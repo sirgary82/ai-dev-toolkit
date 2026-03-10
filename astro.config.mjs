@@ -3,9 +3,8 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-	// Set this to your deployed URL before publishing (GitHub Pages, Netlify, Vercel, etc.)
-	// e.g. site: 'https://your-org.github.io/ai-dev-toolkit'
-	// site: 'https://example.com',
+	site: 'https://sirgary82.github.io',
+	base: 'ai-dev-toolkit',
 	integrations: [
 		starlight({
 			title: 'AI Dev Toolkit',
