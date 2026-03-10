@@ -1,17 +1,53 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import { remarkPrefixLinks } from './remark-prefix-links.mjs';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const BASE = '/ai-dev-toolkit';
+
+/**
+ * Astro integration that rewrites all internal href links in built HTML
+ * to include the base path. Fixes Starlight sidebar and content links
+ * when deploying to a GitHub Pages subpath.
+ */
+function prefixLinksIntegration(base) {
+	const b = base.replace(/\/$/, '');
+	const esc = b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	// Match href="/ that is NOT already prefixed with the base
+	const pattern = new RegExp(`href="(?!${esc}/|${esc}"|https?://|//|#|mailto:)(/[^"]*)`, 'g');
+
+	async function processDir(dir) {
+		const entries = await readdir(dir, { withFileTypes: true });
+		await Promise.all(entries.map(async (entry) => {
+			const full = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				await processDir(full);
+			} else if (entry.name.endsWith('.html')) {
+				const original = await readFile(full, 'utf-8');
+				const rewritten = original.replace(pattern, (_, path) => `href="${b}${path}`);
+				if (rewritten !== original) await writeFile(full, rewritten);
+			}
+		}));
+	}
+
+	return {
+		name: 'prefix-internal-links',
+		hooks: {
+			'astro:build:done': async ({ dir }) => {
+				const distPath = dir instanceof URL ? fileURLToPath(dir) : String(dir);
+				await processDir(distPath);
+			},
+		},
+	};
+}
 
 export default defineConfig({
 	site: 'https://sirgary82.github.io',
 	base: BASE,
-	markdown: {
-		remarkPlugins: [[remarkPrefixLinks, { base: BASE }]],
-	},
 	integrations: [
+		prefixLinksIntegration(BASE),
 		starlight({
 			title: 'AI Dev Toolkit',
 			description: 'Self-paced guides for developers adopting AI coding tools.',
