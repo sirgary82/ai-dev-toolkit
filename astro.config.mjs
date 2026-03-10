@@ -1,10 +1,16 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { remarkPrefixLinks } from './remark-prefix-links.mjs';
+
+const BASE = '/ai-dev-toolkit';
 
 export default defineConfig({
 	site: 'https://sirgary82.github.io',
-	base: 'ai-dev-toolkit',
+	base: BASE,
+	markdown: {
+		remarkPlugins: [[remarkPrefixLinks, { base: BASE }]],
+	},
 	integrations: [
 		starlight({
 			title: 'AI Dev Toolkit',
