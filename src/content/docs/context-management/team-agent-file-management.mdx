@@ -1,0 +1,169 @@
+---
+title: Team Agent File Management
+description: How to maintain AGENTS.md, CLAUDE.md, and copilot-instructions.md reliably when multiple developers are working on the same codebase — ownership, update discipline, reviews, and keeping files accurate.
+track: [backend, frontend]
+status: published
+order: 6
+---
+
+import Callout from '../../../components/Callout.astro';
+
+A single developer maintaining `AGENTS.md` files has one challenge: keeping them current. A team of 10 has additional challenges: consensus on what they say, process for updating them, and accountability when they go stale. These are organisational problems as much as technical ones, and they have straightforward solutions if you address them explicitly.
+
+<Callout type="warning">
+  Context files that are wrong are actively harmful — they instruct AI tools to follow patterns that no longer exist, use libraries that were replaced, or avoid restrictions that were lifted. A missing file is a gap; an inaccurate file is misinformation. Teams that don't manage these files actively will find AI output drifts from their actual codebase over time.
+</Callout>
+
+## Treat agent files as production configuration
+
+The most useful reframe: `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` are configuration files for AI tools, not documentation for humans. This has concrete implications:
+
+- They should be reviewed before merge, not skimmed
+- Changes to them should be deliberate and discussed, not opportunistic
+- Stale entries should be removed promptly, not left "in case it's still relevant"
+- They should be correct at all times, not aspirational
+
+Apply the same standard you'd apply to a shared configuration file that affects everyone's development environment — because that's what they are.
+
+## Ownership: CODEOWNERS
+
+GitHub's CODEOWNERS file ensures that specific people are required reviewers for changes to designated files. Use it for your agent context files so that no update to them can be merged without deliberate sign-off.
+
+`.github/CODEOWNERS`:
+
+```
+# Agent and AI context files require review from tech leads or designated owners
+.github/copilot-instructions.md    @your-org/tech-leads
+CLAUDE.md                          @your-org/tech-leads
+**/AGENTS.md                       @your-org/tech-leads
+docs/architecture/                 @your-org/tech-leads
+docs/decisions/                    @your-org/tech-leads
+```
+
+The `**/AGENTS.md` glob matches every service-level AGENTS.md in the repo. You can scope ownership more narrowly if services have different tech leads:
+
+```
+services/OrderService/AGENTS.md    @your-org/order-team-lead
+services/UserService/AGENTS.md     @your-org/user-team-lead
+```
+
+**Why this matters:** Without CODEOWNERS, a developer refactoring the OrderService in Tuesday's PR will update the service's AGENTS.md — but the change will be merged without anyone who understands the AI tooling implications reviewing it. With CODEOWNERS, the right person is automatically requested as a reviewer.
+
+## The update rule: same PR, always
+
+The most effective team discipline is a single rule applied consistently:
+
+> **Any PR that changes a convention, pattern, or architectural decision must update the relevant AGENTS.md (or other agent context file) in the same PR.**
+
+Not a follow-up PR. Not a "TODO: update the agent file." The same PR.
+
+This rule:
+- Keeps the files current automatically without requiring a separate maintenance process
+- Makes PRs self-documenting (the diff shows both the code change and the convention it establishes)
+- Surfaces disagreements about conventions at PR review time, not after merge
+
+### Making it visible: PR template
+
+Add agent file updates as a checklist item in your PR template so it's impossible to miss:
+
+`.github/pull_request_template.md`:
+
+```markdown
+## Summary
+
+<!-- What does this PR do? -->
+
+## Checklist
+
+- [ ] Tests added or updated
+- [ ] Documentation updated if behaviour changed
+- [ ] **AGENTS.md updated if a pattern, convention, or architecture decision changed**
+- [ ] No sensitive data in agent context files
+```
+
+The bolded item makes it a first-class concern, not an afterthought. Reviewers know to check whether the agent files needed updating when they see code that changes patterns.
+
+<Callout type="tip">
+  If a PR changes how a service handles errors, what library it uses, or how it communicates with other services — the AGENTS.md needs updating. If it's just a bug fix that doesn't affect patterns, it probably doesn't. The test: "would an AI working in this service need to know about this change?" If yes, update the file.
+</Callout>
+
+## Proposing convention changes: discuss before committing
+
+On a solo project, you change a convention and update the AGENTS.md. On a team, a convention change affects everyone's AI-assisted development — and the AGENTS.md update makes it official.
+
+The process that avoids conflict:
+
+1. **Propose in a discussion, not a PR.** GitHub Discussions or a team channel works. "I want to switch from throwing exceptions to returning `Result<T>` for domain validation — does anyone have concerns?" A PR that includes an AGENTS.md change declaring a new convention will surprise people who didn't know the convention was changing.
+
+2. **Get explicit agreement before the PR.** Once the team has discussed it and agreed, the implementation PR includes both the code change and the AGENTS.md update. The CODEOWNERS review is then a confirmation, not a surprise.
+
+3. **For large convention migrations:** Create a migration ADR. "We're moving from X to Y. New code should use Y. Existing code will be migrated incrementally." The AGENTS.md reflects the current state ("use Y for new code; X exists in older parts of the codebase and is being migrated"). The ADR explains why. This gives AI tools accurate guidance without pretending a migration happened all at once.
+
+## What's shared vs what's personal
+
+Some context is appropriate for the shared, committed files. Some is personal preference that shouldn't affect how other developers' AI tools behave.
+
+| Context type | Where it lives |
+|-------------|----------------|
+| Team naming conventions | `.github/copilot-instructions.md` or `AGENTS.md` |
+| Architectural patterns and constraints | `AGENTS.md` |
+| Testing frameworks and patterns | `.github/copilot-instructions.md` or `AGENTS.md` |
+| Personal preferred response style ("be concise") | Personal `~/.claude/claude_code_config.json` or local `CLAUDE.md` not committed |
+| Personal keyboard shortcut preferences | Local tool settings |
+| Exploratory or experimental conventions | Not in committed files until agreed |
+| "Don't suggest X, I personally prefer Y" | Personal config |
+
+Claude Code supports a local `CLAUDE.md` outside the repo (at `~/.claude/CLAUDE.md`) for personal instructions that don't belong in the shared codebase. This is where individual preferences live. The repo-level files contain only what everyone has agreed applies to everyone.
+
+## Keeping files accurate: the stale problem
+
+Agent files go stale when:
+- A library is replaced but the AGENTS.md still names the old one
+- A pattern is deprecated but the AGENTS.md still instructs AI tools to use it
+- A service boundary changes but the architecture doc still shows the old ownership
+- An ADR's decision is reversed but the AGENTS.md still enforces it
+
+**Quarterly review as a team ritual.** Schedule a brief review every quarter: each service's AGENTS.md is read by the service lead and compared against the current codebase. Any mismatch is a PR. This doesn't need to be more than 30 minutes for a small team.
+
+**The "I got wrong output" signal.** When a developer reports that Copilot or Claude generated code that violates a pattern they know is established, that's a signal the agent file is wrong or missing something. Treat it as a bug report. Investigate and update the file.
+
+**Remove rather than accumulate.** When a convention is removed, delete it from the AGENTS.md. Don't leave it with a "this is deprecated" note — AI tools don't reliably infer "deprecated" means "ignore this." An instruction in the file is an instruction the AI follows.
+
+## Reviewing agent file changes
+
+When you're reviewing a PR that includes AGENTS.md changes, review the agent file diff with the same rigour as the code diff. Specifically check:
+
+- **Is the stated convention accurate?** Does the code in this PR actually establish what the AGENTS.md says?
+- **Is it stated clearly enough for an AI?** Ambiguous conventions produce inconsistent AI output. "Use the async pattern" is ambiguous. "All repository methods must be async and return `Task<T>`" is not.
+- **Could it conflict with the global copilot-instructions.md?** A service-level rule that contradicts the global rule will produce inconsistent behaviour. Flag and resolve the conflict before merge.
+- **Is there anything that shouldn't be in a committed file?** Environment-specific configuration, team member names, internal system names that shouldn't be public — none of these belong in committed agent context files.
+
+## Agent files as onboarding
+
+A well-maintained set of AGENTS.md files has a side benefit: they're the best possible onboarding documentation for new developers.
+
+The format forces the writing discipline that onboarding docs need but rarely get:
+- What does this service do (and not do)?
+- What stack is it on?
+- What are the patterns — and more importantly, what are the constraints?
+- Where is the API contract?
+
+A new developer who reads the AGENTS.md for a service before looking at the code has a mental model before they see any implementation. This reduces the cognitive load of the first week significantly.
+
+Explicitly tell new joiners: "Read the AGENTS.md in each service directory as part of onboarding. These are kept current by team process — they reflect the actual current conventions."
+
+## Anti-patterns to avoid
+
+**The growing monolith.** An AGENTS.md that grows to 300 lines of every pattern ever discussed. AI tools apply instructions less precisely as files grow. Keep each file under ~80 lines of actual instructions; anything longer is a signal that scope has drifted.
+
+**Convention wars in agent files.** Two developers editing AGENTS.md with conflicting instructions. The conflict should be resolved in a team discussion, not left as contradictory bullets in the file.
+
+**Aspirational conventions.** "All services should use the CQRS pattern." If only two of five services use CQRS, this instruction misleads AI tools about the current state. Document what is, not what you wish was. Use ADRs to document the direction.
+
+**Siloed ownership.** One developer who "owns" all the agent files and is the only one who updates them. When that person is on leave, files go stale. Ownership through CODEOWNERS means the right people review; it shouldn't mean everyone else ignores the files.
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the full AGENTS.md template and documentation structure
+- [The copilot-instructions.md File](/context-management/copilot-instructions-file/) — the root-level index that ties service files together
+- [Commit Discipline](/auditable-changes/commit-discipline/) — the commit habits that make agent file changes traceable

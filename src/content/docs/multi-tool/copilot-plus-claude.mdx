@@ -1,0 +1,152 @@
+---
+title: Using Copilot and Claude Together
+description: How to combine GitHub Copilot and Claude in a single development workflow — the design/implement/review pattern, when to use each tool, and how shared context files make both work better.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The most common mistake with AI coding tools is treating them as alternatives — picking one and using it for everything. Copilot and Claude are genuinely complementary: they excel at different tasks, and combining them in the right order produces better results than either alone.
+
+## The mental model
+
+**Copilot** is ambient and fast. It watches what you type and offers completions without interrupting your flow. Its context is implicit — it reads your open editor tabs. It's best at tasks you can express by typing code and letting it continue.
+
+**Claude** is deliberate and analytical. You invoke it with a specific question and provide the context explicitly. It's best at tasks that benefit from reasoning, discussion, or seeing a larger slice of your codebase.
+
+The right pattern: Copilot handles the typing; Claude handles the thinking.
+
+## When to use each
+
+| Task | Best tool |
+|------|-----------|
+| Inline completion while typing | Copilot |
+| Quick question about a specific function | Copilot Chat |
+| Generate repetitive boilerplate (CRUD, DTOs) | Copilot Agent Mode |
+| Design review before starting a feature | Claude |
+| Understand an unfamiliar codebase | Claude |
+| Implement a feature across many files | Claude Code |
+| Review AI-generated code | Claude |
+| Explaining a large system to a new developer | Claude |
+| Writing inline doc comments | Copilot |
+| Batch rename or refactor | Copilot Agent Mode or Claude Code |
+| Checking if your approach makes sense | Claude |
+
+## The design / implement / review pattern
+
+This three-step workflow uses each tool where it's strongest:
+
+### Step 1 — Design with Claude
+
+Before writing any code, describe the problem to Claude and agree on the approach.
+
+Paste the relevant context (your `AGENTS.md` for the service, the existing patterns you want to follow, any constraints) and ask:
+
+```
+I need to add rate limiting to the OrderService API endpoints.
+Here's the service context: [paste AGENTS.md]
+Here's the current middleware pipeline: [paste program.cs]
+What's the right approach for ASP.NET Core 8?
+What should I watch out for?
+```
+
+Claude reasons through the design, identifies trade-offs, and flags issues before any code exists. Correcting course at the design stage is free. Correcting course after Copilot has generated 200 lines is not.
+
+**Don't skip this step for anything larger than a trivial addition.** Copilot generates what you ask for; Claude checks whether what you asked for is the right thing.
+
+### Step 2 — Implement with Copilot
+
+With the design agreed, return to VSCode and implement using Copilot inline suggestions or Agent Mode. The design is settled — Copilot's job is code generation, not architecture.
+
+Copilot is faster and less friction for the actual writing. Claude reasoned about the approach; Copilot handles the typing.
+
+If the implementation spans many files or requires exploring the codebase to find the right insertion points, use Claude Code in the terminal instead.
+
+### Step 3 — Review with Claude
+
+Paste the resulting diff or new files back into Claude:
+
+```
+Here's what Copilot generated for the rate limiting implementation.
+Does this match the approach we discussed?
+What edge cases are missing?
+What would you change?
+```
+
+Claude as a reviewer catches what the generator missed:
+- Edge cases the implementation doesn't handle
+- Patterns that don't fit the codebase conventions
+- Missing tests or assertions
+- Security-sensitive code that deserves scrutiny
+
+Then apply Claude's feedback using Copilot Chat's inline edit (`Ctrl+I`) or by making the changes manually. The loop: Claude flags something, Copilot helps you fix it, Claude reviews the fix.
+
+<Callout type="tip">
+  The "reviewer that catches what the generator missed" pattern is genuinely valuable. Copilot and Claude have different biases — using both means each one's blind spots are covered by the other.
+</Callout>
+
+## Shared context: write once, both benefit
+
+The `AGENTS.md` and architecture docs you write for Claude Code are the same files referenced from `.github/copilot-instructions.md` for Copilot. The documentation layer works for both tools without duplication.
+
+This is the compounding payoff of the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide:
+
+- Developer writes `OrderService/AGENTS.md` once
+- Copilot Agent Mode reads it when exploring the service directory
+- Claude Code reads it automatically when you `cd` into the service
+- Claude web gets it pasted at the start of a relevant session
+- Other developers are oriented by it as human documentation
+
+One file, four audiences.
+
+## Running both tools simultaneously in VSCode
+
+Copilot runs in the editor pane; Claude Code runs in the integrated terminal. They operate on the same files without conflicting — as long as you don't run both in agentic mode simultaneously on the same files.
+
+**The practical setup:**
+
+1. Editor pane: Copilot is active, offering inline completions as you write
+2. Terminal panel: Claude Code is available for agentic tasks you kick off explicitly
+
+When Claude Code is editing files, don't accept Copilot suggestions on those same files until Claude Code is done. This prevents overlapping edits that produce confusing results.
+
+## Example: a full feature workflow
+
+Here's how a backend developer might add a `GetOrderHistory` endpoint using both tools:
+
+**Monday morning — Design:**
+- Open Claude web (or a Claude Project for this codebase)
+- Paste the `OrderService/AGENTS.md` and the `GetOrderById` endpoint as a pattern reference
+- Ask Claude to review the proposed design for a paginated order history endpoint
+- Agree on: the query structure, the DTO shape, pagination approach, error handling
+
+**Implementation:**
+- In VSCode, open the relevant files (query, handler, repository interface, controller)
+- Use Copilot Agent Mode: "Implement the `GetOrderHistory` endpoint following the same pattern as `GetOrderById`. Use the design we've agreed on: [paste the agreed design]"
+- Review each file change Copilot proposes before accepting
+
+**Review:**
+- Paste the new handler and query into Claude: "Here's what Copilot generated. Does this match the design? What's missing?"
+- Claude identifies a missing edge case in the pagination logic
+- Fix it using Copilot Chat inline edit
+- Claude confirms the fix looks right
+
+**Ship:** commit the changes, open a PR. The [Automated PR Review](/pr-review/automated-review-basics/) guide covers getting Copilot to do a first-pass review of the PR before human review.
+
+## The most common mistakes
+
+**Using only Copilot for everything.** You get fast code generation but miss Claude's reasoning depth. Design decisions, architectural choices, and review all suffer.
+
+**Using only Claude for everything.** Slower and more friction for tasks where Copilot's ambient completions are perfectly adequate. Writing every method by pasting into a browser is unnecessary overhead for routine work.
+
+**Running Claude Code and Copilot Agent Mode simultaneously on the same files.** Race condition. One agent's changes overwrite the other's. Run one at a time.
+
+**Not sharing context between the two tools.** If your Claude Project and Copilot instructions describe the same codebase differently, you'll get inconsistent results. Keep `AGENTS.md` as the single source of truth; reference it from both.
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the AGENTS.md pattern that makes shared context possible
+- [Claude Code](/claude/claude-code/) — the terminal-based agentic tool for multi-file implementation
+- [Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running both tools across multiple branches simultaneously

@@ -1,0 +1,223 @@
+---
+title: Agent File Lifecycle
+description: The full lifecycle of AGENTS.md and CLAUDE.md — bootstrapping with /init, who updates them and when, letting agents maintain their own context, and when to do a full refresh.
+track: [backend, frontend]
+status: published
+order: 7
+---
+
+import Callout from '../../../components/Callout.astro';
+
+An `AGENTS.md` file that was written once and never touched again is, at best, a snapshot of the past. At worst it's actively misleading. The files that remain useful are the ones that move with the codebase — and the key insight is that AI agents themselves are the best tool for keeping them current.
+
+This guide covers the full lifecycle: starting from zero, daily maintenance discipline, agent self-updating, and knowing when a file needs a ground-up rewrite.
+
+---
+
+## Starting from zero: bootstrapping with `/init`
+
+When you introduce Claude Code to an existing codebase that has no `CLAUDE.md`, the right first step is `/init` — not writing the file from scratch yourself.
+
+```bash
+cd services/OrderService
+claude
+> /init
+```
+
+`/init` instructs Claude Code to scan the current directory, analyse the code structure, infer patterns and conventions, and generate a `CLAUDE.md` file. It reads your source files, configuration, test patterns, and dependency lists, then produces a structured context document.
+
+**What `/init` gets right:**
+- Technology stack (frameworks, libraries, language version)
+- Directory and project structure
+- Test patterns (framework, naming conventions it can observe)
+- Build and run commands
+- Common patterns it can detect from the code
+
+**What `/init` cannot know — and what you must add:**
+- *Why* a pattern exists (the reasoning behind a constraint)
+- What the service is responsible for vs what it explicitly doesn't own
+- Constraints that prevent common AI mistakes ("do not add direct DbContext access")
+- Links to API contracts, architecture docs, and relevant ADRs
+- Patterns that aren't yet consistent across the codebase (the direction, not the current state)
+
+After running `/init`, treat the output as a strong first draft. Read the generated file, then spend 15–20 minutes adding the things only a human knows: the "why", the boundaries, the prohibitions, and the cross-references.
+
+<Callout type="tip">
+  Run `/init` inside a specific service directory, not the repo root. A root-level scan produces a high-level overview; a service-level scan produces the targeted, actionable context that makes AI tools effective. Run it separately for each service.
+</Callout>
+
+### Reviewing `/init` output before committing
+
+Before committing the generated file, check:
+
+1. **Is the stated stack accurate?** Remove any library guesses that are wrong.
+2. **Is there anything that should never be in a committed file?** Environment variable names, internal hostnames, or anything sensitive that appeared in config files.
+3. **Does it describe what the service does?** Add a two-sentence purpose statement if `/init` didn't infer one.
+4. **What's missing that an AI would get wrong without it?** Add the constraints.
+
+Commit the reviewed file as a PR with the context: "Bootstrap CLAUDE.md for OrderService via /init + manual review." This makes the starting point visible in git history.
+
+---
+
+## The maintenance triggers: when to update
+
+Agent context files should be updated in response to specific events. If you're looking at the file without a trigger, you're either doing the quarterly review (good) or performing maintenance theatre (not useful).
+
+**Triggers that require an immediate update in the same PR:**
+
+| Trigger | What to update |
+|---------|----------------|
+| Library replaced (e.g., AutoMapper → Mapster) | Remove old library, add new one and any pattern changes |
+| Pattern adopted (e.g., move to `Result<T>` returns) | Add the new pattern; note if old code is being migrated |
+| Pattern retired (e.g., stop using in-process caching) | Remove the instruction; add a "what not to do" if the old approach is tempting |
+| Service boundary changed (e.g., takes ownership of a new domain) | Update purpose statement and cross-service references |
+| New ADR accepted | Add a link to the ADR and a one-line summary of the decision |
+| Test framework or pattern changed | Update testing section |
+
+**Triggers that are easy to miss:**
+
+- A dependency silently upgraded with a breaking API change — the AGENTS.md still names the old API
+- A convention that one developer started using, others followed, but nobody wrote down
+- A "temporary" approach that became permanent
+
+The best defence: include in your PR description what convention is being established (or changed). If the description mentions a pattern, the AGENTS.md needs to reflect it.
+
+---
+
+## Agents updating their own files — and why this matters
+
+The most underused capability in Claude Code is asking it to maintain its own context files. After a session where you and Claude Code worked through a feature or refactored a service, the agent knows exactly what patterns were established, what constraints emerged, and what it would want to know next time.
+
+End every significant Claude Code session with one of these:
+
+```
+Before we finish, update the AGENTS.md to reflect any patterns or
+conventions we established or confirmed during this session.
+```
+
+```
+Based on what we've implemented today, what should be added or changed
+in the AGENTS.md? Make the updates.
+```
+
+```
+Review the current AGENTS.md against the code we've written today.
+Update anything that's stale or missing.
+```
+
+Claude Code will read the current file, compare it against the session's work, and produce a diff for your review. You approve or adjust — you're not outsourcing the decision, you're outsourcing the mechanical work of drafting the update.
+
+<Callout type="tip">
+  This is not about blind automation. You review every change Claude Code proposes to the AGENTS.md before accepting it. The value is that Claude Code spotted the pattern; you decide whether it's a convention worth documenting.
+</Callout>
+
+### Making self-updating a habit, not an afterthought
+
+The pattern that works: make it part of your session-closing ritual. Before you close the terminal:
+
+1. "Did we establish or confirm any patterns today?"
+2. If yes: "Update AGENTS.md to reflect them."
+3. Review the proposed changes.
+4. Accept or adjust.
+5. The update goes into a commit alongside the feature work.
+
+This takes two minutes. Over time, it compounds: each session leaves the file slightly more accurate than it was. After a month, the file is a living record of how the service actually works — not how it worked when you wrote the first draft.
+
+### Letting agents audit for staleness
+
+At the start of a new session, use Claude Code as an auditor rather than just an implementer:
+
+```
+Read the AGENTS.md for this service, then scan the key source files.
+Tell me if anything in the AGENTS.md looks inaccurate or outdated
+based on what you can see in the current code.
+```
+
+Claude Code will flag mismatches — a library named in the AGENTS.md that isn't in the dependencies, a pattern described that doesn't appear anywhere in the code, a constraint that appears to be violated consistently. Each flag is a candidate for an update.
+
+Run this audit at the start of any session after a period of significant change (a sprint with heavy refactoring, a library migration, an architectural shift).
+
+---
+
+## The CLAUDE.md root file and `/init`
+
+The root-level `CLAUDE.md` (read by Claude Code when you start from the repo root) serves a different purpose from service-level `AGENTS.md` files. It's the global orientation layer: how the repo is structured, where the services live, global conventions, and links to the service-specific files.
+
+When running `/init` at the repo root, Claude Code generates a root-level `CLAUDE.md` focused on the overall structure. This is a useful starting point for the global file.
+
+A well-structured root `CLAUDE.md` after reviewing `/init` output:
+
+```markdown
+# Repository Context
+
+## Structure
+Microservices repo. Services live under /services/. Each has its own
+AGENTS.md with service-specific conventions.
+
+## Tech stack
+- Backend: ASP.NET Core 8 (.NET services under /services/)
+- Frontend: React 18 (app under /web/)
+- Infrastructure: Bicep templates under /infra/
+- CI/CD: GitHub Actions under /.github/workflows/
+
+## Global conventions
+[same as .github/copilot-instructions.md — keep in sync or reference it]
+
+## Where to look
+- Architecture overview: /docs/architecture/overview.md
+- Service-specific context: /services/{ServiceName}/AGENTS.md
+- ADRs: /docs/decisions/
+
+## Build and run
+- All services: docker-compose up
+- Single service: cd services/OrderService && dotnet run
+- Tests: dotnet test from service directory
+```
+
+<Callout type="note">
+  The root `CLAUDE.md` and `.github/copilot-instructions.md` overlap in purpose. You can reference one from the other, or maintain them as parallel summaries. The key is that they don't contradict each other — if a global convention changes, update both.
+</Callout>
+
+---
+
+## When to do a ground-up rewrite
+
+Incremental updates handle most maintenance. There are situations where a file has drifted so far from reality that incremental updates would just be layers of confusion on a broken foundation:
+
+- **After a major architectural migration** (e.g., moving a service from a monolith to standalone, switching from REST-only to CQRS, adopting a new ORM)
+- **After inheriting a codebase** that was maintained by someone else — the file (if there is one) reflects their understanding, not the current reality
+- **After a long period of neglect** where the file has more wrong entries than right ones
+
+The rewrite process:
+
+1. Archive the old file (`git mv AGENTS.md AGENTS.md.archive`)
+2. Run `/init` fresh
+3. Review and add the missing intent, constraints, and links
+4. Delete the archive once the new file is complete and reviewed
+5. Commit with context: "Rewrite AGENTS.md to reflect post-migration state"
+
+The git history still has the old file accessible. There's no need to preserve stale content in the live file to maintain history — that's what git is for.
+
+---
+
+## Reading the git history of agent files
+
+Because agent context files are committed as code, their git history tells the story of how the team's conventions evolved. This is useful when:
+
+- A new developer wants to understand why a constraint exists (the commit message and linked PR have the context)
+- There's disagreement about a current convention (the history shows when it was introduced and why)
+- You're doing a rewrite and want to understand what was deliberately decided vs what was inferred
+
+```bash
+git log --follow -p services/OrderService/AGENTS.md
+```
+
+This shows every change to the file, in order, with diffs. Make commit messages meaningful: "Add `Result<T>` convention after team ADR-004 accepted" is infinitely more useful than "Update AGENTS.md."
+
+---
+
+## Next steps
+
+- [Team Agent File Management](/context-management/team-agent-file-management/) — ownership, CODEOWNERS, PR discipline for keeping files current across the team
+- [Claude Code Tips & Tricks](/claude/claude-code-tips/) — `/init`, `/compact`, `/clear`, and workflow patterns including how to use CC to maintain its own context
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — when your files are mature enough to serve via MCP to agent sessions automatically

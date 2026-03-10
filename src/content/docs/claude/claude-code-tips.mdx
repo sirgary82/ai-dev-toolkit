@@ -1,0 +1,262 @@
+---
+title: Claude Code Tips & Tricks
+description: Workflow patterns, context hygiene habits, and practical techniques for getting consistent results from Claude Code — especially for developers coming from GitHub Copilot.
+track: [backend, frontend]
+status: published
+order: 5
+---
+
+import Callout from '../../../components/Callout.astro';
+import CheatSheet from '../../../components/CheatSheet.astro';
+
+These are the patterns that separate productive Claude Code sessions from frustrating ones. Some are obvious in retrospect but non-obvious until you hit the problem they solve. If you're coming from Copilot, several of these will feel counterintuitive at first.
+
+---
+
+## Context hygiene: use `/clear` heavily
+
+The most important habit in Claude Code is treating the context window as a finite, depletable resource — and clearing it aggressively when the current task is done.
+
+**When to `/clear`:**
+- After completing any discrete task (feature, bug fix, refactor)
+- Before starting something conceptually different from what you were just doing
+- When you notice Claude Code giving answers that don't fit what you're working on
+- When the session has been going long enough that early conversation is compressed out of view
+
+**Signs that your context has degraded:**
+- CC refers to code from an earlier part of the session as if it's still the current state
+- CC repeats solutions you've already rejected
+- CC makes assumptions about what you're building that made sense two hours ago but not now
+- Responses feel generic rather than specific to your codebase
+
+A degraded context doesn't announce itself. The output just gets subtly worse. Developing the habit of `/clear` after each task prevents accumulation.
+
+```
+> /clear
+```
+
+<Callout type="tip">
+  Think of each `/clear` as a clean workbench. You wouldn't try to assemble something new on top of the debris from the last project. The seconds it takes to clear is always faster than unravelling a context-confused session later.
+</Callout>
+
+### `/compact` vs `/clear` — when to use which
+
+`/compact` compresses the conversation history to free up context space while keeping a summary of what was discussed. `/clear` wipes everything and starts fresh.
+
+Use **`/compact`** when:
+- You're mid-task and have run out of context space, but the work is ongoing
+- The session is long but all of it is relevant to what you're currently doing
+
+Use **`/clear`** when:
+- The current task is complete and you're starting a new one
+- You're about to ask something unrelated to the current conversation
+- You want guaranteed fresh context (no carry-over assumptions)
+
+`/compact` is a space-saving measure for long sessions. `/clear` is a task boundary marker. Use both deliberately rather than letting the context fill up passively.
+
+---
+
+## The prompt refinement pattern
+
+This is the highest-value technique in this guide for developers new to Claude Code.
+
+**The problem:** You know what you want to build, but you don't know how to express it as a prompt that gives CC all the context it needs to do it well. The first attempt is often too vague, and you spend several turns correcting CC's misunderstandings.
+
+**The pattern:** Use Claude Code's own knowledge of what makes a good prompt to write the prompt for you.
+
+**Step 1 — Explain your goal informally:**
+Start a CC session. Describe what you want to achieve in plain language, as if explaining it to a colleague. Don't worry about structure.
+
+```
+I want to add a caching layer to the OrderService. The idea is that
+frequently-requested orders (by ID) should be cached in memory for
+a configurable TTL. The cache should be invalidated when an order
+is updated or cancelled. We're on ASP.NET Core 8, using IMemoryCache.
+I want to follow whatever patterns are already established in the service.
+```
+
+**Step 2 — Ask CC to write the prompt:**
+```
+Based on that description, write me a precise prompt for this task
+that includes all the context you'd need to implement it well.
+Include what files should be referenced and what patterns to follow.
+```
+
+**Step 3 — Read the prompt CC writes.** It will structure the request with the right level of specificity, reference the relevant files, name the patterns to follow, and include constraints you didn't explicitly mention but should have. This is CC telling you what context it needs.
+
+**Step 4 — `/clear`**
+
+**Step 5 — Paste the refined prompt into the fresh session.**
+
+The refined prompt starts the implementation session with a precise, well-structured request. You skip the wandering turns that come from vague starting instructions.
+
+<Callout type="tip">
+  This pattern is particularly effective for complex tasks or whenever you're not sure exactly what context CC will need. The meta-request (write me the prompt) is cheap — a few seconds. The payoff is an implementation session that starts correctly.
+</Callout>
+
+---
+
+## The plan-first pattern
+
+Before asking CC to implement anything non-trivial, ask for the plan first. This is different from the prompt refinement pattern — here you already have a good prompt, but you want to validate the approach before CC starts editing files.
+
+```
+Before writing any code, describe your plan for implementing this.
+What files will you create or modify? What's the sequence?
+What assumptions are you making?
+```
+
+Read the plan. Correct it before a line of code is written:
+
+- "Don't create a new class for this — add the method to the existing OrderRepository"
+- "The caching should happen in the service layer, not the controller"
+- "You're missing the cache invalidation on order cancellation"
+
+Correcting a plan is free. Correcting an implementation that went in the wrong direction costs you the time to review the wrong code plus the time to redirect and re-implement.
+
+<Callout type="note">
+  For tasks that touch more than three files, always start with a plan. The larger the scope, the more likely CC's approach and your intended approach will diverge on a key assumption.
+</Callout>
+
+---
+
+## The exploration session: use CC to write its own context
+
+When you arrive at an unfamiliar part of a codebase — a service someone else wrote, code inherited from a previous team, or just a corner you haven't touched in months — use CC to explore before asking it to implement anything.
+
+```
+Explore the NotificationService. Summarise:
+- What it does and what it owns
+- The main patterns and architectural decisions you can see
+- The dependencies (libraries, services it calls)
+- Anything that looks like tech debt or inconsistency
+Don't make any changes yet.
+```
+
+Read the summary. Correct any misunderstandings. Then ask CC to produce the AGENTS.md from its findings:
+
+```
+Based on your exploration, draft an AGENTS.md for this service.
+```
+
+Review and refine the draft. You now have both a current understanding of the service and a context file for future sessions — produced in a single exploration session with no manual code archaeology.
+
+This is also the right workflow when `/init` doesn't capture enough (for older or unconventionally structured codebases) — the exploration session lets CC reason about intent in a way that static `/init` scanning can't.
+
+---
+
+## Quick-reference: commands
+
+<CheatSheet sections={[
+  {
+    title: "Session management",
+    items: [
+      { action: "Start fresh context", shortcut: "/clear", note: "Use between tasks" },
+      { action: "Compress history to free context space", shortcut: "/compact", note: "Use mid-task when context is full" },
+      { action: "Bootstrap CLAUDE.md from current directory", shortcut: "/init", note: "Run once per service, then review" },
+      { action: "Show token usage for this session", shortcut: "/cost" },
+      { action: "List all slash commands", shortcut: "/help" },
+    ]
+  },
+  {
+    title: "File and symbol references",
+    items: [
+      { action: "Reference a specific file", shortcut: "@filename", note: "e.g. @OrderService.cs" },
+      { action: "Reference a symbol by name", shortcut: "#symbol", note: "e.g. #GetOrderById" },
+    ]
+  },
+  {
+    title: "Meta-patterns (type in the prompt)",
+    items: [
+      { action: "Write the prompt for me", shortcut: "\"Write me a prompt for this task...\"" },
+      { action: "Plan before implementing", shortcut: "\"Before writing code, describe your plan\"" },
+      { action: "Explore and summarise", shortcut: "\"Explore X, don't make changes yet\"" },
+      { action: "Update the context file", shortcut: "\"Update AGENTS.md to reflect today's work\"" },
+      { action: "Audit for staleness", shortcut: "\"Read AGENTS.md and check it against the code\"" },
+    ]
+  }
+]} />
+
+---
+
+## Workflow patterns for Copilot users
+
+Coming from Copilot, several things about Claude Code feel different. Most of those differences are features, not problems.
+
+### CC is explicit where Copilot is ambient
+
+Copilot watches silently and completes. CC requires you to describe the task. The description phase feels like overhead until you realise it's where you catch misalignments — CC can't implement the wrong thing if you've confirmed the plan first.
+
+### CC shows its reasoning — read it
+
+When CC explains its approach before making changes, that explanation is worth reading. It often contains the thing you'd want to correct, and it's faster to correct reasoning than to correct code. Developers who skip the reasoning and jump to reviewing the diffs spend more time in revision loops.
+
+### The confirmation step is not friction
+
+When CC pauses and asks "shall I proceed?" before making file changes or running a command — that pause is the review gate. Copilot Agent Mode has the same concept. In both tools, the habit is: read what it's about to do, not just click through.
+
+### What doesn't carry over from Copilot
+
+- **Open tabs as implicit context** — Copilot reads your open editor files automatically. CC doesn't. You tell CC what to look at using `@file` references or by explicitly asking it to read a file.
+- **Always-on completions** — CC is deliberate. You invoke it for a task. Copilot ambient completions still happen in the editor.
+- **Keyboard shortcut muscle memory** — CC is a conversation interface in the terminal. The interaction model is different. Give yourself a session or two to adjust.
+
+---
+
+## Ending every session well
+
+The last two minutes of a Claude Code session are as important as the first two. Build these habits into your session close:
+
+**1. Update the context file:**
+```
+Before we finish: based on what we built today, update the AGENTS.md
+to reflect any patterns, conventions, or constraints we established.
+```
+
+**2. Commit the context update with the feature work:**
+The AGENTS.md update belongs in the same commit as the code, or as the immediate next commit. Not "I'll do it later."
+
+**3. Clear before you close:**
+`/clear` — so the next session that opens in this terminal starts clean.
+
+**4. Note anything that was unexpected:**
+If CC got confused, went in the wrong direction, or needed significant correction — that's a signal. Either the AGENTS.md was missing something, or the initial prompt could have been clearer. Adjust one of them before the next session.
+
+---
+
+## Combining CC with Copilot in the same session
+
+Claude Code runs in the terminal; Copilot runs in the editor. They coexist without technical conflict.
+
+**The split that works well:**
+- CC in the terminal for the task you've planned and scoped explicitly
+- Copilot in the editor for the code you're writing around the CC-generated scaffold
+
+**What to avoid:**
+- Asking CC to implement something in a file you're actively editing in the editor (the edits race)
+- Running Copilot Agent Mode and CC on the same files simultaneously
+- Using CC for ambient completions (it's not designed for that; it's deliberately session-oriented)
+
+See [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) for the full workflow guide, including the design/implement/review pattern.
+
+---
+
+## Anti-patterns
+
+**Running CC without `/clear` between unrelated tasks.** Context from a previous task bleeds into the new one. CC may make references to code or decisions from an earlier session that are no longer relevant.
+
+**Accepting the first plan without reading it.** The plan step exists for a reason. Skipping it and going straight to implementation means you find the misalignment in the diff instead of in the plan.
+
+**Long CC sessions without `/compact` or `/clear`.** Context window degradation is gradual. The session feels fine until the quality of output drops noticeably. By then you've been in a degraded state for a while.
+
+**Giving CC a task that's too large for one session.** If a task will take more than 45–60 minutes of implementation, break it into subtasks, each with its own session. Long sessions accumulate context faster than `/compact` can keep up with.
+
+**Forgetting to update AGENTS.md at session end.** The value of the context file compounds over time. Missing the update after one session isn't catastrophic; making it a habit to skip is.
+
+---
+
+## Next steps
+
+- [Claude Code](/claude/claude-code/) — the full setup guide if you haven't configured CC yet
+- [Agent File Lifecycle](/context-management/agent-file-lifecycle/) — deeper on `/init`, agent self-updating, and the full maintenance loop
+- [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) — using CC and Copilot in the same workflow

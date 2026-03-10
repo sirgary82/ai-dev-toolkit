@@ -1,0 +1,166 @@
+---
+title: The copilot-instructions.md File
+description: How to create a .github/copilot-instructions.md file that acts as an index to your codebase conventions — linking to per-service context files rather than trying to contain everything.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Every team has conventions: preferred patterns, naming rules, libraries to use or avoid. Without a `copilot-instructions.md` file, you repeat those conventions in every prompt. With it, Copilot knows them automatically.
+
+But there's a trap: teams often turn this file into a documentation dump that grows to hundreds of lines. Large, unfocused instructions files are hard for Copilot to apply selectively. The file that works best is one that acts as an **index** — declaring what conventions exist and pointing to where the full context lives.
+
+## What the file does
+
+`.github/copilot-instructions.md` is a Markdown file in your repository that Copilot Chat reads automatically as part of every context window. Whatever you write in it is available in every Copilot Chat and inline suggestion session — without you having to mention it.
+
+<Callout type="note">
+  As of March 2026, this file applies to Copilot Chat and Copilot Agent Mode in VSCode. Support across other Copilot surfaces continues to expand — check the GitHub Copilot documentation for the latest status.
+</Callout>
+
+## Creating the file
+
+1. Create `.github/` in your repo root if it doesn't exist.
+2. Create `.github/copilot-instructions.md`.
+3. Add instructions in plain Markdown.
+4. Commit and push.
+
+Copilot picks it up automatically — no configuration needed.
+
+---
+
+## The index pattern
+
+The most effective `copilot-instructions.md` does three things well:
+
+1. States the global conventions that apply everywhere
+2. Points to per-service context files for detailed, service-specific rules
+3. Stays short enough that Copilot can apply it to any task without confusion
+
+Here's an index-style file for a multi-service .NET repo:
+
+```markdown
+# Copilot Instructions
+
+## Architecture
+- Microservices communicating via Azure Service Bus (events) and REST (sync queries).
+- Each service directory has an AGENTS.md with service-specific conventions.
+  For the service you're working on, open and read its AGENTS.md first.
+
+## Global naming
+- Services: {Domain}Service with interface I{Domain}Service
+- Repositories: {Entity}Repository with interface I{Entity}Repository
+- DTOs use the suffix Dto; Commands use the suffix Command
+
+## Global rules
+- Constructor injection only — never service locator or static accessors
+- All data access through repository classes — no direct DbContext in services or handlers
+- Never throw for domain validation failures — use Result<T> or the existing exception pattern
+
+## Testing
+- Framework: xUnit | Mocking: Moq | Integration: TestContainers
+- Test naming: MethodName_Scenario_ExpectedResult
+
+## Context files (open these when working on the relevant service)
+- Architecture overview: /docs/architecture/overview.md
+- OrderService: /services/OrderService/AGENTS.md
+- UserService: /services/UserService/AGENTS.md
+- NotificationService: /services/NotificationService/AGENTS.md
+
+## What to avoid
+- No raw SQL — use EF Core or Dapper through the repository layer
+- No HttpClient instantiation — use IHttpClientFactory
+- No `Console.Write` or `Debug.Write` — use ILogger<T>
+```
+
+Notice what this file does **not** contain: the full detail of each service's patterns. Those live in the service's `AGENTS.md` file. The top-level instructions file is a map; the service files are the territory.
+
+### Why this works better than one long file
+
+When Copilot reads a long instructions file while working on a specific method, it has to figure out which parts of the file are relevant to this task. A 500-line file with architecture notes for five services, testing conventions, error handling rules, and deployment specifics overwhelms the relevant signal.
+
+An index file keeps the global rules brief and directs Copilot to the relevant service context. The developer opens the service's `AGENTS.md` in a tab (making it visible to Copilot's inline suggestions) or references it in a Chat message.
+
+---
+
+## Per-service context files (AGENTS.md)
+
+In a multi-service or multi-module repository, each service directory gets its own `AGENTS.md`:
+
+```
+/services/
+  OrderService/
+    AGENTS.md    ← order-specific patterns, stack, constraints
+  UserService/
+    AGENTS.md    ← user-specific patterns
+  NotificationService/
+    AGENTS.md
+```
+
+Copilot Agent Mode reads these files when it explores the directory. Claude Code reads them automatically. The root `copilot-instructions.md` references them so developers know they exist.
+
+What goes in a service-level `AGENTS.md`:
+- **Service purpose** (2 sentences — what it does and what it doesn't do)
+- **Technology stack** — specific libraries and versions if they matter
+- **Key patterns** — the architecture decisions that govern this service
+- **What NOT to do** — the constraints that prevent common mistakes
+- **Links** — to the API contract, architecture overview, relevant ADRs
+
+See the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide for a full `AGENTS.md` template and the broader documentation structure.
+
+---
+
+## What goes in the global file vs the service file
+
+| Concern | Global file | Service file |
+|---------|------------|-------------|
+| Constructor injection rule | ✓ | — |
+| xUnit + Moq test stack | ✓ | — |
+| Service Bus vs REST communication | ✓ | — |
+| Service-specific repository interface names | — | ✓ |
+| Domain exceptions specific to this service | — | ✓ |
+| Technology quirks for this service's DB | — | ✓ |
+| Link to this service's API contract | — | ✓ |
+
+If a rule applies everywhere, it belongs in the global file. If it's specific to one service's patterns or stack, it belongs in the service's `AGENTS.md`.
+
+---
+
+## What not to put in either file
+
+- **Sensitive data.** Both files are committed to your repository. No secrets, passwords, or internal credentials.
+- **Business requirements.** These change constantly and don't help Copilot generate better code.
+- **Prose explanations of standard patterns.** Don't explain what the repository pattern is — Copilot knows. Just say "use the repository pattern."
+- **Outdated conventions.** A file that describes how code used to be structured is worse than no file. When a convention changes, update or remove the relevant entry in the same PR.
+
+<Callout type="tip">
+  Start with 5–8 high-signal global rules and one `AGENTS.md` for the service you're currently working in. Test whether Copilot follows them. Add more incrementally. An imperfect file that exists today is more useful than a perfect file that takes a week to write.
+</Callout>
+
+---
+
+## Verifying it works
+
+After adding or updating the file:
+
+1. Open Copilot Chat and ask: "What naming convention should I use for a new repository class?"
+2. If Copilot references your conventions, the file is being read.
+3. If not, verify: the file is at exactly `.github/copilot-instructions.md` (not `.github/copilot/` or any variant).
+
+To verify a service-level `AGENTS.md` is being picked up by Copilot Agent Mode: start an agent session and ask "What does the AGENTS.md in this directory say about error handling?" — it should read and quote the file.
+
+---
+
+## The same files work for Claude
+
+The `AGENTS.md` files you write for Copilot are also what Claude Code reads when working in those directories. The `copilot-instructions.md` at the root can be mirrored or summarised in a root `CLAUDE.md` for Claude Code sessions.
+
+Write once, both tools benefit.
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the full documentation structure (AGENTS.md, architecture docs, ADRs)
+- [Large Repo Strategies](/context-management/large-repo-strategies/) — working with codebases that exceed any context window
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — making your documentation queryable by AI agents

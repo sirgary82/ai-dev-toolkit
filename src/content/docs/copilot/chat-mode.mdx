@@ -1,0 +1,81 @@
+---
+title: Chat Mode
+description: How to use GitHub Copilot Chat in VSCode for questions, explanations, code review, and task assistance.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Copilot Chat is a conversational interface inside VSCode. Unlike inline suggestions — which complete what you're typing — Chat lets you ask questions, request explanations, and make broader requests in natural language.
+
+## Opening Chat
+
+| Method | Shortcut |
+|--------|----------|
+| Chat sidebar panel | `Ctrl+Shift+I` |
+| Inline chat (in editor) | `Ctrl+I` |
+| Quick Chat (floating) | `Ctrl+Shift+Alt+L` |
+
+For most conversations, the sidebar panel works best. Use inline chat when you want to modify a specific selection without switching context.
+
+## What Chat is good for
+
+**Understanding code.** Select any block and press `Ctrl+I` → `/explain`, or paste it in the chat panel. Copilot explains what the code does, what each part means, and what edge cases exist.
+
+**Getting unstuck.** Paste an error message and describe what you were trying to do. Copilot often identifies the cause and suggests a fix faster than a search engine would.
+
+**Exploring options.** "What's the best way to handle retry logic in an HttpClient?" gets a structured answer with trade-offs, not just one approach.
+
+**Code review.** Paste a method and ask "What are the problems with this code?" or "Does this handle null inputs correctly?"
+
+**Generating from scratch.** Describe what you need and ask Copilot to write it. This is most reliable for well-defined, self-contained pieces of code.
+
+## Slash commands
+
+Type these at the start of a message to invoke specific modes:
+
+| Command | What it does |
+|---------|-------------|
+| `/explain` | Explain selected or pasted code |
+| `/fix` | Identify and fix a bug in selected code |
+| `/tests` | Generate unit tests for selected code |
+| `/doc` | Generate documentation comments |
+| `/simplify` | Suggest a simpler version of selected code |
+| `/clear` | Start a new conversation |
+
+## Referencing your code
+
+**Selection in sidebar:** Select code in the editor before typing your chat message. Copilot automatically includes the selection as context.
+
+**`@workspace`:** Prefix your message with `@workspace` to ask questions about your project. Copilot indexes your files and tries to answer from your actual codebase.
+
+**`#file`:** Type `#file` in the chat input to attach a specific file. Useful when the relevant file isn't currently open.
+
+<Callout type="tip">
+  Chat conversations have memory within a session. You can say "now add error handling to that" after a previous exchange, and Copilot will know what "that" refers to. Start a new chat (`/clear`) when switching to a different task.
+</Callout>
+
+## Inline chat (`Ctrl+I`)
+
+Inline chat opens a prompt directly in the editor, overlaying your code. Use it for targeted modifications:
+
+1. Select a block of code.
+2. Press `Ctrl+I`.
+3. Type your request: *"Refactor this to use async/await"* or *"Add null checks"*.
+4. Copilot shows a diff. Accept or discard.
+
+This keeps you in the editor instead of switching to the sidebar.
+
+## Getting better answers
+
+- **Be specific about the return type or interface you want.** "Return an `IReadOnlyList<T>`" is more useful than "return a list".
+- **Provide the error message, not just the description.** Copilot reads error text well.
+- **Follow up.** If the first answer isn't quite right, say so: "That looks right but can you make it handle empty collections?"
+- **Use your language.** Domain terms, method names, and file names from your project give Copilot more to work with.
+
+## Next steps
+
+- [Prompt Engineering Basics](/context-management/prompt-engineering-basics/) — systematic techniques for writing better prompts
+- [Agent Mode](/copilot/agent-mode/) — let Copilot execute multi-step tasks with less guidance

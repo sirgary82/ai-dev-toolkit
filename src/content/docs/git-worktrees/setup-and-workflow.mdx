@@ -1,0 +1,129 @@
+---
+title: Git Worktrees — Setup and Workflow
+description: The practical commands and VSCode setup you need to start using Git worktrees today.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This guide covers the day-to-day commands and editor setup for Git worktrees. If you're not sure what worktrees are or why to use them, read [What and Why](/git-worktrees/what-and-why/) first.
+
+## Creating a worktree
+
+From inside your existing repository:
+
+```bash
+# Create a worktree on a new branch
+git worktree add ../project-feature-x feature/x
+
+# Create a worktree on an existing branch
+git worktree add ../project-hotfix-123 hotfix/123
+
+# Create a worktree with a new branch (combined)
+git worktree add -b feature/new-thing ../project-new-thing main
+```
+
+The first argument is the **path** for the new directory. The second is the **branch**.
+
+<Callout type="tip">
+  Keep worktrees as siblings to your main repo directory (e.g., `../project-feature-x`) rather than inside it. Putting them inside creates nested repos, which confuses tooling.
+</Callout>
+
+## Listing and removing worktrees
+
+```bash
+# List all worktrees
+git worktree list
+
+# Remove a worktree (after you're done with the branch)
+git worktree remove ../project-feature-x
+
+# Force remove (if there are uncommitted changes you want to discard)
+git worktree remove --force ../project-feature-x
+
+# Prune stale worktree records (after manually deleting a directory)
+git worktree prune
+```
+
+## Day-to-day workflow
+
+```
+main/                    ← regular development, always here
+project-feature-x/       ← feature work (or AI exploration)
+project-spike-y/         ← experimental spike (safe to discard)
+```
+
+1. Start the day in `main/` for any urgent tasks
+2. Create a worktree for any new feature or experiment: `git worktree add -b feature/orders ../project-orders main`
+3. Open the new directory in VSCode: `code ../project-orders`
+4. Work (or let an AI agent work) in that worktree
+5. When done: commit, push, create PR — or `git worktree remove --force` to discard
+
+## VSCode setup
+
+VSCode treats each worktree directory as an independent workspace. Each window has its own:
+- Open files and editor state
+- Terminal sessions
+- Source Control view (scoped to that directory's branch)
+
+**Opening a worktree:**
+```bash
+code ../project-feature-x          # opens in current window
+code -n ../project-feature-x       # opens in a new window
+```
+
+**Multi-root workspaces:** If you want both the main repo and a worktree visible in a single VSCode window, use a `.code-workspace` file:
+
+```json
+{
+  "folders": [
+    { "path": "." },
+    { "path": "../project-feature-x", "name": "feature/x" }
+  ]
+}
+```
+
+This is useful for comparing the main and feature branches side by side.
+
+## Dependency management
+
+Each worktree directory is independent at the filesystem level. This means:
+
+- **Node.js:** Each worktree needs its own `node_modules`. Run `npm install` in each worktree. (Or use `npm link` / shared package manager caches if disk space is a concern.)
+- **.NET:** Build artifacts are per-directory. No action required in most cases.
+- **.env files:** If you use a `.env` at the repo root, each worktree needs its own copy. Set this up once when creating the worktree.
+
+<Callout type="note">
+  If your project has a local database or running service, each worktree shares the same ports — you'll need to configure different ports if you want to run both simultaneously.
+</Callout>
+
+## Useful shell aliases
+
+If you use worktrees frequently, these aliases save typing:
+
+```bash
+# Add to your ~/.bashrc or ~/.zshrc
+
+# Create a worktree as a sibling directory
+wt-new() {
+  git worktree add -b "$1" "../$(basename "$(pwd)")-$1" "${2:-main}"
+  echo "Created worktree: ../$(basename "$(pwd)")-$1"
+}
+
+# List worktrees compactly
+alias wt-list='git worktree list'
+
+# Remove a worktree by branch name
+wt-remove() {
+  local path=$(git worktree list | grep "$1" | awk '{print $1}')
+  git worktree remove "$path"
+}
+```
+
+Usage: `wt-new feature/orders` creates `../project-orders` on a new branch `feature/orders`.
+
+## Next steps
+
+- [Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running multiple AI agent sessions on different worktrees simultaneously

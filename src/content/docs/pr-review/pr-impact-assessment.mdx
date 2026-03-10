@@ -1,0 +1,68 @@
+---
+title: PR Impact Assessment on Large Codebases
+description: Using AI tools to understand the blast radius of a pull request before merging — especially for large, AI-generated changesets.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+A large PR — especially one generated with AI assistance — can touch many files and have non-obvious downstream effects. Impact assessment is the practice of understanding *what could break* before you merge.
+
+## What impact assessment means
+
+Before merging a substantial change, impact assessment asks:
+
+- What does this PR change, and what depends on what was changed?
+- Are there callers, consumers, or dependents that weren't updated?
+- Does anything in the test coverage clearly not cover the changed behavior?
+- Are there integration points (APIs, events, databases) that might need coordinated updates?
+
+This is especially relevant for AI-generated changes, which can be correct in isolation but miss downstream effects that a developer working in the codebase every day would naturally consider.
+
+## Using Copilot Chat for impact assessment
+
+Copilot Chat with `@workspace` is the simplest tool for this. After generating a significant change:
+
+**Ask about dependents:**
+> `@workspace What other files or classes use the methods I changed in OrderService?`
+
+**Ask about coverage gaps:**
+> `@workspace Are there test cases that cover the edge cases in my updated CalculateTotal method?`
+
+**Ask for a change summary:**
+> `@workspace Summarize the changes I've made across the current branch in plain language. What's the blast radius?`
+
+<Callout type="note">
+  `@workspace` indexes your project files, but it doesn't run your code. It can identify structural dependencies from imports and references, but it won't catch runtime-only dependencies or dynamic dispatch patterns.
+</Callout>
+
+## A practical pre-merge checklist for large AI-generated PRs
+
+Before merging a PR that was substantially AI-generated:
+
+- [ ] Does the PR description accurately describe what changed? (AI tools can draft this too)
+- [ ] Are all the files that *should* have changed actually changed? (Did the agent miss any callers?)
+- [ ] Are all the files that changed *actually* in scope? (Did the agent edit things it shouldn't have?)
+- [ ] Do the tests cover the changed behavior, not just the happy path?
+- [ ] If an interface changed, are all implementations updated?
+- [ ] If a database schema changed, is there a corresponding migration?
+- [ ] If an API contract changed, are downstream consumers aware?
+
+## Scoping PRs to make assessment tractable
+
+The best impact assessment strategy is keeping PRs small enough that assessment is obvious. A PR with 5 changed files is assessable in 10 minutes. A PR with 50 changed files requires significant effort.
+
+When using AI agents for large tasks, break the work into smaller PRs:
+- Data model changes in one PR
+- Repository/data access layer changes in another
+- Service layer changes in another
+- API layer changes in another
+
+Each is independently reviewable and independently revertable.
+
+## Next steps
+
+- [Commit Discipline](/auditable-changes/commit-discipline/) — the commit structure that makes PRs easy to review
+- [Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — how worktrees keep each AI-generated changeset isolated for cleaner PRs

@@ -1,0 +1,176 @@
+---
+title: Large Repo Strategies
+description: How to work effectively with AI coding tools on codebases that are too large to fit in a single context window.
+track: [backend, frontend]
+status: published
+order: 6
+---
+
+import Callout from '../../../components/Callout.astro';
+
+A .NET solution with 30+ projects, a React monorepo with 20 packages, or any codebase where a single service is thousands of lines long: these don't fit in any AI's context window. AI tools that try to load the whole thing either fail silently or produce mediocre results from compressed, truncated context.
+
+Working with large repos effectively isn't about finding a tool that can see everything — it's about always giving the right tool the right slice.
+
+## The core insight
+
+The context window is a constraint to design around, not overcome. A well-scoped request with focused context produces better results than a vague request with the whole codebase loaded.
+
+**The failing pattern:** "Here's my solution — implement this feature."
+
+**The working pattern:** "Here's the `OrderService`, its repository interface, and the existing `GetOrderById` implementation. Add `GetOrderHistory` following the same pattern."
+
+The second is better not because it uses a larger tool, but because it gives a precisely scoped AI a precisely scoped task.
+
+---
+
+## Strategy 1: Work at the service boundary
+
+Scope your AI session to one service at a time. Don't start from the solution root.
+
+**For Copilot (`@workspace`):** VSCode's `@workspace` indexing is most useful for navigation at large scale. Use it to find where things are ("Where is the retry logic for HTTP clients?"), then switch to direct file context for generation tasks.
+
+**For Claude Code:** Start from inside the service directory:
+
+```bash
+cd services/OrderService
+claude
+# Claude Code scopes its initial exploration to OrderService/
+```
+
+Starting from the solution root lets Claude Code explore everything — which means it reads more noise than signal. The service-level `CLAUDE.md` or `AGENTS.md` then provides the orientation Claude Code needs without scanning hundreds of files.
+
+**For VSCode workspaces:** Create a `.code-workspace` file scoped to the service you're working in. Copilot's inline context and `@workspace` index both respect workspace boundaries.
+
+```json
+{
+  "folders": [
+    { "path": "./services/OrderService", "name": "OrderService" }
+  ]
+}
+```
+
+---
+
+## Strategy 2: Use interface files instead of implementations
+
+You rarely need the full implementation in context. You need the contract.
+
+When writing code that calls a service or repository, open the **interface** file, not the implementation. Interfaces are compact and fully describe the public surface:
+
+- `IOrderRepository.cs` gives Copilot every method name, parameter type, and return type it needs — without the 400-line EF Core implementation.
+- `IUserService.cs` tells Claude exactly what the user service provides — without the business logic, logging, and error handling that don't affect how you call it.
+
+This is the **proxy pattern** for context: the interface is a compact, accurate proxy for the full implementation.
+
+<Callout type="tip">
+  When a generated method calls a non-existent method on a repository or service, the fix is almost always "open the interface file." Copilot was guessing about available methods; the interface removes the guess.
+</Callout>
+
+---
+
+## Strategy 3: Surgical context — paste the method, not the class
+
+When asking about or modifying a specific method, you don't need the entire class. Paste the relevant method and its immediate context:
+
+```
+I'm working on OrderService. Here's the CalculateTotal method:
+
+[paste the 30-line method]
+
+This method doesn't apply the discount when the discount rate is 0.0.
+Here's the failing test: [paste the test].
+Fix it without changing the method signature.
+```
+
+This is the surgical context pattern: give the AI exactly the code it needs to reason about the task, and nothing more. It produces focused output that's easy to review.
+
+When you do need the broader class context, include the class header, any field declarations, and the relevant methods — not the whole file.
+
+---
+
+## Strategy 4: Use AGENTS.md as a session starter
+
+For Claude (web or Code), start a session with the service's `AGENTS.md` file rather than diving straight into code. The `AGENTS.md` gives Claude the architectural orientation — what this service does, what patterns it uses, what not to do — in a compact form.
+
+```
+Here's the context for the OrderService I'm working in:
+
+[paste OrderService/AGENTS.md — typically 30–50 lines]
+
+I need to add X. The relevant existing code is:
+
+[paste the specific file or method]
+```
+
+This is dramatically more efficient than pasting the full service files, and it ensures Claude understands the pattern conventions before generating anything.
+
+---
+
+## Strategy 5: Navigate with AI, generate with context
+
+`@workspace` in Copilot Chat is well-suited for navigation tasks even on very large repos. Use it to **find** things:
+
+```
+@workspace Where is the retry policy for outbound HTTP requests configured?
+@workspace What classes implement IOrderRepository?
+@workspace Where are validation exceptions handled?
+```
+
+Once `@workspace` tells you where the relevant code is, open those files and switch to direct-context generation. The indexing is useful for discovery; it's less reliable for accurate code generation across a large codebase.
+
+---
+
+## Strategy 6: Worktrees as scope limiters
+
+A Git worktree checked out to a single service keeps your editor environment tightly scoped. `@workspace` in VSCode only indexes the workspace — if your workspace is one worktree rooted at `services/OrderService`, the Copilot index is focused on that service.
+
+```bash
+git worktree add -b feature/order-history ../order-history-work main
+cd ../order-history-work/services/OrderService
+code .
+# Workspace is scoped to OrderService — @workspace index is focused here
+```
+
+See [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/) for the full setup.
+
+---
+
+## What doesn't work at large scale
+
+**"Understand my whole codebase and then..."** This prompt pattern fails at any significant scale. There's no AI tool that reliably reasons across a 100,000-line codebase from a single instruction.
+
+**Vague requests without file context.** "Add validation to the order creation flow" — when the AI has no context, it invents something generic. You spend time correcting it instead of reviewing the right output.
+
+**Trusting `@workspace` for generation.** `@workspace` is a search index, not a complete understanding of your codebase. It helps you find relevant files; those files still need to be explicitly in context for reliable code generation.
+
+---
+
+## Code quality as a context problem
+
+Large files are a context problem. A 2,000-line class file is harder to scope for AI context than ten 200-line files with clear responsibilities. If a class is so large that you're constantly struggling with what to include in context, that's a signal about the design, not just an AI tooling limitation.
+
+<Callout type="tip">
+  Refactoring for AI readability often improves human readability. Single-responsibility classes, well-named interfaces, and concise methods are good engineering practice that also makes AI tools significantly more effective.
+</Callout>
+
+---
+
+## A decision guide for large repos
+
+| Situation | What to do |
+|-----------|-----------|
+| Finding where something is implemented | `@workspace` search |
+| Implementing a new method | Interface file + relevant existing method open |
+| Fixing a bug in a specific method | Paste that method + relevant test |
+| Implementing a full feature across a service | Claude Code from service directory + AGENTS.md |
+| Reviewing a large changeset | Claude web with the diff pasted |
+| Understanding an unfamiliar service | Claude web + AGENTS.md + architecture doc |
+
+---
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — AGENTS.md and architecture docs give AI tools the orientation they need
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — queryable documentation that AI agents can access on demand
+- [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/) — scoping workspaces to individual services

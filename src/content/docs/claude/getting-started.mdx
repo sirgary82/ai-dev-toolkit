@@ -1,0 +1,100 @@
+---
+title: Getting Started with Claude
+description: How to access Claude, understand the different surfaces available, and complete your first coding task.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Claude is a conversational AI from Anthropic. Unlike GitHub Copilot — which integrates directly into your editor and offers ambient, always-on suggestions — Claude is deliberate. You invoke it with a question, paste the context you want it to work with, and get back a response you can reason about. The two tools are complementary, not competing.
+
+## How to access Claude
+
+Claude is available through three main surfaces. They suit different workflows and levels of investment.
+
+### 1. claude.ai — the web interface
+
+The simplest starting point. Create an account at claude.ai, start a conversation, and you're coding.
+
+**Projects** are the most important feature for ongoing development work. A Project is a persistent workspace where Claude retains the context and instructions you provide across multiple conversations. Without a Project, every conversation starts from zero — Claude has no memory of what you discussed yesterday.
+
+For software development, a Project is how you avoid re-pasting your architecture overview, naming conventions, and technology choices in every session. Set it up once; reference it as needed.
+
+What to put in a Project's instructions:
+- The technology stack for the codebase you're working on
+- Key architectural rules (e.g., "all data access goes through repositories")
+- Naming conventions
+- Testing framework and patterns
+
+<Callout type="tip">
+  Create one Project per major codebase, not per feature. The Project context is shared across all conversations within it, so keep it at the level of "what's always true about this codebase" rather than the current task.
+</Callout>
+
+### 2. Claude Code — the agentic terminal tool
+
+Claude Code is a terminal-based tool you run in your development environment. It can read files, write code, run commands, and manage multi-step tasks — all from the command line or VSCode's integrated terminal. It's the closest Claude equivalent to Copilot Agent Mode.
+
+Claude Code is covered in its own guide: [Claude Code](/claude/claude-code/).
+
+### 3. Anthropic API
+
+For teams building tooling — custom scripts, CI integrations, internal automation — the Anthropic API gives direct programmatic access to Claude. This is not the typical starting point for developers new to Claude. When you need it, the [official Anthropic API documentation](https://docs.anthropic.com/en/api) is the right reference.
+
+## Your first coding task via the web interface
+
+The web UI is the best place to start before setting up Claude Code. Here's a typical first session:
+
+1. Go to claude.ai and start a new conversation (or create a Project first if you plan to do more than one session).
+
+2. Paste the code you want help with. Claude doesn't see your editor — you have to provide the code. Example opening message:
+
+```
+I'm working on a .NET 8 Web API. Here's my UserService:
+
+[paste the file]
+
+The GetByEmail method is returning null even when the user exists. The email comparison is case-sensitive. How should I fix this?
+```
+
+3. Claude responds with an explanation and a code suggestion. Read both — the explanation tells you *why*, which lets you verify the fix makes sense for your codebase.
+
+4. Ask follow-up questions. The conversation has memory: "What if the email address contains unicode characters?" or "Can you write a test for this fix?"
+
+**The key difference from Copilot Chat:** Claude's context window is large enough to accept an entire service file and its tests, then reason about them as a whole. You can ask "are there edge cases this service doesn't handle?" and get a thoughtful answer that considers the full implementation, not just the lines near the cursor.
+
+## Setting up Claude Code
+
+For daily development work, Claude Code is more practical than switching between your editor and a browser. The setup requires an Anthropic API key (separate from a claude.ai subscription — check the [Anthropic pricing page](https://www.anthropic.com/pricing) for current options).
+
+Install and start:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+claude
+```
+
+Claude Code reads a `CLAUDE.md` file in your repo root as standing instructions — the equivalent of `.github/copilot-instructions.md` for Copilot. See the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide for how to structure this file.
+
+The full Claude Code guide covers: the interaction model, key commands, CLAUDE.md setup, and practical workflows. Start there after this guide.
+
+## What Claude is particularly strong at for coding
+
+- **Multi-file reasoning.** Paste a service and its interface and its tests together. Claude analyses them as a system, not as isolated snippets.
+- **Design conversations before implementation.** Describing what you want to build and getting feedback on the approach before writing code avoids implementing the wrong thing correctly.
+- **Reviewing AI-generated code.** Claude catches things that Copilot misses — edge cases, missing null guards, patterns that don't fit the codebase. The [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) guide covers this workflow.
+- **Explaining complex systems.** Paste an unfamiliar piece of code and ask "what does this do and what could go wrong?" — Claude gives structured, readable explanations with identified risks.
+- **Refactoring with nuance.** "Refactor this to use the repository pattern, but don't change the public interface" is a constraint Claude follows reliably.
+
+## One mental model before you start
+
+Every Claude conversation starts with empty context unless you're using a Project. The quality of your first message determines the quality of the response. A message that includes the relevant code, the goal, and the relevant constraints produces a useful answer. A message that just says "fix this" produces a guess.
+
+This is the same principle as [What Is Context?](/context-management/what-is-context/) — just applied to a conversational interface rather than an editor.
+
+## Next steps
+
+- [Claude Code](/claude/claude-code/) — the terminal-based tool for agentic coding tasks
+- [Best Practices for Coding with Claude](/claude/best-practices/) — prompt patterns that consistently work
+- [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) — how to use both tools in a single workflow

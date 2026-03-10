@@ -1,0 +1,68 @@
+---
+title: Agent Mode
+description: How GitHub Copilot Agent Mode plans and executes multi-step coding tasks with greater autonomy in VSCode.
+track: [backend, frontend]
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+import Badge from '../../../components/Badge.astro';
+
+<Badge type="updated" label="As of March 2026" /> Agent mode is available in the GitHub Copilot extension for VSCode.
+
+## What agent mode is
+
+In standard Chat mode, Copilot answers one question at a time. You make decisions between each step. Agent mode changes the dynamic: you describe a goal, and Copilot plans a sequence of steps, edits files, runs terminal commands, and checks its own work — until the task is done or it gets stuck.
+
+Think of it as the difference between asking a colleague to "add a method" versus asking them to "implement the feature, including the tests."
+
+<Callout type="warning">
+  Agent mode can make multiple file edits and run terminal commands. Review the plan it proposes before approving each step, especially in codebases where a mistake is hard to revert.
+</Callout>
+
+## When to use agent mode
+
+**Good fit:**
+- Scaffolding new features with predictable structure (new endpoint + service + tests)
+- Repetitive refactors across multiple files (renaming a field everywhere it's used)
+- Setting up configuration that follows a known pattern
+
+**Less suited for:**
+- Tasks with complex business rules Copilot can't infer from context
+- Work requiring decisions about architecture or trade-offs
+- Anything where you can't easily review and revert the output
+
+## Starting an agent session
+
+1. Open Copilot Chat (`Ctrl+Shift+I`).
+2. Change the mode dropdown from **Ask** to **Agent** (or **Edit**, depending on your version).
+3. Describe your goal in plain language:
+
+> "Add a `GetByEmail` method to `UserService`. It should query the repository, throw `NotFoundException` if not found, and return the user mapped to a `UserDto`. Follow the same pattern as `GetById`."
+
+4. Copilot proposes a plan. Review it, then confirm to proceed.
+
+## Reviewing agent output
+
+Agent mode shows you each file it intends to change. You can:
+- **Accept** individual file changes
+- **Discard** a change if it doesn't look right
+- **Ask Copilot to revise** by typing a follow-up in the chat
+
+<Callout type="tip">
+  The phrase "follow the same pattern as X" is one of the most effective ways to guide agent mode. It grounds Copilot in your existing conventions rather than generating something generically.
+</Callout>
+
+## Staying in control
+
+Agent mode is more autonomous, but you're still in the loop. A few habits that help:
+
+- **Use Git before starting.** Commit your current work first. This makes it trivial to diff and revert what the agent produces.
+- **Prefer worktrees for experimental tasks.** See [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/) for how to keep agent-mode experiments isolated.
+- **Read the diff.** Every agent output is a diff. Treat it like a PR from a capable contractor: review it before approving.
+
+## Next steps
+
+- [Incremental Mindset](/auditable-changes/incremental-mindset/) — a discipline for working safely with AI-generated changes
+- [Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running multiple agent sessions on different branches simultaneously

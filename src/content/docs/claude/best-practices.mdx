@@ -1,0 +1,160 @@
+---
+title: Best Practices for Coding with Claude
+description: Prompt patterns and workflows that consistently produce useful results when using Claude for software development.
+track: [backend, frontend]
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Claude's biggest advantage for software development is its reasoning depth — the ability to analyse a full service, discuss design trade-offs, and catch edge cases that a faster, more ambient tool misses. Getting the most from that advantage comes down to a few consistent habits.
+
+## Give Claude the whole picture in the first message
+
+Claude only sees what you paste or reference. The quality of your first message determines the quality of the response.
+
+A first message that works:
+
+```
+I'm working on an ASP.NET Core 8 Web API using CQRS with MediatR.
+Here's my UserService and the IUserRepository interface:
+
+[paste UserService.cs]
+[paste IUserRepository.cs]
+
+I need to add a method that retrieves a user by email address.
+Currently GetById exists — follow the same pattern.
+The method should throw NotFoundException if the user doesn't exist.
+```
+
+A first message that doesn't work as well:
+
+```
+How do I add a method to my service to get a user by email?
+```
+
+The difference: the working version gives Claude the actual code, the exact pattern to follow, the exception type, and the framework context. The second forces Claude to make assumptions about all of those things — and its assumptions may not match your codebase.
+
+**The rule:** paste, don't describe. "Here is my `OrderService`:" followed by the code is almost always better than "I have a service that handles orders."
+
+## Use the two-pass pattern for new features
+
+For anything more than a simple method addition, the two-pass pattern produces significantly better output:
+
+**Pass 1 — Design:** Describe what you want to build and ask Claude if the approach makes sense.
+
+```
+I need to add rate limiting to the OrderService API endpoints.
+Here's the current architecture: [paste AGENTS.md or architecture context].
+What's the right approach for ASP.NET Core 8?
+What should I watch out for?
+```
+
+Get agreement on the approach before writing a line of code. Claude will often identify issues with the approach you haven't considered, and correcting course at the design stage is free.
+
+**Pass 2 — Implementation:** With the design agreed, ask Claude (or use Claude Code) to implement it.
+
+```
+Great — let's use the ASP.NET Core rate limiting middleware.
+Here's the existing program.cs and the middleware pipeline: [paste].
+Implement the rate limiting as we discussed. Use the sliding window policy.
+```
+
+Skipping Pass 1 often produces code that is technically correct but architecturally wrong — it solves the stated problem but doesn't fit the system.
+
+## Ask for reasoning alongside code
+
+Claude's strength is explanation. When you ask for code alone, you lose the reasoning that helps you review it.
+
+Instead of: "Write a method that validates email addresses."
+
+Try: "Write a method that validates email addresses, and explain the approach you chose and any edge cases it doesn't cover."
+
+The explanation tells you:
+- Whether Claude understood the requirement correctly
+- What the method won't catch (so you can decide if that matters)
+- Why it made the choices it made (so you can evaluate the design, not just the implementation)
+
+This is different from Copilot, where the goal is usually just the code. Claude has the reasoning capacity to justify its choices — use it.
+
+## Tell Claude what NOT to do
+
+Negative constraints are as important as positive ones. Claude will helpfully add things you didn't ask for unless you constrain it.
+
+**Effective negative constraints:**
+- "Refactor the null handling — do not change the public interface"
+- "Add error logging — do not modify the exception types already thrown"
+- "Implement the query — do not add caching at this stage"
+- "Fix the validation — use the existing `ValidationException` class, not a new one"
+
+Without negative constraints, Claude may restructure your method, introduce a new abstraction, or "improve" adjacent code. Sometimes that's welcome; usually it's noise in the diff.
+
+<Callout type="tip">
+  The phrase "only change X" is one of the most effective constraints. "Only change the GetById method. Leave everything else as-is." This keeps the output surgical and easy to review.
+</Callout>
+
+## Use Projects for ongoing work on the same codebase
+
+Each new Claude conversation starts with empty context. If you work with Claude on the same codebase across multiple sessions, set up a Project at claude.ai:
+
+1. Create a Project named after the codebase
+2. Add the root `AGENTS.md` or `CLAUDE.md` as a Project document
+3. Add any architecture overview docs that are always relevant
+4. Write a brief Project instruction (same content as a good first message: stack, key patterns, what not to do)
+
+With a Project, your conventions are always present. You start each session by describing the specific task — you don't re-paste the context.
+
+**What to include in Project instructions:**
+- Technology stack
+- Key architectural rules (the same as your `AGENTS.md` root file)
+- Patterns in use (CQRS, repository pattern, etc.)
+- Test framework and naming conventions
+
+**What not to include:** Business logic, specific service implementations, anything that changes per feature.
+
+## Verify what Claude generates
+
+Claude is confident even when wrong. Specific things to check in every piece of Claude-generated code:
+
+**Library methods exist.** Claude occasionally invents methods that don't exist in the library version you're using. If a call looks unfamiliar, check the documentation.
+
+**Types match your codebase.** Claude might use `Task<T>` where you use `ValueTask<T>`, or create a new `UserDto` class instead of using your existing one. Always check that the types being used are the actual types in your codebase.
+
+**The test assertions are meaningful.** Claude-generated tests sometimes assert things that will always pass regardless of the implementation (e.g., asserting that a method doesn't throw rather than that it returns the right value). Read each assertion.
+
+**Edge cases were considered.** Ask explicitly: "What edge cases does this not handle?" after receiving an implementation. You'll often learn something.
+
+## When to use Claude web vs Claude Code
+
+| Task | Best surface |
+|------|-------------|
+| Design discussion before implementation | Claude web (or Project) |
+| Explaining an unfamiliar codebase | Claude web |
+| Reviewing a PR or diff | Claude web |
+| Implementing a feature across multiple files | Claude Code |
+| Batch refactor across many files | Claude Code |
+| Quick question about a specific method | Copilot Chat |
+| Inline completion while writing | Copilot inline |
+
+Simple heuristic: if your hands need to leave the keyboard to copy-paste files into a browser, Claude Code is probably more efficient. If you're having a design conversation that doesn't require the AI to edit files, the web interface is fine.
+
+## Comparing Claude and Copilot for common tasks
+
+| Task | Claude | Copilot |
+|------|--------|---------|
+| Completing code as you type | — | Inline suggestions |
+| Explaining a whole service | Large context window, strong | Chat can miss context |
+| Design review before coding | Strong | Limited |
+| Multi-file refactor | Claude Code | Agent Mode |
+| Generating tests from implementation | Strong with full file | Good for adjacent tests |
+| Reviewing AI-generated code | Strong | Chat review |
+| Quick chat in editor | — | Copilot Chat |
+
+See [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) for how to use both in a single workflow without duplication.
+
+## Next steps
+
+- [Claude Code](/claude/claude-code/) — the agentic terminal tool for multi-file tasks
+- [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) — combining both tools effectively
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — giving Claude persistent context about your codebase

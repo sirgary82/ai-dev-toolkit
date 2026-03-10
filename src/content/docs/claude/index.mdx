@@ -1,0 +1,67 @@
+---
+title: Claude — Overview
+description: What Claude is, how it differs from GitHub Copilot, and which guide to start with based on your goals.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import Callout from '../../../components/Callout.astro';
+
+Claude is a conversational AI from Anthropic. If you're already using GitHub Copilot, Claude expands your toolkit — it doesn't replace anything. The two tools serve different modes of working.
+
+## Copilot vs Claude: the mental model
+
+**Copilot** is ambient and reactive. It lives in your editor, watches what you type, and offers completions and quick chat answers. Its context is whatever happens to be in your open files. Its speed is its superpower.
+
+**Claude** is deliberate and analytical. You invoke it with a question and the context you choose to provide. You use it when a task benefits from reasoning, explanation, or understanding a larger slice of code than fits in Copilot's window.
+
+They're layers, not alternatives. Developers who get the most from AI tooling typically use Copilot for inline completions and quick chat, and Claude for design, review, and tasks that span many files.
+
+## Three things Claude is particularly strong at
+
+**Multi-file and whole-service reasoning.** Claude's context window is large enough to accept a full service file, its interface, and its tests together. You can ask "what edge cases does this service not handle?" and get an analysis of the full implementation — not just the code near the cursor.
+
+**Design conversations before implementation.** Describing a feature to Claude and asking "does this approach make sense?" before writing code catches architectural mistakes early. This kind of pre-implementation review isn't something Copilot's ambient model is suited for.
+
+**Reviewing AI-generated code.** Because Claude and Copilot have different biases and strengths, having Claude review Copilot output is genuinely useful. A generator and a reviewer working together produce better results than either alone.
+
+## Access surfaces
+
+Claude is available in three ways:
+
+- **claude.ai** — the web interface, best for design conversations, code review, and sessions that don't require direct file editing
+- **Claude Code** — a terminal-based agentic coding tool; reads your filesystem, edits files, and runs commands; works in VSCode's integrated terminal
+- **Anthropic API** — for teams building tooling, scripts, or CI integrations
+
+Most developers start with the web interface and add Claude Code once they're comfortable with how Claude works.
+
+## Where to start
+
+<CardGrid>
+  <Card title="Getting Started" icon="rocket">
+    Set up access, understand the web interface and Projects, and complete your first coding task with Claude.
+    [→ Getting Started with Claude](/claude/getting-started/)
+  </Card>
+  <Card title="Claude Code" icon="laptop">
+    Install the terminal tool, configure CLAUDE.md, and use Claude Code for multi-file tasks in VSCode.
+    [→ Claude Code](/claude/claude-code/)
+  </Card>
+  <Card title="Best Practices" icon="document">
+    Prompt patterns specific to Claude: the two-pass design flow, paste-don't-describe, negative constraints.
+    [→ Best Practices for Coding](/claude/best-practices/)
+  </Card>
+  <Card title="Using Both Tools" icon="setting">
+    The design/implement/review handoff pattern for combining Copilot and Claude in one workflow.
+    [→ Copilot + Claude Together](/multi-tool/copilot-plus-claude/)
+  </Card>
+</CardGrid>
+
+## Context management for Claude
+
+The same principles from the [context management guides](/context-management/what-is-context/) apply to Claude — with one key difference. Copilot's context is implicit (it reads your open files). Claude's context is explicit (it sees only what you paste or reference).
+
+This means context discipline matters more with Claude. The [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide covers how to write `AGENTS.md` and architecture docs that give Claude accurate, persistent context about your codebase without re-pasting it in every session.
+
+For teams working on large multi-service backends, [MCP for Repo Context](/context-management/mcp-repo-context/) covers how to make your documentation queryable by Claude Code agents.

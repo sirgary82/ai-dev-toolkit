@@ -1,0 +1,66 @@
+---
+/**
+ * Badge component — inline label for page status.
+ *
+ * Usage in MDX:
+ *   import Badge from '../../components/Badge.astro';
+ *   <Badge type="coming-soon" />
+ *   <Badge type="new" />
+ *   <Badge type="draft" />
+ */
+interface Props {
+  type: 'coming-soon' | 'new' | 'draft' | 'updated';
+  label?: string;
+}
+
+const { type, label } = Astro.props;
+
+const defaults: Record<Props['type'], string> = {
+  'coming-soon': 'Coming Soon',
+  new: 'New',
+  draft: 'Draft',
+  updated: 'Updated',
+};
+
+const displayLabel = label ?? defaults[type];
+---
+
+<span class={`badge badge--${type}`}>{displayLabel}</span>
+
+<style>
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.15em 0.55em;
+    border-radius: 9999px;
+    vertical-align: middle;
+    line-height: 1.6;
+  }
+
+  .badge--coming-soon {
+    background: color-mix(in srgb, var(--sl-color-purple) 20%, transparent);
+    color: var(--sl-color-purple-high);
+    border: 1px solid var(--sl-color-purple);
+  }
+
+  .badge--new {
+    background: color-mix(in srgb, var(--sl-color-green) 20%, transparent);
+    color: var(--sl-color-green-high);
+    border: 1px solid var(--sl-color-green);
+  }
+
+  .badge--draft {
+    background: color-mix(in srgb, var(--sl-color-orange) 20%, transparent);
+    color: var(--sl-color-orange-high);
+    border: 1px solid var(--sl-color-orange);
+  }
+
+  .badge--updated {
+    background: color-mix(in srgb, var(--sl-color-blue) 20%, transparent);
+    color: var(--sl-color-blue-high);
+    border: 1px solid var(--sl-color-blue);
+  }
+</style>

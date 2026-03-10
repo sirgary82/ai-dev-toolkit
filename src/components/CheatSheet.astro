@@ -1,0 +1,159 @@
+---
+/**
+ * CheatSheet component — two-column quick-reference card.
+ *
+ * Usage in MDX:
+ *   import CheatSheet from '../../components/CheatSheet.astro';
+ *   <CheatSheet items={[
+ *     { action: 'Accept suggestion', shortcut: 'Tab' },
+ *     { action: 'Dismiss suggestion', shortcut: 'Esc' },
+ *   ]} />
+ *
+ * Or with sections:
+ *   <CheatSheet sections={[
+ *     { title: 'Inline', items: [{ action: 'Accept', shortcut: 'Tab' }] },
+ *   ]} />
+ */
+interface CheatSheetItem {
+  action: string;
+  shortcut: string;
+  note?: string;
+}
+
+interface CheatSheetSection {
+  title: string;
+  items: CheatSheetItem[];
+}
+
+interface Props {
+  items?: CheatSheetItem[];
+  sections?: CheatSheetSection[];
+}
+
+const { items, sections } = Astro.props;
+---
+
+<div class="cheatsheet">
+  {items && (
+    <table class="cheatsheet__table">
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Shortcut / Command</th>
+          {items.some(i => i.note) && <th>Notes</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {items.map(item => (
+          <tr>
+            <td>{item.action}</td>
+            <td><kbd>{item.shortcut}</kbd></td>
+            {items.some(i => i.note) && <td class="cheatsheet__note">{item.note ?? ''}</td>}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+
+  {sections && sections.map(section => (
+    <div class="cheatsheet__section">
+      <h3 class="cheatsheet__section-title">{section.title}</h3>
+      <table class="cheatsheet__table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Shortcut / Command</th>
+            {section.items.some(i => i.note) && <th>Notes</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {section.items.map(item => (
+            <tr>
+              <td>{item.action}</td>
+              <td><kbd>{item.shortcut}</kbd></td>
+              {section.items.some(i => i.note) && <td class="cheatsheet__note">{item.note ?? ''}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ))}
+</div>
+
+<style>
+  .cheatsheet {
+    margin: 1.5rem 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--sl-color-gray-5);
+  }
+
+  .cheatsheet__section {
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .cheatsheet__section:first-child {
+    border-top: none;
+  }
+
+  .cheatsheet__section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sl-color-gray-3);
+    padding: 0.5rem 1rem;
+    margin: 0;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+
+  .cheatsheet__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .cheatsheet__table th {
+    text-align: left;
+    padding: 0.5rem 1rem;
+    background: var(--sl-color-gray-6);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--sl-color-gray-3);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+
+  .cheatsheet__table td {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+    vertical-align: middle;
+  }
+
+  .cheatsheet__table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .cheatsheet__table tr:nth-child(even) {
+    background: color-mix(in srgb, var(--sl-color-gray-6) 50%, transparent);
+  }
+
+  .cheatsheet__note {
+    color: var(--sl-color-gray-3);
+    font-size: 0.85rem;
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 0.15em 0.45em;
+    font-family: var(--sl-font-mono, monospace);
+    font-size: 0.85em;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-4);
+    border-bottom-width: 2px;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    color: var(--sl-color-text);
+  }
+</style>

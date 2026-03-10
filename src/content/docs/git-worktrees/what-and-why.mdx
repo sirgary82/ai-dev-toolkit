@@ -1,0 +1,76 @@
+---
+title: Git Worktrees — What They Are and Why They Matter for AI-Assisted Development
+description: Learn what Git worktrees are, how they differ from branches, and why they're especially powerful when using AI coding tools.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Git worktrees let you have multiple branches checked out simultaneously in separate directories. This sounds like a niche Git feature — but combined with AI coding tools, it unlocks a workflow that would otherwise require multiple machines.
+
+## The problem worktrees solve
+
+Without worktrees, your workflow looks like this:
+
+1. You're working on feature A
+2. You want to try an AI-generated approach to a different problem
+3. You stash or commit your work-in-progress on feature A
+4. You switch branches
+5. Your editor reloads, your build cache may invalidate
+6. You work on the new thing
+7. You switch back
+8. You restore your context
+
+This interrupts flow. The context-switching cost is real, and it compounds when AI tools are involved — because you're often exploring speculative or experimental approaches that may not pan out.
+
+**Worktrees remove step 3–8.** You have two directories. Each is checked out to a different branch. Both are live at the same time. You switch by switching windows.
+
+## What a worktree is
+
+When you run `git worktree add`, Git creates a new directory that shares the same repository history as your main checkout. Think of it as a second working copy of the same repo — but they're linked: they share objects, branches can be pushed from either, and you can't accidentally have both on the same branch at once.
+
+```
+project/                  ← your main worktree (e.g., on 'main')
+project-feature-orders/   ← a linked worktree (on 'feature/orders')
+project-spike-refactor/   ← another linked worktree (on 'spike/refactor')
+```
+
+Each directory works independently. `npm install` in one doesn't affect the other. Your editor can have both open in separate windows.
+
+## Why this matters specifically for AI tools
+
+**AI coding tools are fastest when working on a focused, self-contained task.** When you use Copilot Agent Mode or Claude Code, the tool explores your codebase to understand the task, then makes changes.
+
+With worktrees:
+- You can run an agent on a speculative refactor in one worktree while doing regular work in another
+- If the agent's output is wrong or incomplete, you discard the worktree — no stash, no reset, no cleanup
+- You can compare the results of two different AI approaches by looking at two worktrees side by side
+
+**The cost of experimentation drops to near zero.** A worktree is cheap to create and free to discard. This changes the risk calculus of trying speculative AI-generated approaches.
+
+<Callout type="tip">
+  Worktrees aren't exclusively an AI workflow tool — they're useful for any situation where you need to work on multiple things simultaneously. But they're particularly powerful when combined with agentic AI tools.
+</Callout>
+
+## How worktrees compare to other approaches
+
+| Approach | Parallel branches | No stashing | Separate editor state | Cost to discard |
+|----------|-----------------|-------------|----------------------|-----------------|
+| Branch switching | No | No | No | Low |
+| Multiple clones | Yes | Yes | Yes | Medium (disk space) |
+| Worktrees | Yes | Yes | Yes | Minimal |
+
+Multiple clones work, but they don't share history — pushing from a clone requires keeping it in sync manually. Worktrees share history, so pushing from any worktree works normally.
+
+## When not to use worktrees
+
+- **Single-machine, single-task work.** Worktrees add a small amount of setup overhead. For straightforward feature work, a single checkout is fine.
+- **Very large repos with heavy tooling.** If each directory requires a 5GB `node_modules` install or a long build, the disk and time cost adds up.
+- **Beginners.** Understand basic Git branching well before adding worktrees — they add complexity to the mental model.
+
+## Next steps
+
+- [Setup and Workflow](/git-worktrees/setup-and-workflow/) — the commands and VSCode setup to start using worktrees today
+- [Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running multiple AI sessions on separate branches simultaneously

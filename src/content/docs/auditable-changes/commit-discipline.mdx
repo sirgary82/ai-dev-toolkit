@@ -1,0 +1,128 @@
+---
+title: Commit Discipline for AI-Assisted Development
+description: How to structure commits so AI-generated code is safe to review, traceable in history, and easy to revert.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The commit history is how your team will understand the change after it's merged. With AI-generated code, a few additional habits make the difference between a history that's navigable and one that's opaque.
+
+## Conventional Commits
+
+[Conventional Commits](https://www.conventionalcommits.org) is a simple commit message format that makes history scannable and enables automated changelog generation.
+
+**Format:**
+```
+<type>(<scope>): <description>
+
+[optional body]
+[optional footer]
+```
+
+**Common types:**
+
+| Type | Use for |
+|------|---------|
+| `feat` | A new feature or behavior |
+| `fix` | A bug fix |
+| `refactor` | Code change with no behavior change |
+| `test` | Adding or updating tests |
+| `docs` | Documentation only |
+| `chore` | Build, config, dependency changes |
+
+**Examples:**
+```
+feat(orders): add CalculateTotal with discount support
+fix(auth): handle null claims in token validator
+refactor(users): extract address mapping to AddressMapper
+test(pricing): add boundary cases for zero and negative discounts
+```
+
+<Callout type="tip">
+  Copilot Chat can draft commit messages for you. After staging changes, ask: "Write a conventional commit message for these changes." Review it — don't accept blindly — but it's usually a good starting point.
+</Callout>
+
+## Commit size: one logical change per commit
+
+A commit should answer the question: "what was the one thing changed here?"
+
+**Good:**
+- `feat(users): add GetByEmail method to UserRepository`
+- `test(users): add tests for GetByEmail null and not-found cases`
+
+**Not good:**
+- `feat: add a bunch of stuff to the user service including email lookup and also fixed that null bug and updated tests`
+
+The second one is harder to review, harder to revert specifically, and harder to understand six months from now.
+
+## `git add -p` — stage incrementally
+
+`git add -p` (patch mode) lets you stage individual hunks of changes rather than entire files. This is especially useful after AI-generated sessions where many files changed:
+
+```bash
+git add -p
+# Git shows each changed hunk and asks: stage this? [y/n/s/q/?]
+# y = yes, n = no, s = split into smaller hunks
+```
+
+This forces you to look at each change before committing it, and lets you put related changes into separate commits even if they're in the same editing session.
+
+## Including AI provenance in commit messages (optional)
+
+Some teams find it useful to note when a commit was AI-assisted. This is optional — but if you adopt it, be consistent:
+
+```
+feat(orders): add discount calculation to CalculateTotal
+
+Co-authored-by: GitHub Copilot <copilot@github.com>
+```
+
+Or as a simple tag:
+
+```
+feat(orders): add discount calculation to CalculateTotal
+
+[ai-assisted: copilot agent mode]
+```
+
+This gives future reviewers context about how the code was generated, which can be useful when assessing review depth needed.
+
+## Don't commit work-in-progress as a feature commit
+
+```bash
+# If you're not done, use WIP commits — or just don't push yet
+git commit -m "wip: partial order service refactor"
+
+# Or use git stash if you need to switch context briefly
+git stash push -m "order service refactor in progress"
+```
+
+A WIP commit is fine locally as a checkpoint. Squash or clean it up before pushing to a shared branch.
+
+## Pre-commit checklist for AI-generated code
+
+Before committing AI-generated changes:
+
+- [ ] Did I read this diff completely?
+- [ ] Does this commit change one logical thing?
+- [ ] Do the tests pass?
+- [ ] Does the commit message accurately describe what changed?
+- [ ] Are there any company-internal references, secrets, or debug code to remove?
+
+## Using Copilot to write commit messages
+
+```
+# In Copilot Chat, after staging your changes:
+"Write a conventional commit message for my staged changes.
+Focus on what behavior changed, not what files changed."
+```
+
+Or use the VSCode Source Control panel — Copilot can generate commit messages from the diff directly (look for the sparkle icon in the commit message input).
+
+## Next steps
+
+- [Incremental Mindset](/auditable-changes/incremental-mindset/) — the discipline that makes good commits natural
+- [PR Review Automation](/pr-review/automated-review-basics/) — getting automated feedback before human reviewers see the PR

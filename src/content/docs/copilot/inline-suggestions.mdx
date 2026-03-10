@@ -1,0 +1,93 @@
+---
+title: Inline Suggestions
+description: How GitHub Copilot's inline code completions work, how to guide them, and when to push back.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Inline suggestions are Copilot's core feature: grey ghost text that appears as you type, offering to complete what you're writing. Understanding how they work makes you significantly faster at using them effectively.
+
+## How inline suggestions work
+
+As you type, Copilot sends your current file (and open tabs) to GitHub's servers and returns a completion suggestion. The suggestion appears as dimmed text after your cursor.
+
+- **Tab** — accept the full suggestion
+- **Esc** — dismiss and keep typing
+- **Alt+]** / **Alt+[** — cycle through alternative suggestions
+- **Ctrl+Right** — accept the suggestion word by word
+
+The suggestion updates as you type more characters. Copilot is always watching for a good moment to make an offer.
+
+## What Copilot is reading
+
+When generating a suggestion, Copilot considers:
+- The current file, especially the code directly above the cursor
+- Other open tabs in your editor (ordered by relevance)
+- Your comments and function signatures
+
+It does **not** read your entire codebase. If a file is closed, Copilot doesn't see it.
+
+<Callout type="tip">
+  Open the files that are most relevant to what you're writing. A service class is much easier for Copilot to complete correctly if the interface and model it references are open in other tabs.
+</Callout>
+
+## Guiding suggestions with comments
+
+Comments are one of the most effective ways to steer Copilot. Write what you want in plain language, then let Copilot translate it to code.
+
+```csharp
+// Return the user's full name, formatted as "Last, First"
+public string GetFormattedName(User user)
+{
+    // Copilot will suggest the implementation here
+```
+
+The more specific the comment, the better the result. Compare:
+
+| Comment | Quality |
+|---------|---------|
+| `// handle the order` | Vague — Copilot will guess |
+| `// Calculate total after applying discount, return 0 if items list is empty` | Specific — Copilot has enough to work with |
+
+## Guiding suggestions with function signatures
+
+A well-named function with typed parameters is itself a form of prompt:
+
+```typescript
+async function fetchUserOrderHistory(
+  userId: string,
+  sinceDate: Date,
+  limit: number
+): Promise<Order[]>
+```
+
+Copilot can infer a lot from the parameter names, return type, and function name alone. Make these explicit before asking Copilot to fill in the body.
+
+## When to accept, cycle, or dismiss
+
+**Accept** when the suggestion matches your intent closely, even if you'd tweak a detail. Accept first, edit second — it's often faster.
+
+**Cycle** (`Alt+]`) when the first suggestion doesn't look right. Copilot generates multiple candidates. The second or third is sometimes better.
+
+**Dismiss** when Copilot is heading in a clearly wrong direction. It's faster to dismiss and type a comment clarifying your intent than to accept and rewrite.
+
+## Common patterns where inline suggestions excel
+
+- **Completing known patterns**: CRUD operations, switch cases, boilerplate validation
+- **Mirror implementations**: "Write this the same way as `GetById` above, but for `GetByEmail`"
+- **Generating structured data**: Test fixtures, configuration objects, enum values
+- **Finishing a started pattern**: Begin a loop or conditional and Copilot completes the body
+
+## When to be more skeptical
+
+- **Business logic**: Copilot doesn't know your domain rules. Verify any calculation or rule it generates.
+- **Security-sensitive code**: Sanitization, authentication flows, and permission checks need human review regardless of source.
+- **New abstractions**: Copilot is better at filling in existing patterns than inventing new ones correctly.
+
+## Next steps
+
+- [What Is Context?](/context-management/what-is-context/) — the deeper theory behind why suggestions work the way they do
+- [Keyboard Shortcuts](/copilot/keyboard-shortcuts/) — quick reference for all Copilot shortcuts

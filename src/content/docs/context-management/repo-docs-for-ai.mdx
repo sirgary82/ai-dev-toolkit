@@ -1,0 +1,199 @@
+---
+title: Repo Documentation for AI Tools
+description: How to structure AGENTS.md files, architecture docs, and ADRs so that AI coding tools have persistent, accurate context about your codebase.
+track: [backend, frontend]
+status: published
+order: 5
+---
+
+import Callout from '../../../components/Callout.astro';
+
+AI tools are only as useful as the context they receive. For a small, solo project, this isn't much of a problem — the whole codebase fits in a context window. For a team working on a multi-service backend, the problem compounds: every developer is re-pasting the same architectural conventions into every AI session, context gets stale, and the AI makes suggestions that are technically correct but architecturally wrong.
+
+The solution is treating AI-readable documentation as a first-class concern — not an afterthought.
+
+## The three types of AI-useful documentation
+
+AI tools consume documentation differently from humans. Humans read sequentially and infer context from surrounding text. AI tools work from whatever is in their context window right now.
+
+This means the most useful documentation for AI tools is:
+
+1. **Orientation docs** — "What does this service do, what are its boundaries, what does it depend on?" A human reads this once. An AI needs it at the start of every relevant session.
+
+2. **Convention docs** — "How is code structured here? What patterns are in use? What should never happen?" These are the rules an AI follows when generating or reviewing code.
+
+3. **Decision docs (ADRs)** — "Why did we make this choice?" These prevent AI tools from helpfully replacing a pattern they don't understand with something generic.
+
+## AGENTS.md — per-service context files
+
+The canonical pattern for per-service AI context is an `AGENTS.md` file in the service directory. Claude Code reads this file automatically when working in that directory. Copilot Agent Mode picks it up when exploring. It's also referenced from the top-level `.github/copilot-instructions.md` (see the [copilot-instructions guide](/context-management/copilot-instructions-file/)).
+
+<Callout type="note">
+  `AGENTS.md` and `CLAUDE.md` serve the same purpose. `AGENTS.md` is the name Anthropic has converged on for general-purpose agent instructions; Claude Code also reads `CLAUDE.md` in the current directory. Use `AGENTS.md` for consistency across tools — Claude Code reads both.
+</Callout>
+
+### What to put in a service-level AGENTS.md
+
+Keep it short, factual, and opinionated. The goal is to give an AI the same orientation a competent new team member would need on their first day working on this service.
+
+```markdown
+# OrderService — Agent Context
+
+## Purpose
+Handles order lifecycle: creation, status transitions, cancellation, and fulfilment
+notification. Does NOT handle payments (see PaymentService) or inventory (see
+InventoryService).
+
+## Stack
+- ASP.NET Core 8 Web API
+- Entity Framework Core 8 with PostgreSQL
+- Azure Service Bus for event publishing
+- MediatR for CQRS (commands and queries are strictly separated)
+
+## Key patterns
+- All data access through `IOrderRepository` — no direct DbContext access outside
+  the repository layer.
+- Handlers return `Result<T>` — never throw for domain validation failures;
+  throw only for infrastructure failures.
+- Events published via `IEventPublisher` after successful command handling.
+- Tests: xUnit, Moq, TestContainers for integration tests.
+
+## Naming conventions
+- Commands: `{Verb}OrderCommand` (e.g. `CreateOrderCommand`, `CancelOrderCommand`)
+- Queries: `Get{Thing}Query` (e.g. `GetOrderByIdQuery`, `GetOrderHistoryQuery`)
+- Handlers: `{CommandOrQuery}Handler`
+
+## What NOT to do
+- Do not add direct DbContext injection to controllers or handlers.
+- Do not throw `ArgumentException` for validation errors — use `Result.Failure`.
+- Do not publish events from the repository layer.
+
+## Related context
+- Architecture overview: /docs/architecture/services/order-service.md
+- API contract: /docs/api/order-service-openapi.yaml
+- ADR-003: Why we chose CQRS for this service: /docs/decisions/ADR-003-cqrs.md
+```
+
+The critical sections: **Purpose** (what it does and doesn't do), **Stack** (exact libraries), **Key patterns** (the rules), **What NOT to do** (the constraints), **Related context** (links to more detail).
+
+### What to leave out
+
+- Business rules that change frequently
+- Anything that's obvious from the code itself
+- Prose explanations of standard .NET patterns (the AI already knows what EF Core is — you just need to say you're using it)
+- Details that belong in a different service's AGENTS.md
+
+## Architecture docs as orientation context
+
+Alongside per-service AGENTS.md files, a `/docs/architecture/` directory with brief service overviews gives AI tools a map of the whole system.
+
+Each service overview should answer:
+- What is this service responsible for?
+- What does it depend on?
+- What depends on it?
+- How does it communicate (REST, event bus, gRPC)?
+
+Example (`/docs/architecture/services/order-service.md`):
+
+```markdown
+# OrderService
+
+**Owns:** Order lifecycle (creation → fulfilment → cancellation)
+**Does not own:** Payment processing, inventory management
+
+**Upstream dependencies:**
+- UserService (validates customer identity via REST)
+- InventoryService (checks stock via REST before order creation)
+
+**Downstream consumers:**
+- FulfilmentService (subscribes to `OrderConfirmed` event via Service Bus)
+- NotificationService (subscribes to `OrderStatusChanged` event)
+
+**API surface:** REST (internal, behind API Gateway) + Azure Service Bus events
+
+**Database:** PostgreSQL, `orders` schema, owned migrations
+```
+
+This is information no AI can infer from the code. With it, you can ask "I'm adding a feature to OrderService — what other services might I need to coordinate with?" and get a useful answer.
+
+## ADRs — why the pattern exists
+
+Architecture Decision Records prevent AI tools from replacing established patterns with something "better." Without an ADR explaining why you chose the repository pattern, an AI seeing your service might suggest accessing the database directly in a handler — it's less code and technically works.
+
+An ADR explains the context, decision, and consequences:
+
+```markdown
+# ADR-003: CQRS for OrderService
+
+## Status: Accepted
+
+## Context
+OrderService started as a simple CRUD service. As the domain grew, we needed:
+- Different read models for the UI vs internal integrations
+- The ability to audit every state transition
+- Clearer separation of side effects (event publishing) from reads
+
+## Decision
+Use MediatR to implement CQRS. Commands mutate state and publish events.
+Queries return read-optimised DTOs. Handlers are the unit of work.
+
+## Consequences
+- More files per feature (command + handler + query + handler)
+- Clear place for every behaviour
+- Direct DbContext access becomes obviously wrong — it bypasses the CQRS boundary
+- New developers need to understand CQRS before contributing
+```
+
+When an AI references or reads this ADR, it understands *why* the pattern exists and won't suggest violating it without understanding the trade-off.
+
+<Callout type="tip">
+  Link ADRs from the relevant AGENTS.md file. An AI working on a service is more likely to encounter the ADR when it's explicitly referenced than when it has to discover it by searching.
+</Callout>
+
+## The full documentation structure
+
+Here's a directory layout that supports AI-readable documentation alongside human documentation:
+
+```
+/
+├── .github/
+│   └── copilot-instructions.md       ← global index (links out, doesn't contain)
+├── docs/
+│   ├── architecture/
+│   │   ├── overview.md               ← system map, service responsibilities
+│   │   └── services/
+│   │       ├── order-service.md
+│   │       ├── user-service.md
+│   │       └── notification-service.md
+│   ├── decisions/
+│   │   ├── ADR-001-repository-pattern.md
+│   │   ├── ADR-002-result-type-over-exceptions.md
+│   │   └── ADR-003-cqrs-for-order-service.md
+│   └── api/
+│       ├── order-service-openapi.yaml
+│       └── user-service-openapi.yaml
+├── services/
+│   ├── OrderService/
+│   │   ├── AGENTS.md                 ← service-level context
+│   │   └── ...
+│   └── UserService/
+│       ├── AGENTS.md
+│       └── ...
+└── CLAUDE.md                         ← root-level context for Claude Code
+```
+
+## Keeping it current
+
+Documentation that's wrong is worse than no documentation — it actively misleads the AI.
+
+Two rules that help:
+
+**Update in the same PR.** If a PR changes a pattern (e.g., switches from throwing exceptions to returning `Result<T>`), the `AGENTS.md` update is part of that PR. Make it a PR template checklist item.
+
+**ADRs are append-only.** Don't edit an existing ADR when a decision changes — add a new one that supersedes it, and mark the old one as "Superseded by ADR-007." This preserves the history an AI might reference and makes the evolution traceable.
+
+## Next steps
+
+- [The copilot-instructions.md File](/context-management/copilot-instructions-file/) — how the root-level index ties all these docs together for Copilot
+- [Large Repo Strategies](/context-management/large-repo-strategies/) — working with codebases that don't fit in a context window
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — making your documentation queryable by AI agents

@@ -1,0 +1,83 @@
+---
+title: Scoping Your Requests
+description: How to break down tasks so AI coding tools produce targeted, reviewable output rather than sprawling generated code.
+track: [backend, frontend]
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The size and shape of your request determines the size and shape of the output. A well-scoped request produces a focused response you can review in two minutes. A vague or oversized request produces code you need to audit for twenty.
+
+## The scoping principle
+
+A good request is one where you could verify the output correct within 5 minutes of receiving it. If you can't define what "done" looks like, Copilot can't hit it either.
+
+**Too broad:** "Build the authentication module"
+**Better:** "Add a `ValidateToken` method to `AuthService` that checks the JWT signature, expiry, and required claims. Return `ClaimsPrincipal` on success, throw `AuthenticationException` on failure."
+
+The broader request might produce *something*, but you won't be able to review it efficiently, and it will certainly miss conventions and requirements you haven't explicitly described.
+
+## Scope to a method, not a feature
+
+The most reliable unit of work for AI-assisted coding is a **single method or function**. At that level:
+- Copilot has enough context to understand the signature, inputs, and expected output
+- You have something small enough to read carefully
+- If the output is wrong, you've lost seconds, not hours
+
+When you have a multi-method feature to build, write it as a series of single-method requests. Each one builds on the last.
+
+## Scope to a single concern
+
+One request, one responsibility. Not "add validation and logging and update the database" — but "add input validation to `CreateUser`. Throw `ValidationException` if email is empty or malformed."
+
+<Callout type="tip">
+  If your request contains more than one "and", consider splitting it. Each "and" is a separate concern, and combining them makes the output harder to verify.
+</Callout>
+
+## Use existing code as the boundary
+
+Your existing code defines the expected contract. Use it explicitly:
+
+- "Add a method that follows the same pattern as `GetById`"
+- "Write a test in the style of the existing `DeleteUser` tests"
+- "Add a validation rule the same way `NameValidator` is implemented"
+
+This keeps output within the established conventions of your codebase, rather than generating something that works but looks foreign.
+
+## Breaking down a larger task
+
+If you're implementing something that spans multiple files or methods, break it down before starting:
+
+1. **Start with the data model.** Get the types right first — everything else depends on them.
+2. **Then the repository/data access.** With the model in an open file, Copilot can generate correct property references.
+3. **Then the service logic.** With the repository interface open, Copilot knows the available operations.
+4. **Then the controller/API layer.** With the service interface open, Copilot knows what to call.
+5. **Then the tests.** With the implementation open, Copilot can generate tests targeting the actual public interface.
+
+This sequencing isn't just good for AI — it's a generally solid implementation order.
+
+## When to write the code yourself
+
+Sometimes the fastest path is to write the code first and use Copilot for the adjacent work:
+
+- You write the core logic; Copilot writes the tests
+- You write the happy path; Copilot writes the edge case handling
+- You write the implementation; Copilot writes the documentation comments
+
+Copilot works best when it has a complete example to reason from. Your own code is the best possible example.
+
+## Reviewing scoped output
+
+When the request is well-scoped, review is fast:
+- Does it have the right signature?
+- Does it handle the edge cases you mentioned?
+- Does it follow the patterns of the code around it?
+
+Three questions, answered in a quick read. That's the payoff of good scoping.
+
+## Next steps
+
+- [Agent Mode](/copilot/agent-mode/) — for cases where you want Copilot to plan and execute a sequence of scoped steps
+- [Incremental Mindset](/auditable-changes/incremental-mindset/) — how to structure the development loop around small, verifiable changes

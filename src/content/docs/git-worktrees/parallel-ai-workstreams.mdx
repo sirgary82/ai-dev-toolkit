@@ -1,0 +1,108 @@
+---
+title: Parallel AI Workstreams with Git Worktrees
+description: How to run multiple AI coding agent sessions simultaneously on separate branches using Git worktrees.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The combination of Git worktrees and agentic AI tools changes the economics of software development. Instead of one AI session at a time, you can run several — each in its own isolated branch — while you review completed work or work on something else entirely.
+
+## The basic pattern
+
+1. Create two or three worktrees on separate branches
+2. Open each in a separate VSCode window (or editor/terminal session)
+3. Start an AI agent session in each worktree with a different task
+4. Review the results as each completes
+5. Merge the good ones, discard the rest
+
+Each worktree is independent. An agent working in one cannot affect another. If one agent goes wrong, `git worktree remove --force` undoes everything.
+
+## Example: exploring two implementation approaches
+
+```bash
+# Start from your main branch
+cd project/
+
+# Create two worktrees for competing approaches
+git worktree add -b spike/approach-a ../project-approach-a main
+git worktree add -b spike/approach-b ../project-approach-b main
+
+# Open both in VSCode
+code -n ../project-approach-a
+code -n ../project-approach-b
+```
+
+Start a Copilot Agent Mode session in each window with different prompts, or use Claude Code in each terminal. Let both run. Review the diffs when done. Pick the better one, or cherry-pick the best parts.
+
+## Example: AI generates tests while you work
+
+```bash
+# Create a worktree for AI test generation
+git worktree add -b ai/generate-tests-order-service ../project-ai-tests main
+
+# In that worktree, run:
+# "Generate comprehensive unit tests for OrderService,
+#  covering all public methods, happy path, null inputs, and boundary conditions.
+#  Use xUnit and Moq. Follow the patterns in existing UserService tests."
+```
+
+The agent works in one window. You keep working in your main checkout. When it's done, you review the diff as a PR from the worktree branch.
+
+## Example: batch refactor across multiple files
+
+```bash
+# Create a worktree for a large-scope refactor
+git worktree add -b refactor/rename-customer-to-account ../project-refactor main
+
+# In that worktree, instruct an agent:
+# "Rename the 'Customer' domain entity to 'Account' throughout the codebase.
+#  Update: class names, interface names, method parameters, database column names
+#  in migration files, and all XML documentation comments. Do not change 'CustomerDto'
+#  — that stays for the external API contract."
+```
+
+This kind of rename is tedious to do manually and risky to do in your main checkout while other work is in flight. In a worktree, it's isolated. You review the diff as a PR before merging.
+
+## Staying organized
+
+With multiple worktrees in flight, it helps to be explicit about what each one contains:
+
+**Branch naming convention:**
+```
+ai/task-description         ← work generated primarily by AI
+spike/approach-description  ← exploratory / may be discarded
+feature/name                ← regular feature work
+```
+
+**Track in-progress worktrees:**
+```bash
+git worktree list
+```
+
+Clean up completed or abandoned worktrees promptly:
+```bash
+git worktree remove ../project-approach-b
+git branch -d spike/approach-b
+```
+
+<Callout type="warning">
+  Don't accumulate more worktrees than you can reasonably review. Three or four concurrent sessions is practical. More than that and the review backlog compounds faster than the work gets done.
+</Callout>
+
+## Review discipline
+
+Parallel AI workstreams produce more output, faster. The bottleneck shifts from "generating code" to "reviewing code well." This makes review discipline more important, not less:
+
+- **Read the full diff.** Don't just run the tests — read what the agent changed and why.
+- **Check for unexpected changes.** Agents sometimes modify files they shouldn't. Look for changes outside the intended scope.
+- **Commit incrementally.** Even in an AI-generated worktree, commit in logical units before merging. This makes the history reviewable and individual commits revertable.
+
+See [Commit Discipline](/auditable-changes/commit-discipline/) for more on making AI-generated changes safe to ship.
+
+## Next steps
+
+- [Commit Discipline](/auditable-changes/commit-discipline/) — how to structure commits so AI-generated work is safe to review and easy to audit
+- [PR Review Automation](/pr-review/automated-review-basics/) — using Copilot's PR review feature to get a first pass on every merge

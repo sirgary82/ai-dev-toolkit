@@ -1,0 +1,113 @@
+---
+title: Prompt Engineering Basics
+description: Practical techniques for writing prompts that consistently produce useful results from GitHub Copilot and other AI coding tools.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+"Prompt engineering" sounds academic, but it's simply the practice of writing clearer instructions. The same skills that make a good bug report or a good code review comment also make a good AI prompt.
+
+## The anatomy of an effective prompt
+
+A prompt that reliably produces useful output usually contains:
+
+1. **Role / constraint** — what kind of output you want
+2. **Specific task** — what you're asking for, precisely
+3. **Context** — the relevant code, types, or patterns
+4. **Format constraint** — how the output should look
+
+You don't need all four every time, but adding each one narrows the solution space and reduces the chance of a generic answer.
+
+**Example:**
+> "In `OrderService`, add a public method called `GetExpiredOrders`. It should query `orderRepository` for orders where `ExpiresAt` is in the past and `Status` is not `Closed`. Return `IReadOnlyList<Order>`. Follow the same async pattern as `GetPendingOrders`."
+
+This has: task (add a method), context (service name, repository, field names), constraint (return type, async pattern).
+
+## Pattern 1: Specify the output format
+
+Copilot will match the format you imply. If you want:
+- An async method: use `async` in your comment or existing method signature
+- An extension method: write the static class header first
+- A fluent builder: start the builder pattern and let Copilot continue
+- XML documentation: write `///` and Copilot fills the rest
+
+When you don't specify format, Copilot picks one. When you do, it follows yours.
+
+## Pattern 2: Use the word "only"
+
+"Only" is a useful constraint word. It prevents Copilot from doing more than you asked:
+
+- "Refactor **only** the null check, don't change the return type"
+- "Add **only** the validation logic, no logging"
+- "Update **only** the `GetById` method, not the class structure"
+
+<Callout type="tip">
+  Without "only", Copilot sometimes helpfully refactors things you didn't ask it to touch. If you want surgical edits, say so explicitly.
+</Callout>
+
+## Pattern 3: Anchor to existing code
+
+One of the most reliable prompt patterns: explicitly name existing code that Copilot should imitate.
+
+```
+// Follow the same error handling pattern as DeleteUser above
+public async Task DeleteOrder(int orderId)
+{
+```
+
+```
+// Write tests for ValidateEmail using the same structure as the existing ValidateName tests
+```
+
+This grounds Copilot in your codebase conventions rather than making up its own. The referenced code must be in an open file (or selected in Chat) for Copilot to see it.
+
+## Pattern 4: Give examples inline
+
+If your naming convention or return format isn't obvious, show an example:
+
+```
+// Return a dictionary of validation errors.
+// Example: { "email": "is not a valid email address", "name": "is required" }
+public Dictionary<string, string> ValidateUser(CreateUserRequest request)
+{
+```
+
+One concrete example is often worth three sentences of explanation.
+
+## Pattern 5: Constrain what Copilot should NOT do
+
+Sometimes the most useful constraint is a negative one:
+
+- "Don't use LINQ — use a for loop"
+- "Don't add a new dependency, use what's already injected"
+- "Don't create a new class for this, add it to the existing one"
+
+Copilot respects these boundaries reliably. Use negatives when you know there's a tempting but wrong direction.
+
+## Common weak prompts and stronger alternatives
+
+| Weak | Stronger |
+|------|---------|
+| "Add validation" | "Validate that `email` matches RFC 5322 format; throw `ValidationException` with message 'Invalid email address' if it fails" |
+| "Fix this" | "This throws a NullReferenceException when `user.Address` is null. Add a null guard and return an empty `AddressDto` instead" |
+| "Write tests" | "Write three unit tests for `CalculateDiscount`: one where discount is 0%, one where it's 100%, and one where the input is negative (should throw)" |
+| "Make it async" | "Convert `GetUser` to async. Replace the synchronous `DbContext` call with its async equivalent. Keep the same return type and error handling." |
+
+## Iterating on a prompt
+
+You rarely need to get a prompt perfect on the first try. A faster workflow:
+
+1. Write a rough prompt and accept the result
+2. Identify what's wrong: wrong type? wrong pattern? missing edge case?
+3. Write a follow-up that addresses exactly that: "Change the return type to `Task<UserDto?>` and return null instead of throwing when not found"
+4. Repeat until the output matches your intent
+
+This is often faster than trying to write the perfect prompt upfront.
+
+## Next steps
+
+- [The `copilot-instructions.md` File](/context-management/copilot-instructions-file/) — apply these patterns once at the project level, not per-prompt
+- [Scoping Your Requests](/context-management/scoping-requests/) — techniques for breaking down large tasks into effective smaller prompts

@@ -1,0 +1,253 @@
+---
+title: MCP for Repo Context
+description: How to use the Model Context Protocol to give AI agents queryable access to your documentation, API contracts, and architectural knowledge — without manual copy-paste.
+track: [backend, frontend]
+status: published
+order: 7
+---
+
+import Callout from '../../../components/Callout.astro';
+import Badge from '../../../components/Badge.astro';
+
+<Badge type="updated" label="As of March 2026" /> MCP is an open protocol supported by Claude Code natively. Copilot's equivalent (Extensions) is in active development.
+
+The strategies in [Large Repo Strategies](/context-management/large-repo-strategies/) and [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) all rely on you — the developer — deciding what context to provide for each session. You open the right files, paste the relevant `AGENTS.md`, reference the architecture doc.
+
+MCP (Model Context Protocol) shifts this: the AI agent queries your documentation on demand, fetching exactly the context it needs for the task at hand. You set it up once; every subsequent agent session benefits automatically.
+
+## What MCP is
+
+MCP is an open protocol that defines how AI tools (clients) communicate with external data sources (servers). The client — Claude Code — sends a request to a running MCP server. The server responds with data, executes a function, or exposes a tool the AI can call as part of its reasoning.
+
+The protocol is:
+- **Transport-agnostic** — servers can run locally via stdio or remotely over HTTP
+- **Language-agnostic** — the official SDKs are TypeScript and Python; the protocol itself is JSON-RPC
+- **Tool-centric** — servers expose named functions ("tools") that the AI can call with parameters
+
+For software repositories, this means: instead of pasting your architecture overview into every Claude session, you build a server that Claude Code can ask "what is the architecture of `OrderService`?" and get back the right document automatically.
+
+## The client-server model
+
+```
+Claude Code (MCP client)
+      │
+      │  "get_service_docs('OrderService')"
+      │
+      ▼
+MCP Server (your local docs server)
+      │
+      │  reads /docs/architecture/services/order-service.md
+      │
+      ▼
+Returns structured content to Claude Code
+```
+
+Claude Code can call this tool at any point during an agentic session — when it's exploring the codebase, when it encounters a service it needs to understand, or when you explicitly instruct it: "Before implementing this, fetch the docs for `OrderService`."
+
+The server runs as a local process. Nothing leaves your machine. Claude Code communicates with it over stdio.
+
+## Claude Code's native MCP support
+
+Claude Code has built-in MCP client support. Configure servers in `~/.claude/claude_code_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "repo-docs": {
+      "command": "node",
+      "args": ["/path/to/your-repo/mcp-server/index.js"],
+      "env": {
+        "REPO_ROOT": "/path/to/your-repo"
+      }
+    }
+  }
+}
+```
+
+With this configuration, every Claude Code session has `repo-docs` available as a tool. Claude Code can call `repo-docs.get_service_docs("OrderService")` and receive the content of that service's architecture document.
+
+You can also start Claude Code with a specific MCP server for a session:
+```bash
+claude --mcp-server repo-docs
+```
+
+<Callout type="note">
+  MCP servers run as local processes. They start when Claude Code starts and stop when it stops. The server needs to be available at the path you configure — a simple relative path in the project works well for team setups where the server lives in the repo.
+</Callout>
+
+## What tools a repo docs server should expose
+
+For a multi-service backend, a practical MCP server exposes four to six tools:
+
+| Tool | Parameters | Returns |
+|------|-----------|---------|
+| `get_service_docs` | `service_name: string` | The service's AGENTS.md content |
+| `get_architecture_overview` | — | The top-level architecture overview |
+| `list_services` | — | All service names and one-line descriptions |
+| `get_adr` | `adr_id: string` | The full ADR text |
+| `list_adrs` | — | All ADRs with titles and status |
+| `get_api_contract` | `service_name: string` | The OpenAPI spec or API summary |
+
+This is enough to give Claude Code answers to the questions it needs during most agent sessions:
+- "What does `OrderService` do and what are its conventions?" → `get_service_docs`
+- "What other services does this interact with?" → `get_architecture_overview`
+- "Why are we using CQRS here?" → `list_adrs` then `get_adr("ADR-003")`
+- "What's the API contract I'm implementing?" → `get_api_contract`
+
+## A minimal MCP server example
+
+A basic TypeScript MCP server that serves your docs directory:
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
+
+const REPO_ROOT = process.env.REPO_ROOT ?? process.cwd();
+
+const server = new Server(
+  { name: 'repo-docs', version: '1.0.0' },
+  { capabilities: { tools: {} } }
+);
+
+server.setRequestHandler('tools/list', async () => ({
+  tools: [
+    {
+      name: 'get_service_docs',
+      description: 'Get the AGENTS.md context file for a service',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          service_name: { type: 'string', description: 'Service directory name, e.g. OrderService' }
+        },
+        required: ['service_name']
+      }
+    },
+    {
+      name: 'list_services',
+      description: 'List all services in the repo with brief descriptions',
+      inputSchema: { type: 'object', properties: {} }
+    },
+    {
+      name: 'get_architecture_overview',
+      description: 'Get the top-level architecture overview',
+      inputSchema: { type: 'object', properties: {} }
+    }
+  ]
+}));
+
+server.setRequestHandler('tools/call', async (request) => {
+  const { name, arguments: args } = request.params;
+
+  if (name === 'get_service_docs') {
+    const agentsPath = join(REPO_ROOT, 'services', args.service_name, 'AGENTS.md');
+    const content = readFileSync(agentsPath, 'utf-8');
+    return { content: [{ type: 'text', text: content }] };
+  }
+
+  if (name === 'list_services') {
+    const servicesDir = join(REPO_ROOT, 'services');
+    const services = readdirSync(servicesDir, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => d.name);
+    return { content: [{ type: 'text', text: services.join('\n') }] };
+  }
+
+  if (name === 'get_architecture_overview') {
+    const overviewPath = join(REPO_ROOT, 'docs', 'architecture', 'overview.md');
+    const content = readFileSync(overviewPath, 'utf-8');
+    return { content: [{ type: 'text', text: content }] };
+  }
+
+  throw new Error(`Unknown tool: ${name}`);
+});
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+Add this to your repo as `/mcp-server/index.ts` (with a compiled output or via `ts-node`), configure it in Claude Code's config, and every developer on the team can use it.
+
+**Dependencies:**
+```bash
+npm install @modelcontextprotocol/sdk
+```
+
+The full MCP SDK documentation is at [modelcontextprotocol.io](https://modelcontextprotocol.io).
+
+## Structuring docs for MCP consumption
+
+For an MCP server to reliably serve the right content, the docs directory needs consistent naming:
+
+```
+/docs/
+  architecture/
+    overview.md
+    services/
+      order-service.md     ← lowercase-kebab-case service name
+      user-service.md
+  decisions/
+    ADR-001-*.md           ← consistent ADR naming prefix
+    ADR-002-*.md
+  api/
+    order-service-openapi.yaml
+/services/
+  OrderService/            ← PascalCase matches the service directory
+    AGENTS.md
+  UserService/
+    AGENTS.md
+```
+
+The server maps `get_service_docs("OrderService")` to `services/OrderService/AGENTS.md`. Consistent naming means the mapping is predictable and the server code stays simple.
+
+<Callout type="tip">
+  Put the MCP server in the repo itself (e.g., `/mcp-server/`). This way, when the documentation updates, the server reflects it automatically. The server config in `~/.claude/claude_code_config.json` points to the repo-relative path.
+</Callout>
+
+## GitHub Copilot's equivalent — Extensions
+
+GitHub Copilot doesn't support MCP directly. The equivalent mechanism is **Copilot Extensions** — GitHub Apps that expose tools to Copilot Chat agents.
+
+A Copilot Extension can expose the same tools as an MCP server (get service docs, list services, etc.) and make them available in Copilot Chat with the `@extension-name` participant prefix:
+
+```
+@repo-docs get the architecture for OrderService
+```
+
+The concepts are the same; the implementation differs:
+- MCP servers run locally, configured per developer
+- Copilot Extensions are published GitHub Apps, configured at the org or repo level
+
+As of March 2026, Copilot Extensions are in public preview. For teams already invested in Claude Code, an MCP server is faster to build and deploy. For teams primarily on Copilot who want the same capability, a Copilot Extension achieves the same result.
+
+Anthropic and GitHub are working toward convergence on tooling protocols — watch both roadmaps for updates.
+
+## When to build an MCP server
+
+Building and maintaining an MCP server is a tooling investment. It pays off when:
+
+- The team has **5+ services** and AGENTS.md files are actively maintained
+- **Multiple developers** use Claude Code regularly (the setup cost is per-repo, not per-developer)
+- You're treating AI tooling as **a platform investment**, not individual productivity hacks
+- The most frequent AI-session friction is "I have to paste the same context every time"
+
+It's not worth it for a single-service repo, or a team that hasn't established the `AGENTS.md` documentation discipline first. Build the documentation layer ([Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)) before building the MCP layer.
+
+## The progression
+
+A team adopting this stack typically goes through three stages:
+
+**Stage 1 — Manual context:** Developers paste AGENTS.md files and architecture docs manually at the start of each relevant Claude session. High friction, but it works.
+
+**Stage 2 — Convention and tooling:** AGENTS.md files are standardised, the `copilot-instructions.md` file is an index, and Claude Code uses the root `CLAUDE.md` automatically. Less friction, still manual for per-session context.
+
+**Stage 3 — MCP:** Claude Code agents query the docs server on demand. No manual pasting. The AI fetches what it needs when it needs it.
+
+Most teams will be productive at Stage 2 indefinitely. Stage 3 is for teams where AI tooling is a significant part of the development platform.
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the documentation foundation that makes MCP worth building
+- [Claude Code](/claude/claude-code/) — how to configure MCP servers in Claude Code
+- [Large Repo Strategies](/context-management/large-repo-strategies/) — other approaches to the large-codebase context problem

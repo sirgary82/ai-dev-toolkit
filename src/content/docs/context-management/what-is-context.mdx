@@ -1,0 +1,146 @@
+---
+title: What Is Context — and Why It's the Most Important Concept in AI-Assisted Development
+description: Understand what context means for AI coding tools, why it determines output quality, and how to give Copilot and Claude the right information to generate useful results.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+If you've ever wondered why Copilot generates something brilliant one moment and something completely off-base the next, the answer is almost always **context**. Understanding this one concept will improve your results with every AI coding tool you use — Copilot, Claude, or any that comes after.
+
+## What "context" means
+
+AI coding tools work by predicting what text should come next, given everything they've been shown. The word "context" refers to that input: everything the model sees before it generates a response.
+
+Think of it like explaining a task to a new contractor on their first day. If you walk them into the office and say "fix the bug" — without showing them the codebase, telling them what system they're working on, or explaining what "the bug" is — you'll get a confused response, or one that's technically valid but misses the point entirely.
+
+But if you say: "Here's the `OrderService` class. There's a bug in `CalculateTotal` — it doesn't apply the discount when the discount rate is stored as a decimal. Here's a failing test that demonstrates the problem. Fix it to match the existing pattern in `ApplyTaxRate`." — now there's enough context for a useful answer.
+
+AI tools work the same way. The quality of your context determines the quality of the output.
+
+## The context window
+
+Every AI model has a **context window** — a limit on how much text it can process at once. Think of it as working memory. Anything outside the window is invisible to the model.
+
+For Copilot's inline suggestions:
+- The current file (weighted toward what's near the cursor)
+- Other open tabs in your editor (roughly in order of relevance)
+- The contents of any `.github/copilot-instructions.md` file in your repo
+
+For Copilot Chat:
+- The conversation history (up to the session limit)
+- Any code you've selected or explicitly attached
+- `@workspace` context (if you ask for it — it indexes your project)
+
+**What's never in context automatically:**
+- Closed files
+- Files outside your workspace
+- Previous chat sessions
+- Tribal knowledge in your team's heads
+
+<Callout type="tip">
+  Open the files that are most relevant to what you're writing. A closed file is invisible. If Copilot is generating incorrect types or calling methods that don't exist, the first fix to try is opening the relevant interface or model file.
+</Callout>
+
+## Why this matters for output quality
+
+Here's the same request with different amounts of context:
+
+**Low context:**
+```
+// Add validation
+public void ProcessOrder(Order order)
+{
+```
+
+Copilot sees: a method name and a type name. It has to guess what validation means in this codebase.
+
+**High context:**
+```csharp
+// Validate that the order meets all requirements before processing:
+// - Order must have at least one item
+// - Each item quantity must be >= 1
+// - The customer must exist in the system (check customerRepository)
+// - Throw OrderValidationException with a descriptive message if any check fails
+// Follow the same pattern as ValidateReturnRequest above this method.
+public void ProcessOrder(Order order)
+{
+```
+
+Now Copilot has: the specific rules, the exception type to use, and an explicit reference to an existing pattern. The output will be dramatically better.
+
+## Five ways to improve context quality
+
+### 1. Open relevant files
+
+Before asking Copilot to write code that uses a type, interface, or service — open that file. Copilot reads open tabs. A model class in an open tab means Copilot knows the property names; the same class in a closed tab means it has to guess.
+
+### 2. Write intention-revealing comments
+
+A comment isn't just documentation — it's a direct prompt. Write the behavior you want in plain language above the code you're about to write.
+
+```typescript
+// Fetch all incomplete orders for a given customer,
+// sorted by creation date ascending, limited to 50 results.
+async function getIncompleteOrders(customerId: string): Promise<Order[]> {
+```
+
+### 3. Reference existing patterns explicitly
+
+If your codebase already has a pattern Copilot should follow, reference it by name:
+
+> "Follow the same error handling pattern as `GetUserById`."
+
+> "Use the same constructor injection style as `NotificationService`."
+
+This is more effective than trying to describe the pattern abstractly, because Copilot can actually see the referenced code (if the file is open).
+
+### 4. Narrow the scope of your request
+
+"Build me an order management system" is too broad. The broader the request, the more Copilot has to invent from scratch. The more specific the request, the more it can reason from what it's already seen.
+
+Prefer:
+- "Add a method to `OrderRepository` that returns orders created in the last 30 days"
+- "Write a unit test for the discount calculation in `PricingService` — the test should cover zero discount, full discount, and invalid discount scenarios"
+
+### 5. Correct as you go
+
+Copilot learns from the conversation. If it uses the wrong type name, correct it in your next message: "Use `CustomerDto` instead of `Customer` here." That correction becomes part of the context for subsequent suggestions.
+
+## Context in Chat vs inline suggestions
+
+**Inline suggestions** use the snapshot of what's currently in your editor. Context quality = which files you have open.
+
+**Chat** uses the conversation history plus whatever you explicitly attach. Context quality = how clearly you describe the task and what code you include.
+
+**The key difference:** In Chat, you control the context explicitly by describing it. In inline suggestions, context is implicit — it's whatever happens to be open. This is why the same task can feel effortless in Chat and frustrating in inline mode if you haven't set up your editor view correctly.
+
+## What good context looks like in practice
+
+Before starting an AI-assisted coding session:
+
+1. **Open a few files.** The interface being implemented, an existing similar implementation, the model/type, and the test file if you're writing tests.
+2. **Write a comment.** Even one sentence describing your intent puts Copilot on the right track.
+3. **Refer to existing code by name.** "Like `X` does" grounds the output in your actual codebase.
+
+Thirty seconds of setup produces meaningfully better output than diving in cold.
+
+## Common context mistakes
+
+**Using vague variable names.** `data`, `item`, `obj` give Copilot nothing to work with. `userAccount`, `orderLineItem`, `validationResult` carry semantic meaning Copilot uses.
+
+**Asking in isolation.** Describing a complex feature in one sentence, without any of the related code open, forces Copilot to invent everything. Break the request down, or open the related files first.
+
+**Forgetting that chat sessions are isolated.** Each new Copilot Chat session starts fresh. If you solved something in yesterday's chat, you can't reference it today. Keep track of solutions in code and comments, not chat history.
+
+## The payoff
+
+Once you internalize the context model, a lot of Copilot's behavior becomes predictable. You'll know why a suggestion was wrong (not enough relevant context), you'll know how to fix it (open the right file, add a clarifying comment), and you'll stop wondering whether Copilot "works" and start asking whether you've set it up to succeed.
+
+## Next steps
+
+- [Prompt Engineering Basics](/context-management/prompt-engineering-basics/) — systematic techniques for structuring what you tell Copilot
+- [The `copilot-instructions.md` File](/context-management/copilot-instructions-file/) — how to add persistent project context that applies to every session
+- [Scoping Your Requests](/context-management/scoping-requests/) — practical patterns for narrowing requests to get better results

@@ -1,0 +1,108 @@
+---
+title: Copilot Keyboard Shortcuts
+description: The complete keyboard shortcut reference for GitHub Copilot in Visual Studio Code.
+track: [backend, frontend]
+status: published
+order: 5
+cheatsheet: copilot-keyboard-shortcuts
+---
+
+import CheatSheet from '../../../components/CheatSheet.astro';
+import Callout from '../../../components/Callout.astro';
+
+Quick reference for all GitHub Copilot keyboard shortcuts in VSCode. Print it, pin it, or bookmark it.
+
+<Callout type="note">
+  Shortcuts are for Windows/Linux. On macOS, substitute **Ctrl** → **Cmd** and **Alt** → **Option**.
+</Callout>
+
+## Inline completions
+
+<CheatSheet sections={[
+  {
+    title: "Accepting & dismissing",
+    items: [
+      { action: "Accept suggestion", shortcut: "Tab" },
+      { action: "Dismiss suggestion", shortcut: "Esc" },
+      { action: "Accept next word only", shortcut: "Ctrl+Right", note: "Partial acceptance" },
+    ]
+  },
+  {
+    title: "Cycling suggestions",
+    items: [
+      { action: "Next suggestion", shortcut: "Alt+]" },
+      { action: "Previous suggestion", shortcut: "Alt+[" },
+      { action: "Open completions panel (all suggestions)", shortcut: "Ctrl+Enter" },
+    ]
+  },
+  {
+    title: "Triggering suggestions",
+    items: [
+      { action: "Trigger inline suggestion manually", shortcut: "Alt+\\" },
+    ]
+  }
+]} />
+
+## Copilot Chat
+
+<CheatSheet sections={[
+  {
+    title: "Opening chat",
+    items: [
+      { action: "Open Chat panel (sidebar)", shortcut: "Ctrl+Shift+I" },
+      { action: "Open inline chat (in editor)", shortcut: "Ctrl+I" },
+      { action: "Open Quick Chat", shortcut: "Ctrl+Shift+Alt+L" },
+    ]
+  },
+  {
+    title: "In the chat panel",
+    items: [
+      { action: "Submit message", shortcut: "Enter" },
+      { action: "New line in message", shortcut: "Shift+Enter" },
+      { action: "Navigate chat history (up)", shortcut: "Alt+Up" },
+      { action: "Navigate chat history (down)", shortcut: "Alt+Down" },
+    ]
+  },
+  {
+    title: "With code selected",
+    items: [
+      { action: "Explain selected code", shortcut: "Ctrl+Shift+I (then type)", note: "Selection sent automatically" },
+      { action: "Inline chat on selection", shortcut: "Ctrl+I", note: "Ask to modify selection" },
+    ]
+  }
+]} />
+
+## Slash commands (in Chat)
+
+Type these at the start of a chat message to invoke specific behaviors.
+
+<CheatSheet items={[
+  { action: "Explain the selected code", shortcut: "/explain" },
+  { action: "Fix the selected code or error", shortcut: "/fix" },
+  { action: "Generate tests for selected code", shortcut: "/tests" },
+  { action: "Generate docs for selected code", shortcut: "/doc" },
+  { action: "Simplify or refactor selection", shortcut: "/simplify" },
+  { action: "Start a new chat session", shortcut: "/clear" },
+  { action: "Ask about workspace/codebase", shortcut: "/workspace" },
+]} />
+
+## Chat participants (in Chat)
+
+Prefix your message with `@` to direct it to a specific context provider.
+
+<CheatSheet items={[
+  { action: "Ask about the current workspace", shortcut: "@workspace", note: "Indexes your project files" },
+  { action: "Ask about VSCode settings/commands", shortcut: "@vscode" },
+  { action: "Ask about terminal commands", shortcut: "@terminal" },
+  { action: "Ask about GitHub (PRs, issues)", shortcut: "@github", note: "Requires GitHub access" },
+]} />
+
+## Tips for efficient shortcut use
+
+**Tab is your most-used key.** Most Copilot sessions involve a steady rhythm of type → review → Tab (or Esc). Get comfortable with that loop before trying anything else.
+
+**Inline chat (`Ctrl+I`) is underused.** Select a block of code and press `Ctrl+I` to ask Copilot to modify just that selection — without leaving the editor or starting a sidebar conversation.
+
+**`Ctrl+Enter` when you're not sure.** If the first suggestion looks off, open the completions panel (`Ctrl+Enter`) to see Copilot's other options. The best answer isn't always the first one.
+
+**Customize if needed.** All shortcuts can be remapped in VSCode's keyboard shortcuts editor (`Ctrl+K Ctrl+S`). Search for "Copilot" to find all bindable actions.

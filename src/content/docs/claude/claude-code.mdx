@@ -1,0 +1,178 @@
+---
+title: Claude Code
+description: How to install, configure, and use Claude Code — the terminal-based agentic coding tool that integrates with VSCode and reads your codebase directly.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+import Badge from '../../../components/Badge.astro';
+
+<Badge type="updated" label="As of March 2026" /> Claude Code is available as a public release via npm.
+
+Claude Code is a terminal-based agentic coding tool. You run it in a terminal (including VSCode's integrated terminal), and it reads your files, proposes edits, runs commands, and manages multi-step tasks — all with you reviewing and approving each significant action.
+
+If you've used Copilot Agent Mode in VSCode, Claude Code occupies a similar space: describe a goal, review a plan, approve or reject changes. The key differences are that Claude Code operates from the terminal (not embedded in the editor), has a larger context window, and natively supports [MCP servers](/context-management/mcp-repo-context/) for extending what it can access.
+
+## Installation
+
+Claude Code requires Node.js and an Anthropic API key. The API key is separate from a claude.ai web subscription — check the [Anthropic pricing page](https://www.anthropic.com/pricing) for current options.
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+Set your API key:
+
+```bash
+export ANTHROPIC_API_KEY=your_key_here
+# Add to ~/.bashrc or ~/.zshrc to persist it
+```
+
+Start Claude Code from your project directory:
+
+```bash
+cd /path/to/your/project
+claude
+```
+
+<Callout type="warning">
+  Claude Code has access to your filesystem and can run terminal commands. Always review what it plans to do before approving. Start with lower-stakes tasks to build familiarity with how it behaves before using it on critical code.
+</Callout>
+
+## The interaction model
+
+When you start Claude Code and describe a task, it:
+
+1. **Explores** — reads the files it thinks are relevant (you see what it's reading)
+2. **Plans** — proposes a sequence of steps (you can redirect or refine before it starts)
+3. **Acts** — edits files one by one, showing you a diff before applying each change
+4. **Confirms** — stops at decision points (file edits, shell commands) to ask for approval
+
+You're never watching blind automation. Every file change is a diff you can read, accept, or reject. Every shell command is shown before execution.
+
+**The "compact" escape hatch:** Long sessions accumulate conversation history that eats into the context window. Use `/compact` to compress prior context when the session gets long, keeping recent work in full detail.
+
+## The CLAUDE.md file
+
+Claude Code automatically reads `CLAUDE.md` in the repo root (and any `CLAUDE.md` in directories it navigates into). This file is Claude Code's equivalent of `.github/copilot-instructions.md` — standing instructions that apply to every session without you repeating them.
+
+For a multi-service repo, `CLAUDE.md` at the root contains global conventions, and each service directory can have its own `CLAUDE.md` (or `AGENTS.md` — both are read) with service-specific context.
+
+<Callout type="tip">
+  The same content works for both `CLAUDE.md` and `AGENTS.md`. If you've already written `AGENTS.md` files per the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide, Claude Code reads them as-is. No duplication needed.
+</Callout>
+
+Root-level `CLAUDE.md` structure:
+
+```markdown
+# Project Context
+
+## Architecture
+- Microservices communicating via Azure Service Bus and REST
+- Each service has its own AGENTS.md with service-specific context
+- Global naming and testing conventions below
+
+## Global naming conventions
+- Services: {Domain}Service with interface I{Domain}Service
+- Repositories: {Entity}Repository with interface I{Entity}Repository
+- Commands: {Verb}{Entity}Command | Handlers: {Command}Handler
+
+## Testing
+- xUnit + Moq for unit tests; TestContainers for integration tests
+- Test naming: MethodName_Scenario_ExpectedResult
+
+## What never to do
+- No direct DbContext injection outside repository classes
+- No business logic in controllers
+- No synchronous HTTP calls — use HttpClientFactory
+```
+
+## Key commands
+
+| Command | What it does |
+|---------|-------------|
+| `/help` | List all available slash commands |
+| `/compact` | Compress conversation history to free up context space |
+| `/clear` | Start a fresh conversation |
+| `/cost` | Show token usage for the current session |
+| `@filename` | Reference a specific file in your message |
+| `#symbol` | Reference a symbol (function, class) by name |
+
+## A practical workflow: adding a new endpoint
+
+Here's how a typical Claude Code session looks for a backend developer adding a `GetOrderHistory` endpoint to a .NET Web API.
+
+**Start from the service directory:**
+```bash
+cd services/OrderService
+claude
+```
+
+**Describe the task with enough context:**
+```
+Add a GET /orders/history endpoint for the authenticated user.
+It should return the last 50 orders sorted by creation date descending,
+mapped to OrderSummaryDto.
+Follow the same pattern as the existing GET /orders/{id} endpoint.
+```
+
+Claude Code reads the existing endpoint, the repository interface, the DTO, and any existing tests. It then proposes:
+
+1. Add `GetOrderHistoryQuery` and handler
+2. Add `GetOrderHistoryAsync` to `IOrderRepository` and implementation
+3. Add controller action
+4. Add unit tests for the handler
+
+For each step, you see the proposed file changes as a diff. You review and approve, or tell Claude Code to adjust: "The query should also accept a `from` date parameter — update the plan."
+
+**After Claude Code finishes:** run your tests (`dotnet test`), review the full diff with `git diff`, commit incrementally. Claude Code generates the code; your review and tests are what make it safe to ship.
+
+## Working at the right scope
+
+Claude Code is most effective when scoped to one service at a time:
+
+```bash
+# Good: start from within the service
+cd services/OrderService && claude
+
+# Less good: start from the solution root for a task in one service
+cd solution-root && claude
+# (Claude Code will explore the whole solution, which is noisier)
+```
+
+For a .NET solution with multiple projects, navigating to the specific project directory before starting grounds Claude Code's exploration in the right place. It can still read files outside that directory if needed, but its initial scan is focused.
+
+## MCP servers — extending what Claude Code can access
+
+Claude Code natively supports MCP (Model Context Protocol) servers. An MCP server exposes tools and data sources that Claude Code can query during a session — your architecture documentation, API specs, or any custom knowledge about your codebase.
+
+Configuration lives at `~/.claude/claude_code_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "repo-docs": {
+      "command": "node",
+      "args": ["/path/to/your/mcp-server/index.js"]
+    }
+  }
+}
+```
+
+With a docs MCP server configured, Claude Code can call `get_service_docs("OrderService")` and receive your AGENTS.md content automatically — no copy-pasting. The full guide to building and using MCP servers is at [MCP for Repo Context](/context-management/mcp-repo-context/).
+
+## Using Claude Code alongside Copilot in VSCode
+
+Claude Code runs in the VSCode integrated terminal; Copilot runs in the editor pane. They work on the same files without conflicting, as long as you don't run both in agentic mode simultaneously on the same files.
+
+The practical pattern: use Copilot for inline completions while you write, and Claude Code for larger tasks (scaffolding a feature, implementing a spec, batch refactors) that you kick off and review.
+
+See [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) for a full workflow guide.
+
+## Next steps
+
+- [Best Practices for Coding with Claude](/claude/best-practices/) — prompt patterns that work well with Claude's reasoning
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — extending Claude Code with queryable documentation
+- [Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running Claude Code sessions on separate branches using Git worktrees

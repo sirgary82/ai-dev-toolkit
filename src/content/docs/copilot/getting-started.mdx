@@ -1,0 +1,113 @@
+---
+title: Getting Started with GitHub Copilot in VSCode
+description: How to install GitHub Copilot, authenticate, and get your first AI-assisted suggestions in Visual Studio Code.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+GitHub Copilot is an AI coding assistant that suggests code as you type and answers questions in a chat panel. This guide covers everything you need to go from zero to your first productive session.
+
+## What you need
+
+- Visual Studio Code installed (any recent version)
+- A GitHub account with Copilot access enabled on your subscription
+- An internet connection (Copilot sends context to GitHub's servers to generate suggestions)
+
+<Callout type="note">
+  Copilot processes your code on GitHub's infrastructure. Check your organization's data handling policy before using it on sensitive codebases.
+</Callout>
+
+## Step 1: Install the extension
+
+1. Open VSCode and press `Ctrl+Shift+X` to open the Extensions panel.
+2. Search for **GitHub Copilot**.
+3. Install the extension published by **GitHub** (not third-party variants).
+4. Restart VSCode if prompted.
+
+The Copilot extension bundle includes both inline completions and the Chat panel. You don't need to install them separately.
+
+## Step 2: Sign in to GitHub
+
+After installation, VSCode will prompt you to sign in:
+
+1. Click **Sign in to GitHub** in the notification or in the bottom-left status bar.
+2. A browser tab opens — log in with your GitHub account.
+3. Authorize VSCode to access your GitHub account.
+4. Return to VSCode. The Copilot icon in the status bar should now show as active.
+
+If the status bar shows a warning icon, your account may not have Copilot access. Contact your administrator.
+
+## Step 3: Accept your first suggestion
+
+Open any code file and start typing. Copilot generates inline suggestions shown in grey italic text. To try it:
+
+1. Open an existing file or create a new one.
+2. Type a function signature or a comment describing what you want:
+
+```csharp
+// Get the total price of all items in the order, applying any discount
+```
+
+3. Copilot will suggest a method body. The suggestion appears in grey text.
+4. Press **Tab** to accept it.
+5. Press **Esc** to dismiss and keep typing on your own.
+
+<Callout type="tip">
+  Copilot suggestions are better when it has context. Open relevant files in other tabs — Copilot reads your open files when generating suggestions.
+</Callout>
+
+## Step 4: Open GitHub Copilot Chat
+
+The Chat panel lets you ask questions, get explanations, and make broader requests in natural language.
+
+1. Press `Ctrl+Shift+I` to open the Copilot Chat panel (or click the chat icon in the Activity Bar).
+2. Try asking something like: *"Explain what this method does"* with a method selected, or *"What does the async keyword do in C#?"*
+
+Chat is particularly useful for:
+- Understanding unfamiliar code
+- Asking "why" questions about language features
+- Getting a second opinion before refactoring
+
+## Step 5: Check the key settings
+
+Open VSCode Settings (`Ctrl+,`) and search for **copilot** to review the defaults. A few settings worth knowing about:
+
+| Setting | Default | What it controls |
+|---------|---------|-----------------|
+| `github.copilot.editor.enableAutoCompletions` | `true` | Inline suggestions as you type |
+| `github.copilot.chat.localeOverride` | system | Language for chat responses |
+| `github.copilot.enable` | per-language | Disable Copilot for specific file types |
+
+Most developers leave the defaults as-is to start.
+
+## What Copilot is good at
+
+**Strengths:**
+- Completing repetitive patterns (loops, CRUD methods, boilerplate)
+- Translating intent expressed in comments into working code
+- Suggesting tests when the implementation is open
+- Explaining existing code in plain language
+
+**Limitations:**
+- Copilot doesn't know your business logic, domain rules, or organizational conventions unless you tell it
+- Suggestions can be confidently wrong — always review generated code before accepting
+- It works best with well-named variables, clear function signatures, and comments that explain intent
+
+## Common first-day mistakes
+
+**Accepting suggestions without reading them.** Copilot is fast, but not always correct. Treat suggestions like code from a capable but context-free colleague: read before you accept.
+
+**Asking too broadly.** "Build me a service that handles orders" produces a generic scaffold. "Add a method to `OrderService` that calculates the net total after applying the customer's discount rate" produces something useful.
+
+**Not opening relevant files.** Copilot reads your open tabs. A closed file is invisible to it. When working on something that depends on other files, open those files first.
+
+## Next steps
+
+Now that Copilot is running, the most important thing to understand is how context works — why some prompts produce great results and others produce garbage.
+
+**Recommended next read:** [What Is Context?](/context-management/what-is-context/) — the single highest-leverage concept in AI-assisted development.
+
+Or explore the full [Backend Track](/tracks/backend/) or [Frontend Track](/tracks/frontend/) for a sequenced path.

@@ -1,0 +1,94 @@
+---
+title: The Incremental Mindset
+description: How to work with AI coding tools in small, verifiable steps — making changes that are safe to review, easy to revert, and trustworthy to ship.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+AI coding tools can generate a lot of code quickly. That speed is only an advantage if the output is trustworthy. The incremental mindset is the practice of keeping your changes small enough that you can verify each step before taking the next one.
+
+## Why increments matter more with AI
+
+When you write code yourself, you naturally work in small increments — you write a method, test it mentally, adjust, and move on. The cognitive overhead of writing keeps the scope manageable.
+
+AI tools remove that overhead. You can describe a feature in one sentence and receive 200 lines of code in seconds. But those 200 lines still need to be correct, and the burden of verifying them is now yours.
+
+**Large AI-generated changesets are harder to review than small ones** — not because AI is less reliable than humans, but because the volume and speed of output can outpace your ability to understand what was generated.
+
+The incremental mindset is the correction: generate less, review more often.
+
+## The loop
+
+A healthy AI-assisted development loop looks like:
+
+```
+1. Describe one small task
+2. Generate output
+3. Read the output — actually read it
+4. Accept, modify, or discard
+5. Run tests (or manually verify)
+6. Commit if it works
+7. Repeat
+```
+
+Step 5 and 6 are the discipline. Resist the urge to accept several suggestions in a row before testing. The further you get from a working state, the harder it is to diagnose what went wrong.
+
+<Callout type="tip">
+  A useful heuristic: if you can't describe what the AI just generated in one or two sentences, the scope was too large. Break it down further.
+</Callout>
+
+## What counts as one increment
+
+An increment is a chunk of work you can verify in isolation:
+
+- One method
+- One validation rule
+- One test class
+- One database migration
+- One configuration change
+
+It is **not**:
+- An entire feature
+- All the tests for an entire service
+- A full refactor of a module
+
+Larger units can be described to an AI in one shot, but review them in smaller chunks.
+
+## Committing as a checkpoint
+
+Each increment that works should be committed. This isn't about having a perfect commit history — it's about creating checkpoints you can return to.
+
+If you commit after every verified step, the worst case at any point is: discard uncommitted changes and go back to the last working state.
+
+If you work for two hours with AI assistance and commit once at the end, the worst case is: lose two hours of work, or spend an hour untangling what went wrong.
+
+```bash
+# After each verified increment
+git add -p           # stage only the intended changes
+git commit -m "feat(orders): add null guard to CalculateTotal"
+```
+
+See [Commit Discipline](/auditable-changes/commit-discipline/) for a full guide to commit conventions.
+
+## Signals that your increments are too large
+
+- You're reading generated code but not fully understanding it before accepting
+- Tests are failing but you're not sure which change caused it
+- You have a large diff at the end of a session with "roughly working" code
+- You accepted 10 suggestions in a row before running anything
+
+Any of these is a signal to pause, run what you have, and commit or discard before continuing.
+
+## Incremental vs. fast
+
+The incremental mindset does not mean slow. Committing after each verified step takes 30 seconds. Running a focused set of tests takes a minute. The overhead is minimal.
+
+What it prevents is the scenario where you discover a subtle bug in AI-generated code after an hour of building on top of it. That recovery cost is where the real time loss happens.
+
+## Next steps
+
+- [Commit Discipline](/auditable-changes/commit-discipline/) — how to structure commits for AI-generated code that's safe to review and ship
+- [Scoping Your Requests](/context-management/scoping-requests/) — how to break down tasks so each AI request produces an increment worth committing

@@ -1,0 +1,65 @@
+---
+title: Backend Track — .NET / Azure
+description: A curated sequence of AI toolkit guides for backend developers working with .NET and Azure.
+track: [backend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This track gives you a sequenced path through the guides most relevant to .NET and Azure backend work. Each guide is independently useful — but in this order they build on each other effectively.
+
+<Callout type="tip">
+  Not all guides are published yet. Follow this page — new guides are added as they're ready.
+</Callout>
+
+## Phase 1 — Foundation
+
+Work through these if you're new to AI coding tools or using them only occasionally.
+
+1. **[Getting Started with GitHub Copilot](/copilot/getting-started/)** — Install, authenticate, and get your first suggestions in VSCode.
+2. **[Inline Suggestions](/copilot/inline-suggestions/)** — How Copilot completes code as you type, and how to guide it.
+3. **[What Is Context?](/context-management/what-is-context/)** ← Start here if you only read one article. Context is the most important concept for getting useful results from any AI tool.
+4. **[Chat Mode](/copilot/chat-mode/)** — Ask Copilot questions, get explanations, and use it for code review inside VSCode.
+5. **[Keyboard Shortcuts](/copilot/keyboard-shortcuts/)** — The full shortcut reference for Copilot in VSCode.
+
+## Phase 2 — Intermediate
+
+Once Copilot is a daily habit, these guides make your use significantly more effective.
+
+6. **[Prompt Engineering Basics](/context-management/prompt-engineering-basics/)** — How to write prompts that consistently produce good results.
+7. **[The `copilot-instructions.md` File](/context-management/copilot-instructions-file/)** — Teach Copilot your codebase conventions once, so you don't repeat yourself in every prompt.
+8. **[Agent Mode](/copilot/agent-mode/)** — Let Copilot plan and execute multi-step tasks autonomously inside your editor.
+9. **[Incremental Mindset](/auditable-changes/incremental-mindset/)** — A discipline for making AI-assisted changes that are safe to review and easy to revert.
+
+## Phase 3 — Advanced Workflows
+
+For teams ready to push AI tooling deeper into their workflow.
+
+10. **[Git Worktrees: What and Why](/git-worktrees/what-and-why/)** — Run multiple branches simultaneously, which enables parallel AI workstreams.
+11. **[Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/)** — The practical setup you need to start using worktrees today.
+12. **[PR Review Automation](/pr-review/automated-review-basics/)** — Use Copilot to get a first-pass review on every pull request.
+13. **[Commit Discipline](/auditable-changes/commit-discipline/)** — Commit conventions that make AI-generated changes safe to ship and easy to audit.
+
+## Phase 4 — Claude and Advanced Context
+
+Once you're using Copilot daily and have explored Agent Mode, these guides expand your toolkit significantly.
+
+14. **[Claude: Overview](/claude/)** — What Claude is and how it fits with your existing Copilot workflow.
+15. **[Getting Started with Claude](/claude/getting-started/)** — Web interface, Projects, and your first coding tasks with Claude.
+16. **[Claude Code](/claude/claude-code/)** — The terminal-based agentic tool. Start sessions from inside a single service directory for best results on .NET solutions.
+17. **[Best Practices for Coding with Claude](/claude/best-practices/)** — The two-pass design pattern, paste-don't-describe, and negative constraints.
+18. **[Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)** — AGENTS.md per service, architecture docs, and ADRs that give both Copilot and Claude persistent context.
+19. **[Large Repo Strategies](/context-management/large-repo-strategies/)** — Working with .NET solutions that exceed any context window.
+20. **[Copilot + Claude Together](/multi-tool/copilot-plus-claude/)** — The design/implement/review handoff pattern.
+21. **[MCP for Repo Context](/context-management/mcp-repo-context/)** — Building a docs MCP server so Claude Code agents can query your AGENTS.md files and architecture docs without manual copy-paste.
+22. **[Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/)** — Running Copilot and Claude Code on separate branches simultaneously.
+
+## Backend-specific tips
+
+- **Open the relevant files.** Copilot reads open tabs. When generating a new service, open the interface, the data model, and an existing similar service.
+- **Use XML doc comments as prompts.** Write the `/// <summary>` first and let Copilot generate the method body.
+- **Scope to the class, not the project.** Ask "add a method to this class that..." rather than "build me a feature that...".
+- **For Claude Code on .NET solutions:** `cd` into the specific project directory before starting a session. Scoping Claude Code to one project produces better results than letting it explore the full solution.
+- **Write one AGENTS.md per .NET project** (not per solution). Each project has its own patterns, dependencies, and constraints.

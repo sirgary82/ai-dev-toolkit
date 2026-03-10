@@ -1,0 +1,76 @@
+---
+title: Automated PR Review with GitHub Copilot
+description: How to use GitHub Copilot's pull request review feature to catch issues before human reviewers see them.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+GitHub Copilot can review pull requests and leave comments, just like a human reviewer. This doesn't replace human review — but it catches an entire class of common issues before your colleagues spend time on them.
+
+## What Copilot looks for in a PR review
+
+As of March 2026, Copilot's PR review comments typically cover:
+
+- **Logic issues:** Incorrect conditions, off-by-one errors, unreachable code
+- **Null/undefined handling:** Potential null dereferences or unhandled null returns
+- **Error handling gaps:** Try/catch placement, missing exception types
+- **Performance red flags:** Obvious N+1 patterns, unnecessary allocations in hot paths
+- **Security basics:** Obvious input validation gaps, unescaped output
+- **Code clarity:** Unusually complex logic that might be simplified
+
+It does **not** know your business requirements, domain rules, or architectural decisions. It reviews the code as written, not against your intent.
+
+<Callout type="note">
+  Copilot PR review is a GitHub feature, not a VSCode extension feature. It runs on GitHub.com when a PR is opened or updated.
+</Callout>
+
+## Enabling Copilot code review
+
+1. Go to your repository on GitHub.
+2. Open **Settings → Copilot** (organization or repo level, depending on your plan).
+3. Enable **Copilot code review** for the repository.
+4. Optionally configure it to run automatically on every PR.
+
+Once enabled, you can request a Copilot review from the pull request page under **Reviewers**.
+
+## Making the most of automated review
+
+**Treat it as a pre-flight check.** Run Copilot review before requesting human reviewers. Resolve the straightforward issues first. This means your colleagues spend their review time on design, requirements, and context — not null checks and missing error handling.
+
+**Read all comments, even the ones you disagree with.** Sometimes Copilot flags something for a good reason that isn't immediately obvious. Sometimes it's wrong. Either way, reading forces you to have a conscious decision about each comment rather than blindly accepting or dismissing.
+
+**Dismiss false positives explicitly.** GitHub lets you resolve or dismiss review comments. Dismissing with a brief explanation ("this null case is handled upstream by middleware") keeps the PR history clean.
+
+<Callout type="tip">
+  Copilot review is most valuable for AI-generated code — the kind of code that was written quickly, works on the happy path, but may have missed edge cases. The reviewer that catches what the generator missed.
+</Callout>
+
+## What human review still needs to cover
+
+Copilot review is not a substitute for human code review. It can't evaluate:
+
+- Whether the implementation matches the requirements
+- Whether the design is appropriate for the long-term codebase direction
+- Whether the business logic is correct
+- Domain-specific rules and invariants
+- Context from team conversations that isn't in the code
+
+Use automated review to handle the mechanical layer, and preserve human review energy for the things that require judgment.
+
+## Using Copilot Chat for self-review before pushing
+
+Before opening a PR, you can use Copilot Chat in VSCode for a quick self-review:
+
+1. Open the changed files.
+2. Open Copilot Chat and type: `@workspace Review my recent changes. What issues do you see?`
+3. Or select a specific method and use `/fix` or ask "What edge cases does this not handle?"
+
+This is faster than waiting for a PR review cycle and catches obvious issues while you're still in context.
+
+## Next steps
+
+- [PR Impact Assessment](/pr-review/pr-impact-assessment/) — using AI to assess risk and change scope on larger PRs
+- [Commit Discipline](/auditable-changes/commit-discipline/) — structuring commits so PRs are easier to review in the first place
