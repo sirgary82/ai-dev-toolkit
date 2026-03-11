@@ -142,8 +142,11 @@ The grey italic text that Copilot shows as an inline suggestion before you accep
 **copilot-instructions.md**
 A file at `.github/copilot-instructions.md` in your repository that Copilot reads automatically and uses to inform all suggestions and chat responses in that workspace. The nearest thing Copilot has to a persistent system prompt. See [The copilot-instructions.md File](/context-management/copilot-instructions-file/).
 
-**AGENTS.md / CLAUDE.md**
-A file that gives Claude (and other AI tools that support it) standing instructions about a specific directory or project. Per-directory context. Claude Code reads these at session start from the working directory and its parents. The difference from copilot-instructions.md: these are scoped per project or service, not per repository. See [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/).
+**CLAUDE.md**
+Claude Code's native memory file. Placed in a repository root or service subdirectory, it is loaded automatically at session start. Supports a multi-level hierarchy: `~/.claude/CLAUDE.md` for personal preferences, project root for repo-wide conventions, and subdirectory files for service-specific rules — more specific files override broader ones. Supports `@import` directives and auto-memory features. Case-sensitive: must be exactly `CLAUDE.md`. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/).
+
+**AGENTS.md**
+A cross-tool open standard for per-project AI agent instructions, maintained by the Agentic AI Foundation (Linux Foundation). Read by Claude Code, GitHub Copilot, Cursor, Gemini CLI, Windsurf, Aider, and others. The right choice for multi-tool teams — one file that all AI tools can read. Does not support subdirectory hierarchies or `@import`. When both AGENTS.md and CLAUDE.md exist in the same directory, Claude Code reads both but CLAUDE.md takes priority. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/).
 
 **Workspace context**
 In Copilot Chat, the set of files and symbols visible to the model for a given conversation. You can add files explicitly with `@` references or `#file:`. Without explicit references, Copilot uses open tabs and the current file. Managing workspace context is the Copilot equivalent of managing what you paste into Claude.

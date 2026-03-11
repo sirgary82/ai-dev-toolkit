@@ -29,7 +29,7 @@ This means the most useful documentation for AI tools is:
 The canonical pattern for per-service AI context is an `AGENTS.md` file in the service directory. Claude Code reads this file automatically when working in that directory. Copilot Agent Mode picks it up when exploring. It's also referenced from the top-level `.github/copilot-instructions.md` (see the [copilot-instructions guide](/context-management/copilot-instructions-file/)).
 
 <Callout type="note">
-  `AGENTS.md` and `CLAUDE.md` serve the same purpose. `AGENTS.md` is the name Anthropic has converged on for general-purpose agent instructions; Claude Code also reads `CLAUDE.md` in the current directory. Use `AGENTS.md` for consistency across tools — Claude Code reads both.
+  `AGENTS.md` and `CLAUDE.md` are related but distinct. AGENTS.md is a cross-tool open standard read by Claude Code, Copilot, Cursor, and others — the right choice for multi-tool teams. CLAUDE.md is Claude Code's native format with additional features (subdirectory hierarchy, `@import` support, auto-memory). Claude Code reads both; CLAUDE.md takes priority when both exist. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full breakdown and decision guide.
 </Callout>
 
 ### What to put in a service-level AGENTS.md

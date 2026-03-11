@@ -1,0 +1,164 @@
+---
+title: "CLAUDE.md vs AGENTS.md — What Each One Is"
+description: The real difference between CLAUDE.md and AGENTS.md — their origins, what each tool reads, the CLAUDE.md hierarchy, and how to decide which to use for your team.
+track: [backend, frontend]
+status: published
+order: 5
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These two files are used loosely throughout most AI tooling guides — including early versions of this one. The practical consequence of treating them as the same is that you miss features of CLAUDE.md you'd actually want, and you may give teams incorrect guidance about cross-tool compatibility. This page sets the record straight.
+
+---
+
+## CLAUDE.md — Claude Code's native memory file
+
+`CLAUDE.md` is built into Claude Code by Anthropic. When you start a Claude Code session, it reads `CLAUDE.md` files automatically — from the working directory and upward through parent directories.
+
+The filename is **case-sensitive**. It must be exactly `CLAUDE.md`. `claude.md` or `Claude.md` will not be picked up.
+
+### The loading hierarchy
+
+This is the most important feature CLAUDE.md has that AGENTS.md does not: a **multi-level, bottom-up hierarchy**. Claude Code loads CLAUDE.md files in this order, from most general to most specific:
+
+1. **Enterprise / organisation level** — deployed centrally via Claude Code's enterprise configuration
+2. **Global personal** — `~/.claude/CLAUDE.md` on your machine; never committed to any repo
+3. **Project root** — `CLAUDE.md` in the root of the repository
+4. **Subdirectory** — `CLAUDE.md` inside a specific service, module, or feature directory
+
+More specific files override broader ones. A rule in the subdirectory `CLAUDE.md` takes precedence over a conflicting rule in the project root `CLAUDE.md`.
+
+In practice for a microservices repo:
+
+```
+~/.claude/CLAUDE.md              ← your personal preferences (never in git)
+/
+├── CLAUDE.md                    ← repo-wide conventions
+├── services/
+│   ├── OrderService/
+│   │   └── CLAUDE.md            ← OrderService-specific rules (overrides root)
+│   └── UserService/
+│       └── CLAUDE.md            ← UserService-specific rules (overrides root)
+```
+
+When you `cd services/OrderService && claude`, Claude Code reads all three levels and merges them — repo root first, then service-level on top. The service-level rules win any conflict.
+
+### Claude-specific features
+
+CLAUDE.md supports two capabilities AGENTS.md does not:
+
+**`@import` directives** — pull in content from another file rather than duplicating it:
+
+```markdown
+# OrderService — Claude Context
+
+@import /docs/architecture/services/order-service.md
+@import /docs/decisions/ADR-003-cqrs.md
+
+## What NOT to do
+- Do not add direct DbContext access outside the repository layer.
+```
+
+This keeps the CLAUDE.md file focused on instructions while linking out to richer documentation. The imported content is included in Claude's context as if it were in the file directly.
+
+**Auto-memory** — Claude Code can be instructed to update CLAUDE.md as a session progresses, letting the agent maintain its own context file. The `/init` command generates a `CLAUDE.md` (not an AGENTS.md) for this reason — it's the format that supports Claude Code's memory features.
+
+---
+
+## AGENTS.md — the cross-tool open standard
+
+`AGENTS.md` emerged in mid-2025 from a collaboration between Sourcegraph, OpenAI, Google, Cursor, and others. It is now maintained by the **Agentic AI Foundation** under the Linux Foundation. It is not a Claude or Anthropic standard — it is a vendor-neutral specification designed to work across tools.
+
+Tools that read AGENTS.md (as of 2025–2026): Claude Code, GitHub Copilot, Cursor, Gemini CLI, Windsurf, Aider, and others.
+
+Claude Code reads AGENTS.md alongside CLAUDE.md — but **CLAUDE.md takes priority** when both exist in the same directory.
+
+### What AGENTS.md does not have
+
+Because AGENTS.md must work across many different tools with different capabilities, it is intentionally minimal. It does not support:
+
+- Hierarchical loading (no subdirectory override mechanism)
+- `@import` directives
+- Auto-memory or agent self-updating
+- Tool-specific feature flags
+
+What it loses in features it gains in portability. An AGENTS.md file written for Claude Code will also be read by Copilot, Cursor, and any other tool that adopts the standard — with no extra work.
+
+---
+
+## Side by side
+
+| | CLAUDE.md | AGENTS.md |
+|---|---|---|
+| **Origin** | Anthropic / Claude Code | Agentic AI Foundation (open standard) |
+| **Read by** | Claude Code (primarily) | Claude Code, Copilot, Cursor, Gemini CLI, Windsurf, Aider, others |
+| **Priority in Claude Code** | Higher (wins conflicts) | Lower |
+| **Subdirectory hierarchy** | Yes (bottom-up loading) | No |
+| **`@import` support** | Yes | No |
+| **Auto-memory / `/init`** | Yes | No |
+| **Personal global file** | `~/.claude/CLAUDE.md` | No equivalent |
+| **Best for** | Claude-only or Claude-primary teams | Multi-tool teams |
+
+---
+
+## Choosing which to use
+
+### Your team uses Copilot and Claude (the most common setup described in this toolkit)
+
+Use **AGENTS.md** for shared per-service context. Both Copilot and Claude Code read it. It stays tool-agnostic and leaves the door open when a third tool joins the team.
+
+If you want to layer in Claude-specific features — `@imports` to pull in architecture docs, or auto-memory at session end — add a `CLAUDE.md` alongside. Keep the shared conventions in AGENTS.md and the Claude-specific instructions in CLAUDE.md.
+
+### Your team is Claude-only
+
+Use **CLAUDE.md** throughout and take advantage of the full feature set: the subdirectory hierarchy, `@imports`, and auto-memory. The per-service files can still be named AGENTS.md if you expect other tools to join later — Claude Code reads both.
+
+### Using both files in the same directory
+
+This is a valid pattern. Keep them from contradicting each other:
+
+- **AGENTS.md** — shared team conventions that should apply to all AI tools
+- **CLAUDE.md** — Claude-specific settings, `@import` links, anything that requires Claude Code features
+
+Claude Code will read both and apply CLAUDE.md rules when there's a conflict. A developer using Cursor only reads the AGENTS.md — so anything critical for all developers should be in AGENTS.md, not only in CLAUDE.md.
+
+### The pragmatic default
+
+If you're uncertain: start with AGENTS.md. It works with Claude Code and Copilot today, and it's compatible with every other tool that enters your workflow. You can add a CLAUDE.md later for Claude-specific features without disrupting what already exists.
+
+<Callout type="tip">
+  The per-service file pattern recommended in [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) works correctly with either filename — or both. The content structure (purpose, stack, patterns, constraints) is the same regardless of which filename you use.
+</Callout>
+
+---
+
+## The personal global CLAUDE.md
+
+`~/.claude/CLAUDE.md` (in your home directory, not in any repo) is for personal preferences that should never be committed to a team repository:
+
+- Your preferred response style ("be concise", "explain your reasoning")
+- Tools or patterns you personally want to avoid
+- Personal shortcuts or aliases
+
+This file is loaded by Claude Code for every session, across all projects. Team members have their own. What's in it affects only your sessions — not your colleagues'.
+
+**Never put personal preferences in a committed AGENTS.md or project-level CLAUDE.md.** Those files affect everyone on the team who uses AI tools. Style preferences in a shared file cause friction for everyone except the person who wrote them.
+
+---
+
+## What this means for the advice on this site
+
+Most guides on this site use **AGENTS.md as the default recommendation** — one file per service, reviewed as configuration, updated in the same PR as convention changes. That advice is correct and holds for multi-tool teams.
+
+If you're Claude-only or Claude-primary, read "AGENTS.md" in those guides as "CLAUDE.md at the service level" — the content structure, ownership rules, and update discipline are identical. The filename changes; the practices don't.
+
+When you see `/init` used in the [Agent File Lifecycle](/context-management/agent-file-lifecycle/) guide, note that it generates a `CLAUDE.md` — that's correct. The `/init` command is Claude Code's tool and uses Claude Code's native format. You can rename the output to `AGENTS.md` if you prefer the cross-tool standard, at the cost of losing `@import` support and auto-memory.
+
+---
+
+## Next steps
+
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the full per-service file template and documentation structure
+- [Agent File Lifecycle](/context-management/agent-file-lifecycle/) — bootstrapping with `/init`, self-updating, and knowing when to rewrite
+- [Team Agent File Management](/context-management/team-agent-file-management/) — ownership, CODEOWNERS, and update discipline across a team

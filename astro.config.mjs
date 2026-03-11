@@ -86,6 +86,7 @@ export default defineConfig({
 						{ label: 'Prompt Engineering Basics', slug: 'context-management/prompt-engineering-basics' },
 						{ label: 'The copilot-instructions.md File', slug: 'context-management/copilot-instructions-file' },
 						{ label: 'Scoping Your Requests', slug: 'context-management/scoping-requests' },
+						{ label: 'CLAUDE.md vs AGENTS.md', slug: 'context-management/agent-files-explained' },
 						{ label: 'Repo Documentation for AI Tools', slug: 'context-management/repo-docs-for-ai' },
 						{ label: 'Team Agent File Management', slug: 'context-management/team-agent-file-management' },
 						{ label: 'Agent File Lifecycle', slug: 'context-management/agent-file-lifecycle' },

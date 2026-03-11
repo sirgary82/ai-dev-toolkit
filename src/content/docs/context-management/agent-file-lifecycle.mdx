@@ -16,6 +16,10 @@ This guide covers the full lifecycle: starting from zero, daily maintenance disc
 
 ## Starting from zero: bootstrapping with `/init`
 
+<Callout type="note">
+  `/init` generates a `CLAUDE.md` file — Claude Code's native format. This is intentional: CLAUDE.md supports features AGENTS.md does not, including subdirectory hierarchies, `@import` directives, and auto-memory. If your team uses multiple AI tools and needs a cross-tool standard, you can rename the output to `AGENTS.md`, at the cost of losing those features. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full distinction.
+</Callout>
+
 When you introduce Claude Code to an existing codebase that has no `CLAUDE.md`, the right first step is `/init` — not writing the file from scratch yourself.
 
 ```bash
