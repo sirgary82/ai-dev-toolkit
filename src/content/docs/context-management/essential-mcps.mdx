@@ -62,6 +62,51 @@ Create a token at GitHub → Settings → Developer settings → Personal access
 
 ---
 
+## NuGet MCP (Official, Microsoft)
+
+**What it does:** Gives Claude direct access to NuGet registry data — current package versions, dependency resolution, and vulnerability information. Solves the LLM knowledge-cutoff problem for .NET packages: instead of suggesting the version from training data, Claude queries the live registry.
+
+**Setup (VS Code):**
+
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "nuget": {
+      "type": "stdio",
+      "command": "dnx",
+      "args": ["nuget-mcp"]
+    }
+  }
+}
+```
+
+Requires .NET 10 SDK. In Visual Studio 2026, it's built-in under the Copilot Chat Tools menu.
+
+**Best uses:**
+- "Add the latest stable version of MediatR to this project" — resolves against live registry, not training data
+- "Update all packages to the latest compatible versions"
+- "Which of our packages have known vulnerabilities and what version fixes them?"
+
+See [LLM Version Staleness](/context-management/llm-version-context/) for the full picture on why this matters and what to do without MCP.
+
+---
+
+## package-registry-mcp (npm + NuGet + PyPI + Cargo)
+
+**What it does:** A community MCP server covering five package registries. Useful for teams working across ecosystems, or for fullstack repos with both .NET and npm dependencies.
+
+```bash
+claude mcp add -s user package-registry npx package-registry-mcp
+```
+
+**Best uses:**
+- "What is the latest stable version of react-hook-form?"
+- "What versions of FluentValidation are available for .NET 9?"
+- "Are there any security advisories for these packages?" (exposes GitHub Security Advisories)
+
+---
+
 ## Filesystem MCP
 
 **What it does:** Gives Claude structured access to your local filesystem beyond the current working directory. Useful when you need Claude to read configuration files, logs, or documentation that lives outside the project directory.

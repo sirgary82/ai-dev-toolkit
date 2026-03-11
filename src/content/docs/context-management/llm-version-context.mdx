@@ -1,0 +1,328 @@
+---
+title: LLM Version Staleness — Keeping AI Aware of Current Libraries
+description: LLMs always suggest outdated package versions because their training data is months behind. How to give AI tools accurate version context — through MCP servers, Directory.Packages.props pointers, and automated AGENTS.md updates.
+track: [backend, frontend]
+status: published
+order: 12
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Every LLM has a training cutoff. The model was trained on data up to a certain date, then deployed weeks or months later, and you're using it weeks or months after that. When you ask Claude or Copilot to add a NuGet package or update an import, it will confidently suggest a version that was current during training — which may be one or two major versions behind where the ecosystem actually is.
+
+An ICSE 2025 study evaluated seven major LLMs across 28,000 code completion prompts and found the same problem across all of them: deprecated API usage, outdated method signatures, patterns from superseded versions. The models aren't broken — they're accurate to their training data. The training data is just old.
+
+This guide covers the practical strategies for closing that gap.
+
+---
+
+## Why this matters in practice
+
+The version staleness problem shows up in three ways:
+
+**Wrong package version suggestions.** You ask Claude to add FluentValidation to a .NET project. It adds version 10.x. The current version is 11.x with a different validation API. The code compiles against the old API, then fails at runtime or during testing.
+
+**Deprecated API usage.** The package version is right but the API call is from a previous major version that has been removed or changed. The code looks correct, reads well, and fails with a `MethodNotFoundException` at runtime.
+
+**Missing newer features.** You ask Claude how to do something complex. It generates a workaround that was the right approach in version 7 but is now a single method call in version 9. The code works but is unnecessary.
+
+<Callout type="tip">
+  The symptom is usually: AI-generated code that compiles cleanly but fails with unexpected method or type errors at runtime, or a code review comment that says "we're past version X, use Y instead."
+</Callout>
+
+---
+
+## The two approaches: query-time vs file-based
+
+There are two fundamentally different ways to solve this:
+
+**Query-time (MCP servers):** Give the AI access to live package registry data so it can look up the current version at the moment it needs to know. No maintenance required. Requires an MCP server configured in the developer's environment.
+
+**File-based (context documents):** Maintain a file that lists current versions and include it in AI context. Requires maintenance but works in any environment without MCP setup.
+
+Most teams will want both: MCP for interactive development where it's configured, file-based as a reliable fallback that travels with the repository.
+
+---
+
+## Query-time: MCP servers for live version data
+
+### Official NuGet MCP Server (Microsoft)
+
+Microsoft released an official NuGet MCP server (preview, 2026) that gives AI tools direct access to NuGet registry data. When configured, Claude or Copilot can query the actual current version rather than relying on training data.
+
+Capabilities:
+- Returns the latest stable and pre-release version for any package on your configured feeds (nuget.org, Azure Artifacts, private feeds)
+- Uses NuGetSolver (developed with Microsoft Research) to resolve dependency conflicts automatically
+- Flags packages with known vulnerabilities and suggests the minimum secure version
+
+Setup in VS Code:
+
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "nuget": {
+      "type": "stdio",
+      "command": "dnx",
+      "args": ["nuget-mcp"]
+    }
+  }
+}
+```
+
+Requires .NET 10 SDK (for the `dnx` command). In Visual Studio 2026, it's built-in under the Copilot Chat Tools menu.
+
+Once configured, prompts like "add the latest stable version of MediatR to this project" will resolve against live registry data, not training data.
+
+### package-registry-mcp (cross-ecosystem: NuGet + npm + PyPI + Cargo)
+
+A community MCP server that covers five package registries in one. Useful for teams working across ecosystems or for frontend + backend monorepos.
+
+```bash
+# Add to Claude Code (user-level, works across all projects)
+claude mcp add -s user package-registry npx package-registry-mcp
+```
+
+Or add to `claude_desktop_config.json`:
+```json
+"package-registry": {
+  "command": "npx",
+  "args": ["package-registry-mcp"]
+}
+```
+
+When active, Claude can answer "what is the latest stable version of react-hook-form?" or "what version of FluentValidation is current?" with live registry data.
+
+### DimonSmart NugetMcpServer (API signatures from assemblies)
+
+Goes deeper than version numbers — it reads the actual assembly to return current interface definitions and type signatures. Solves the "right version, wrong API" problem.
+
+```bash
+dotnet tool install -g DimonSmart.NugetMcpServer
+```
+
+Example use: "What does `IValidator<T>` look like in FluentValidation 11?" returns the actual current interface definition from the assembly, not from training data. Useful when you're working with a library whose API changed significantly between the version Claude knows and the version you're using.
+
+---
+
+## File-based: the pointer pattern for .NET
+
+For .NET projects using Central Package Management, the cleanest approach isn't to duplicate version numbers into `AGENTS.md` — it's to point the AI at the file that already has them.
+
+### Directory.Packages.props
+
+Central Package Management (CPM) consolidates all NuGet versions into a single file at the solution root:
+
+```xml
+<!-- Directory.Packages.props -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
+    <PackageVersion Include="MediatR" Version="12.4.1" />
+    <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageVersion Include="Mapster" Version="7.4.0" />
+  </ItemGroup>
+</Project>
+```
+
+Individual `.csproj` files reference packages without version attributes — `Directory.Packages.props` is the single source of truth.
+
+In your `AGENTS.md`, add a pointer rather than duplicating the data:
+
+```markdown
+## Dependencies
+
+All NuGet package versions are centrally managed in `Directory.Packages.props`
+at the solution root. Always check that file for current versions before suggesting
+package additions or updates. Do not suggest versions that differ from what is
+already in use unless asked to upgrade.
+```
+
+This is zero-maintenance: when Dependabot bumps a package in `Directory.Packages.props`, the AGENTS.md pointer automatically reflects the change because it points to the live file.
+
+Enable CPM if you haven't already:
+
+```xml
+<!-- Add to Directory.Packages.props if starting fresh -->
+<PropertyGroup>
+  <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+</PropertyGroup>
+```
+
+Then remove version attributes from all `<PackageReference>` elements in `.csproj` files — they're now inherited from the central file.
+
+---
+
+## File-based: the pointer pattern for npm
+
+For npm projects, `package.json` is already the canonical version source. The same pointer pattern applies:
+
+```markdown
+## Dependencies
+
+Current package versions are in `package.json`. Key runtime dependencies:
+- Framework: React 18, TypeScript 5
+- Build: Vite 6
+- Testing: Vitest 2, Playwright 1.48
+
+Always check `package.json` for exact versions before suggesting updates or
+additions. Use `npm outdated` to see what is behind before suggesting upgrades.
+```
+
+If you want to go further and auto-generate the version list so it stays current, a GitHub Actions workflow can regenerate the section from `package.json` on every dependency update PR:
+
+```yaml
+# .github/workflows/update-agents-versions.yml
+name: Update AGENTS.md versions
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'Directory.Packages.props'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Regenerate version section in AGENTS.md
+        run: |
+          # Extract key deps from package.json and rewrite the section
+          node scripts/update-agents-versions.js
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet || (git add AGENTS.md && git commit -m "chore: update AGENTS.md package versions")
+          git push
+```
+
+This triggers on any PR that touches `package.json` or `Directory.Packages.props`, regenerates the relevant section, and commits it back to the PR branch.
+
+---
+
+## Renovate: auto-updating AGENTS.md on every dependency bump
+
+Renovate's `postUpgradeTasks` feature can run arbitrary scripts after a dependency is bumped, and commit the results alongside the version change. This means every Renovate PR that updates a package also updates `AGENTS.md`.
+
+```json
+// renovate.json
+{
+  "postUpgradeTasks": {
+    "commands": [
+      "scripts/update-agents-versions.sh {{{depName}}} {{{newVersion}}}"
+    ],
+    "fileFilters": ["AGENTS.md", "CLAUDE.md"],
+    "executionMode": "branch"
+  }
+}
+```
+
+The `fileFilters` array controls which modified files are committed alongside the dependency bump. The script receives the package name and new version as arguments and updates the relevant section.
+
+<Callout type="note">
+  Dependabot cannot do this — it only updates recognized package manifest formats and does not support running scripts or updating arbitrary markdown files. If automatic AGENTS.md updates on dependency bumps is important to your team, Renovate is the right tool.
+</Callout>
+
+---
+
+## Claude Code + GitHub Actions: weekly automated upgrades
+
+The most aggressive version of this pattern: a weekly scheduled job that runs Claude Code as a GitHub Actions worker to update all outdated packages, fix any breaking changes, and update `AGENTS.md` in one PR.
+
+Create a custom command at `.claude/commands/update-packages.md`:
+
+```markdown
+# /update-packages
+
+1. Run `dotnet list package --outdated` (or `npm outdated`) to find outdated packages
+2. Update each package to the latest stable version in Directory.Packages.props (or package.json)
+3. Run the build — if it fails, fix the breaking changes caused by the version bump
+4. Run the tests — if they fail, investigate and fix
+5. Update the "Dependencies" section in AGENTS.md to reflect the new versions
+6. Create a pull request with a description of what was updated and any breaking changes fixed
+```
+
+Then schedule it:
+
+```yaml
+# .github/workflows/weekly-package-update.yml
+name: Weekly package update
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Monday 8am UTC
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: /update-packages
+          max_turns: 50
+          allowed_tools: "Edit,Bash"
+```
+
+This is ambitious but has been documented as working in production — Claude reads the outdated list, updates the manifest, fixes the compile errors that often come with EF Core or MediatR major bumps, runs tests, and files a PR with a human-readable summary.
+
+---
+
+## What to put in AGENTS.md today (practical minimum)
+
+If you implement nothing else from this guide, add this to your `AGENTS.md`:
+
+**For .NET with CPM:**
+```markdown
+## Dependencies
+All NuGet versions are in `Directory.Packages.props` at the solution root.
+Always read that file before suggesting package versions or additions.
+Target framework: .NET 9.
+```
+
+**For .NET without CPM:**
+```markdown
+## Dependencies
+<!-- Update this section when upgrading major dependencies -->
+Key package versions (as of [date]):
+- EF Core: 9.0.x
+- MediatR: 12.x
+- FluentValidation: 11.x
+- Serilog: 4.x
+
+Always check the .csproj files for exact versions before suggesting updates.
+```
+
+**For npm:**
+```markdown
+## Dependencies
+Current versions are in `package.json`. Key runtime deps:
+- React: 18.x, TypeScript: 5.x, Vite: 6.x
+Always check package.json for exact versions.
+```
+
+The date comment in the manual version is important — it tells you (and the AI) when the section was last verified. When you see a date from six months ago, you know to update it.
+
+---
+
+## Next steps
+
+- [Essential MCPs for Development](/context-management/essential-mcps/) — the NuGet MCP and package-registry-mcp servers listed there solve this at query time
+- [Dependency Upgrades](/cicd/dependency-upgrades/) — using Claude to assess migration impact when you do upgrade
+- [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) — the full AGENTS.md pattern this guide extends
+- [Agent File Lifecycle](/context-management/agent-file-lifecycle/) — when and how to update context files as the project evolves

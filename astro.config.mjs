@@ -84,6 +84,7 @@ export default defineConfig({
 						{ label: 'Agent File Lifecycle', slug: 'context-management/agent-file-lifecycle' },
 						{ label: 'Large Repo Strategies', slug: 'context-management/large-repo-strategies' },
 						{ label: 'MCP for Repo Context', slug: 'context-management/mcp-repo-context' },
+						{ label: 'LLM Version Staleness', slug: 'context-management/llm-version-context' },
 						{ label: 'Essential MCPs for Development', slug: 'context-management/essential-mcps' },
 						{ label: 'Figma MCP for Design-to-Code', slug: 'context-management/figma-mcp' },
 					],
