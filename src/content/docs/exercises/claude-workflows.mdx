@@ -1,0 +1,157 @@
+---
+title: "Exercises: Claude & Advanced Workflows"
+description: Hands-on practice for Phase 4 — the two-pass design pattern, writing AGENTS.md, your first Claude Code session, and custom commands.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These exercises cover the Claude-specific workflows from Phase 4. They require you to have Claude access (web or Claude Code) and at least one codebase you know well enough to evaluate whether the AI output is correct.
+
+Exercise 1 takes 20–30 minutes. Exercises 2–4 each take 30–60 minutes.
+
+---
+
+## Before you start
+
+You need:
+- Access to Claude (claude.ai web interface minimum; Claude Code for exercises 3 and 4)
+- A codebase you understand well — exercises are harder to evaluate on unfamiliar code
+- Read: [Best Practices for Coding with Claude](/claude/best-practices/), [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)
+
+---
+
+## Exercise 1: The two-pass design pattern
+
+**What you'll practice:** Separating the "figure out what to build" conversation from the "build it" session, so each phase has clear intent.
+
+**Reference:** [Best Practices for Coding with Claude](/claude/best-practices/)
+
+Pick a feature or change you're currently planning. It should be real work, not invented — something with genuine ambiguity about the right approach.
+
+**Pass 1 — Design conversation (Claude web)**
+
+Open Claude at claude.ai. Do not paste any code yet.
+
+Describe the problem in plain language: what you're trying to achieve, what constraints you're working within, what you've already considered and rejected. Ask Claude to help you think through the approach.
+
+Push back on the first answer. Ask: *"What are the downsides of that approach?"* or *"Is there a simpler option I'm missing?"* Run this conversation until you have a concrete plan you're willing to commit to — not just the first thing Claude suggested.
+
+Write down the plan in a single paragraph before you close the tab.
+
+**Pass 2 — Implementation (Copilot or Claude Code)**
+
+Now implement the plan you wrote down. Whether you use Copilot inline or Claude Code, your reference is the written plan — not a re-run of the design conversation.
+
+When you're done, compare the final implementation to the plan. Where did you deviate, and was that deviation right?
+
+<Callout type="tip">
+  The value of writing down the plan before implementing is that you can evaluate whether the implementation matches the intent. Without a written plan, it's easy to end up building whatever the AI suggested, not what you actually needed.
+</Callout>
+
+---
+
+## Exercise 2: Write AGENTS.md for a real service
+
+**What you'll practice:** Creating the standing instructions that give Claude (and Copilot) persistent context about a specific part of your codebase.
+
+**Reference:** [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)
+
+Pick a service, module, or component you know well. Create an `AGENTS.md` file in its root directory.
+
+Write it in these sections:
+
+**Purpose (2–3 sentences)**
+What this service does, what it owns, what it doesn't own.
+
+**Key dependencies (a short list)**
+The external systems, packages, or internal services this code depends on. Include version numbers for any library where AI often suggests the wrong API.
+
+**Patterns we follow**
+The architecture or coding patterns that are not obvious from the code — things a capable developer joining the team would need to know. Examples: which DI registration approach, which error handling pattern, whether this service owns its database or shares one.
+
+**Things that have bitten us**
+One or two specific pitfalls that are not in the code but that cause bugs when missed. Be specific. Examples: "this repository method is not thread-safe — never call it concurrently"; "the cache key format must match the contract in redis-schema.md or you'll get misses in prod."
+
+**Do not do**
+One or two explicit prohibitions relevant to this service.
+
+After writing it, test it. Open Claude Code in the service directory and ask it to add a small feature. Does the output respect the patterns and prohibitions you documented? If not, update the file to be more explicit.
+
+---
+
+## Exercise 3: Your first Claude Code session
+
+**What you'll practice:** Running Claude Code on a scoped, single-directory task with clear success criteria.
+
+**Reference:** [Claude Code](/claude/claude-code/)
+
+**Preparation (do this before opening Claude Code):**
+
+1. Choose a task with a clear, testable outcome — not "improve this codebase" but "add a method to X class that does Y and has at least one test".
+2. Make sure the relevant tests pass before you start. You need a known-good baseline.
+3. Ensure there's an `AGENTS.md` in the directory (create a minimal one if needed — five bullet points is enough).
+
+**The session:**
+
+1. `cd` into the single directory containing the work — not the repo root.
+2. Start Claude Code: `claude`
+3. Describe the task in one clear paragraph. Include the class name, what method to add, and what it should do.
+4. Let Claude Code run without interrupting unless it asks a question or does something you want to stop.
+5. When it finishes, read the diff carefully before running anything.
+6. Run the tests. Do they pass? Is the new test actually testing the right thing?
+
+**What to evaluate:**
+- Did Claude Code stay within the directory you started in?
+- Did it respect the patterns in your AGENTS.md?
+- Did it hallucinate any method or class name that doesn't exist?
+- Did the tests pass?
+
+If something went wrong, note exactly what broke and at which step. That's the learning.
+
+<Callout type="warning">
+  Never start Claude Code at the repo root for your first session. The amount of code visible is overwhelming, and Claude is more likely to make changes in files you didn't intend. Scope to one directory.
+</Callout>
+
+---
+
+## Exercise 4: Create a custom slash command
+
+**What you'll practice:** Packaging a recurring prompt into a reusable command so you don't re-type it every session.
+
+**Reference:** [Custom Slash Commands](/claude/custom-commands/)
+
+Identify a prompt you've typed more than three times in Claude Code sessions. Good candidates:
+- Security review of a new method
+- Test generation for a class
+- PR description generation from a diff
+- AGENTS.md update after a feature is complete
+
+Create a `.claude/commands/` directory in your project (or home directory for global commands). Write a `.md` file for your command.
+
+The file should:
+- Have a clear, specific instruction set (not "review this code" but exactly what to check, in what order, with what output format)
+- Use `$ARGUMENTS` if the command needs a target to be specified at run time
+- Include an example of the expected output format if the format matters
+
+Test the command in a real session. Run `/your-command` on actual code. Does the output match what you would have written manually? If not, refine the instruction set until it does.
+
+A well-written command should produce output you'd be willing to include in a PR description or code review comment without editing.
+
+---
+
+## What good looks like
+
+After these exercises, you should be able to:
+- Run a two-pass design conversation and produce a written plan before opening an editor
+- Write an AGENTS.md that meaningfully constrains what Claude generates for a specific service
+- Run a scoped Claude Code session on a real task and review the output critically
+- Package a recurring prompt into a slash command that produces reusable output
+
+---
+
+## Next exercises
+
+- [Testing & Quality Exercises](/exercises/testing-and-quality/) — Practice for Phases 5–7

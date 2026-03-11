@@ -1,0 +1,141 @@
+---
+title: Using Claude as a Learning Partner
+description: How to load this toolkit into a Claude Project and use it as an interactive tutor — asking questions, getting explanations, and being quizzed on what you've read.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Most developers read documentation linearly and passively — top to bottom, once, and move on. Retention from that approach is predictably low.
+
+There's a better way, and it requires no custom tooling: load the material into a Claude Project and have a conversation about it. Claude can explain concepts differently, give examples tailored to your stack, answer follow-up questions, and quiz you on what you've read. That's a more active form of learning, and it's available in the same tool you're already learning to use.
+
+The added benefit: setting this up is itself a Claude exercise. You'll use Projects, upload documents as knowledge, and write a system prompt — all skills that apply directly to real development work.
+
+---
+
+## Why this works
+
+The [Getting Started with Claude](/claude/getting-started/) guide introduces Projects as a way to give Claude persistent context across coding sessions. The same mechanism works for learning: upload the pages you want to study, and Claude can answer questions about them, explain them from a different angle, or challenge you on their content.
+
+The key difference from just reading the page:
+
+- **You can ask follow-up questions.** "I understood the concept but I'm not sure how it applies when I'm working on a legacy codebase with no tests." That question has no answer on the page — but Claude can reason about it using what's there.
+- **Claude can adapt the explanation to your context.** "Give me an example of this pattern but in TypeScript rather than C#" works because Claude has both the concept from the uploaded page and general knowledge about your language.
+- **You can ask Claude to challenge you.** "Ask me questions about this section as if you're checking whether I understood it" produces a different kind of engagement than re-reading.
+
+<Callout type="note">
+  This is not a magic shortcut. Claude's answers are as good as the material you give it and the questions you ask. It won't catch what you don't ask about. Active questioning is the skill — the tool enables it.
+</Callout>
+
+---
+
+## How to set it up
+
+### Step 1 — Create a Project
+
+In claude.ai, click **Create project** from the left sidebar. Name it something clear: *AI Dev Toolkit* or *AI Learning* works fine.
+
+Projects persist across conversations. Everything you add here is available every time you open this project — you won't need to re-upload anything between sessions.
+
+### Step 2 — Add a system prompt
+
+In the project's **Custom instructions** field, write a short brief that tells Claude its role:
+
+```
+You are a learning guide for this AI development toolkit.
+Your job is to help me understand the material in the uploaded pages
+through explanation, examples, and questions.
+
+When I ask you to explain something, tailor your answer to a developer
+working with [your stack — e.g., .NET and Azure / React and TypeScript].
+
+When I ask you to quiz me, ask one question at a time and wait for my
+answer before continuing.
+
+If I ask something that isn't covered in the uploaded material, say so
+rather than inventing an answer.
+```
+
+Adjust the stack line to match your own. The last instruction matters: it tells Claude to be honest about the limits of what's uploaded rather than filling gaps with confident fabrication.
+
+### Step 3 — Upload the pages you want to study
+
+In the Project's **knowledge** section, add the pages you want to work with. The source content for every page on this site is plain text — copy it directly from your browser or from the GitHub repository.
+
+**To copy from the browser:** Open the page, select all (`Ctrl+A`), copy (`Ctrl+C`), and paste into a new document or directly into Claude's knowledge upload.
+
+**To copy from the source:** The site's source files are markdown (`.mdx`). If you have access to the repository, the files in `src/content/docs/` are readable as-is — the frontmatter and component tags are minimal and don't interfere with comprehension.
+
+A practical starting set for Phase 1–2:
+
+- Before You Start
+- What Is Context?
+- Prompt Engineering Basics
+- The copilot-instructions.md File
+- Getting Started with Copilot
+
+You don't need to upload everything at once. Add pages as you reach them in the track.
+
+<Callout type="tip">
+  Claude Projects have a knowledge size limit. Upload the pages relevant to where you are in the track rather than the entire toolkit. Focused context produces better answers than a large, unfocused knowledge base.
+</Callout>
+
+---
+
+## The exercise
+
+With the Project set up and at least three pages uploaded, work through these four question types. Each one produces a different kind of understanding.
+
+### 1. Comprehension check
+
+Ask Claude to explain the core concept of a page you just read, as if you hadn't read it:
+
+> *"Explain what context window means and why it matters for how I use Copilot day-to-day."*
+
+Read the explanation. Does it match what the page said? Is anything clearer now, or anything Claude added that the page didn't cover? If Claude's explanation contradicts the page, check which version is more accurate — both are possible.
+
+### 2. Apply it to your situation
+
+Ask for an example specific to your work:
+
+> *"Give me an example of a weak prompt and a stronger version for a task I'd commonly do — generating a repository method in [your framework]."*
+
+Compare the example to your own prompting habits. Does the "weak" version look like how you currently write prompts?
+
+### 3. Find the gaps
+
+Ask Claude what the material didn't address:
+
+> *"Based on what's in the uploaded pages about prompt engineering, what related concepts or edge cases aren't covered that I should know about?"*
+
+This is a useful cross-check on the material itself. The answers Claude gives here are from its general training, not the uploaded content — treat them as pointers to explore, not facts from the guide.
+
+### 4. Socratic mode
+
+Ask Claude to test you:
+
+> *"Quiz me on the prompt engineering basics page. Ask me one question at a time and tell me whether my answer is right before moving on."*
+
+This is the most demanding mode and the most useful for retention. A concept you can explain back under light questioning is a concept you've actually absorbed.
+
+---
+
+## What this teaches beyond the material
+
+Setting up this Project and working through these questions is not just a learning exercise — it demonstrates a workflow you'll use constantly in real development:
+
+**Using Claude Projects as a knowledge base.** Loading documentation, ADRs, or architecture notes into a Project so Claude can answer questions about them is a direct analogue of what you'd do for a real codebase. The skill of deciding what to upload, how to write the system prompt, and how to ask productive questions transfers immediately.
+
+**Knowing what to ask.** The quality of Claude's answers is bounded by the quality of your questions. Learners who find Claude "not that useful" are usually asking weak or vague questions. Practicing question types on material you already understand is a lower-stakes way to develop this skill.
+
+**Recognising the limits.** When Claude answers something that isn't in the uploaded pages, you can catch it — you know the material. This is deliberate practice for the same habit in a production context: knowing when to trust the output and when to verify.
+
+---
+
+## Next steps
+
+- [Best Practices for Coding with Claude](/claude/best-practices/) — prompt patterns for implementation tasks
+- [Claude Exercises: Advanced Workflows](/exercises/claude-workflows/) — hands-on practice using Claude Code on real code

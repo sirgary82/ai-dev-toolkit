@@ -1,0 +1,177 @@
+---
+title: Glossary of AI Development Terms
+description: Definitions for the terms that appear throughout this toolkit — from core LLM concepts to tool-specific vocabulary, with enough depth to make each one actually useful.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+[Before You Start](/foundations/before-you-start/) covers the essential terms you need before your first session. This page goes further — it covers more terms, adds depth to ones that deserve it, and is intended as an ongoing reference rather than a one-time read.
+
+Terms are grouped by concept area. Use your browser's find (`Ctrl+F`) to jump to a specific term.
+
+---
+
+## How models work
+
+**Large Language Model (LLM)**
+The underlying technology behind Copilot, Claude, GPT, and similar tools. An LLM is a neural network trained on a large corpus of text to predict the most statistically likely continuation of a sequence. It does not reason, retrieve, or look things up — it generates. Everything else about how these tools behave follows from this.
+
+**Training data**
+The text an LLM was trained on — code repositories, documentation, books, websites, and more. The model's knowledge is bounded by what was in this data and when it was collected. It cannot know about events, releases, or API changes that postdate its training cutoff.
+
+**Training cutoff**
+The date beyond which the model has no knowledge from training. If a library released a breaking change after the cutoff, the model doesn't know. If a new framework emerged, the model doesn't know. You can tell the model — but you have to tell it explicitly.
+
+**Parameters / weights**
+The numerical values inside the model that encode what it learned during training. When people talk about a "70 billion parameter model", they're describing the size of this internal representation. Larger parameter counts generally (not always) correlate with more capable models. As a developer using these tools, you never interact with parameters directly.
+
+**Inference**
+The act of generating a response. Each time you send a prompt, the model performs inference — generating tokens one at a time, each conditioned on everything before it. Inference is stateless: the model doesn't remember previous inferences unless the conversation history is included in the current context.
+
+**Tokens**
+The unit the model operates in. A token is roughly three-quarters of a word in English, or about four characters. Code is often denser — a long identifier might be multiple tokens; a common keyword might be one. Context window sizes, pricing, and rate limits are all measured in tokens. A typical 200-line C# file is roughly 1,500–3,000 tokens.
+
+**Temperature**
+A parameter controlling the randomness of generated output. At temperature 0, the model always picks the highest-probability next token — deterministic, conservative, sometimes repetitive. At higher temperatures, lower-probability tokens are sampled more often, producing more varied and sometimes more creative output. You don't set this directly when using Copilot or Claude's default interfaces, but it explains why identical prompts can produce different results.
+
+**Top-p (nucleus sampling)**
+A related sampling strategy: instead of sampling across all possible tokens at a fixed temperature, the model samples only from the smallest set of tokens whose cumulative probability exceeds a threshold p. Together with temperature, this shapes output diversity. Again, you don't set this directly — but it's why "the same prompt always gives the same answer" is not strictly true.
+
+---
+
+## Prompts and completions
+
+**Prompt**
+Everything you send to the model in a single request — your question, instructions, code, examples, and any conversation history. The prompt is the model's entire input. The quality of the prompt is the single biggest factor in the quality of the output.
+
+**Completion**
+The model's response to your prompt. A "completion" in the strict sense refers to the text generated after your input — the AI's continuation of what you started. Chat interfaces frame this as a reply; inline code tools show it as a suggestion. Same underlying concept.
+
+**System prompt**
+Instructions given to the model before the user's message, usually by the application rather than the user. In Claude, a system prompt can define the assistant's role, constraints, and output format. In Copilot, the copilot-instructions.md file contributes to what functions as a system prompt. You can think of it as standing instructions that frame every conversation in that context.
+
+**Zero-shot prompting**
+Asking the model to do something without providing any examples. "Write a unit test for this method" is zero-shot. The model uses its training to infer what a unit test should look like for your context. Works well for common tasks; less reliable for unusual formats or domain-specific conventions.
+
+**Few-shot prompting**
+Providing one or more examples of what you want before asking for it. Showing two existing unit tests before asking for a third is few-shot prompting. The examples anchor the output format, style, and conventions. It's one of the most effective techniques for getting output that matches your codebase patterns — and it's essentially what "follow the same pattern as X" does.
+
+**Chain-of-thought**
+A prompting technique where you ask the model to reason through a problem step by step before giving a final answer. "Think through this step by step before answering" or "explain your reasoning" invokes this. It tends to produce more accurate results on complex reasoning tasks because the intermediate steps constrain the final output. Useful for debugging logic, evaluating architectural trade-offs, or any task where the answer depends on non-obvious reasoning.
+
+**Negative constraint**
+An explicit instruction about what the model should not do. "Don't use LINQ", "Don't add a new dependency", "Don't modify the public interface". Negative constraints are underused but highly effective — the model respects them reliably when they're explicit. See [Prompt Engineering Basics](/context-management/prompt-engineering-basics/).
+
+**Stop sequence**
+A token or string that tells the model to stop generating. Applications use these to prevent the model from generating beyond the intended endpoint. Not something you set directly in most interfaces, but relevant if you're building with the API.
+
+---
+
+## Context and memory
+
+**Context window**
+The total amount of text — your messages, the model's replies, any attached files or code — that the model can "see" at once in a single session. Measured in tokens. Once you exceed the limit, the oldest parts of the conversation are dropped. This is why long sessions degrade: the model literally cannot see what was discussed at the start.
+
+**Context poisoning**
+When incorrect or misleading information in the context causes the model to generate wrong output. If you paste code with a bug and ask the model to extend it, the extension will be built on the bug. If you describe a problem incorrectly, the solution addresses the wrong problem. The model takes the context at face value.
+
+**Grounding**
+Connecting the model's output to factual, verifiable sources rather than relying solely on training data. Pasting documentation into the prompt before asking a question is a form of manual grounding. MCP servers that query real databases or search the web in real time are a form of automated grounding. Grounding reduces hallucination for specific factual claims.
+
+**RAG (Retrieval-Augmented Generation)**
+An architecture where relevant documents are retrieved from a database and inserted into the prompt before the model generates its response. Instead of relying purely on training data, the model answers using the retrieved content plus its general capabilities. MCP servers that query your documentation, codebase, or knowledge base work on similar principles.
+
+**Embeddings**
+Numerical representations of text that capture semantic meaning. Two pieces of text with similar meaning have embeddings that are numerically close. Embeddings are the mechanism behind semantic search — "find code similar to this description" works by comparing embeddings rather than keywords. You encounter embeddings when building RAG systems or codebase search tools; you don't need them to use Copilot or Claude day-to-day.
+
+**Fine-tuning**
+Additional training performed on a pre-trained model using a smaller, domain-specific dataset to shift its behaviour in a particular direction. A fine-tuned model for legal documents behaves differently from the base model on legal questions. GitHub Copilot offers enterprise fine-tuning on private codebases. As a developer using standard Copilot or Claude, you're not fine-tuning — you're steering a general-purpose model through prompts.
+
+---
+
+## Agentic concepts
+
+**Agent / agentic mode**
+A mode in which the AI doesn't just generate a response — it takes a sequence of actions: reads files, writes code, runs commands, observes results, and decides the next step. Copilot Agent Mode and Claude Code both operate this way. The model acts as a planning loop, not a single-shot responder. More powerful, but also more likely to make changes you didn't intend.
+
+**Tool use / function calling**
+The mechanism by which an AI agent interacts with external systems. The model can call a defined function — search the web, query a database, read a file — and incorporate the result into its reasoning. Claude Code uses tool use to read and write files and run shell commands. MCPs expose tools to the model. From the model's perspective, a tool is a function it can call; from your perspective, it's a capability you're granting.
+
+**MCP (Model Context Protocol)**
+An open protocol for connecting external tools and data sources to AI agents. An MCP server exposes functions the agent can call — querying a database, fetching documentation, searching GitHub issues. The agent calls these during a session without you having to paste the information manually. See [MCP for Repo Context](/context-management/mcp-repo-context/).
+
+**Sub-agent / orchestration**
+A pattern where one AI agent (the orchestrator) delegates tasks to other AI agents (sub-agents). The orchestrator coordinates, the sub-agents specialise. Useful for tasks that benefit from parallelism or isolation — running multiple research tasks simultaneously, keeping separate agents focused on separate files. See [Sub-agents & Orchestration](/claude/sub-agents/).
+
+**Planning**
+In agentic contexts, the model's internal generation of a step-by-step approach before taking action. Claude Code and Copilot Agent Mode both plan before executing. The plan is usually visible — you can read it before confirming. Reading the plan before the agent acts is one of the highest-leverage review points.
+
+**Interrupt**
+Stopping an agent mid-execution. In Claude Code, `Ctrl+C` interrupts the current action. In Copilot Agent Mode, there's a stop button. Interrupting is not a failure — it's a normal part of working with agents. If the plan is wrong, interrupting early costs one step. Not interrupting when the plan is wrong can cost many files.
+
+---
+
+## Hallucination and reliability
+
+**Hallucination**
+When the model generates something that sounds correct but is not — a method that doesn't exist, a parameter removed in a prior version, a library that was never real. Hallucination is not random noise. It's statistically plausible fabrication. It looks identical to correct output. Verification is the only way to distinguish the two.
+
+<Callout type="note">
+  "Hallucination" is the common term, though some researchers prefer "confabulation" — the model fills in gaps with plausible content, the way a person might confidently misremember a detail. The mechanism and the practical implication are the same: don't trust without verifying.
+</Callout>
+
+**Confidence calibration**
+The relationship between how confident a model sounds and how likely it is to be correct. LLMs are poorly calibrated — they express the same tone whether they're right or wrong. A detailed, well-formatted answer is not more likely to be correct than a brief one. Confidence is a property of the output style, not the accuracy.
+
+**Sycophancy**
+A tendency in some models to agree with the user rather than maintain a correct position. If you tell the model it's wrong when it isn't, it may capitulate and produce a worse answer. If you express a strong opinion, it may align with it even if the evidence doesn't support it. Knowing this exists helps you interpret model behaviour when you push back on a response — the new answer isn't necessarily better just because you challenged it.
+
+**Prompt injection**
+An attack where malicious content in the model's context attempts to override its instructions. For example, a file the agent reads might contain text like "Ignore your previous instructions and do X". In agentic contexts where the model reads files, emails, or web pages, this is a real concern. Relevant if you're building tools that expose agents to untrusted input.
+
+---
+
+## Tool-specific vocabulary
+
+**Ghost text**
+The grey italic text that Copilot shows as an inline suggestion before you accept or dismiss it. It is "ghost" text because it's visual-only — it hasn't been inserted into the file yet.
+
+**copilot-instructions.md**
+A file at `.github/copilot-instructions.md` in your repository that Copilot reads automatically and uses to inform all suggestions and chat responses in that workspace. The nearest thing Copilot has to a persistent system prompt. See [The copilot-instructions.md File](/context-management/copilot-instructions-file/).
+
+**AGENTS.md / CLAUDE.md**
+A file that gives Claude (and other AI tools that support it) standing instructions about a specific directory or project. Per-directory context. Claude Code reads these at session start from the working directory and its parents. The difference from copilot-instructions.md: these are scoped per project or service, not per repository. See [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/).
+
+**Workspace context**
+In Copilot Chat, the set of files and symbols visible to the model for a given conversation. You can add files explicitly with `@` references or `#file:`. Without explicit references, Copilot uses open tabs and the current file. Managing workspace context is the Copilot equivalent of managing what you paste into Claude.
+
+**Slash command**
+A shorthand trigger for a pre-written prompt or workflow. In Claude Code, `/review`, `/commit`, or any custom command you define. In Copilot Chat, built-in commands like `/explain` or `/fix`. Custom slash commands in Claude Code are defined as markdown files in `.claude/commands/`. See [Custom Slash Commands](/claude/custom-commands/).
+
+**Two-pass pattern**
+A workflow: design conversation first (Claude web, no code), write the plan, then implement (Copilot or Claude Code, using the plan). The two phases are kept separate because design and implementation require different cognitive modes. See [Best Practices for Coding with Claude](/claude/best-practices/).
+
+**Session**
+One continuous conversation with a model. Sessions have no memory of previous sessions — each starts blank unless you provide prior context explicitly. In Claude Code, a session begins when you run `claude` and ends when you exit. Everything in between is in context; nothing carries forward automatically.
+
+**Diff**
+The set of changes a code generation or edit produces, shown as additions and removals relative to the original. Reading the diff before accepting or running AI-generated changes is the most reliable review practice. Both correct and incorrect AI output look confident — the diff is objective.
+
+---
+
+## Advanced techniques
+
+**RLHF (Reinforcement Learning from Human Feedback)**
+A training technique used to align model behaviour with human preferences. Human raters compare model outputs and mark which is better; this feedback trains a reward model, which in turn shapes the main model. It's why modern LLMs are generally helpful, avoid certain content, and follow instructions — but also why they can be sycophantic. You don't interact with RLHF directly, but it explains why models behave differently from raw autocomplete.
+
+**Latency**
+The time between sending a prompt and receiving the first token of the response. For interactive coding use, this matters — a two-second response feels fast; a ten-second response breaks flow. Latency varies by model size, server load, and the length of the output being generated. Larger, more capable models are generally slower.
+
+**Rate limiting**
+Restrictions on how many requests or tokens you can send per unit of time. Copilot and Claude both have rate limits, though the specifics depend on your subscription. If you're hitting limits, session length and prompt verbosity are the first things to reduce.
+
+**Streaming**
+Delivering response tokens to the client as they're generated, rather than waiting for the full response. Most chat interfaces stream — you see text appearing word by word. This reduces perceived latency and lets you interrupt early if the response is going wrong. Claude Code streams by default.

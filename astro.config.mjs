@@ -59,6 +59,7 @@ export default defineConfig({
 					label: 'Start Here',
 					items: [
 						{ label: 'Before You Start', slug: 'foundations/before-you-start' },
+						{ label: 'Glossary', slug: 'foundations/glossary' },
 					],
 				},
 				{
@@ -100,6 +101,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Overview', slug: 'claude' },
 						{ label: 'Getting Started', slug: 'claude/getting-started' },
+						{ label: 'Claude as a Learning Partner', slug: 'claude/learning-partner' },
 						{ label: 'Claude Code', slug: 'claude/claude-code' },
 						{ label: 'Best Practices for Coding', slug: 'claude/best-practices' },
 						{ label: 'Claude Code Tips & Tricks', slug: 'claude/claude-code-tips' },
@@ -176,6 +178,34 @@ export default defineConfig({
 					items: [
 						{ label: '.NET Prompts', slug: 'prompts/prompt-library-dotnet' },
 						{ label: 'React Prompts', slug: 'prompts/prompt-library-react' },
+					],
+				},
+				{
+					label: 'Exercises',
+					items: [
+						{ label: 'Copilot Basics (Phase 1)', slug: 'exercises/copilot-basics' },
+						{ label: 'Prompting & Context (Phase 2)', slug: 'exercises/prompting-and-context' },
+						{ label: 'Claude & Advanced Workflows (Phase 4)', slug: 'exercises/claude-workflows' },
+						{ label: 'Testing, Security & CI/CD (Phases 5–7)', slug: 'exercises/testing-and-quality' },
+					],
+				},
+				{
+					label: 'Case Studies',
+					items: [
+						{ label: 'Backend Feature Walkthrough (.NET)', slug: 'case-studies/backend-feature-walkthrough' },
+						{ label: 'Frontend Component Walkthrough (React)', slug: 'case-studies/frontend-component-walkthrough' },
+					],
+				},
+				{
+					label: 'Troubleshooting',
+					items: [
+						{ label: 'Common Issues & Fixes', slug: 'troubleshooting/common-issues' },
+					],
+				},
+				{
+					label: 'Self-Assessment',
+					items: [
+						{ label: 'Phase Checklists', slug: 'self-assessment/phase-checklists' },
 					],
 				},
 			],

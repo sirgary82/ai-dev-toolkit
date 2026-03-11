@@ -1,0 +1,192 @@
+---
+title: Troubleshooting Common Issues
+description: Causes and fixes for the most common problems developers hit with Copilot and Claude Code — poor suggestions, ignored instructions, context loss, and more.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These are the problems that appear most often in practice, along with their actual causes and the fastest fixes. They are grouped by tool.
+
+---
+
+## GitHub Copilot
+
+### Suggestions are generic, wrong, or don't match my codebase
+
+**Most likely cause:** Copilot doesn't have the right files open.
+
+Copilot generates suggestions from your current file plus any files open in other tabs. If the relevant service, interface, or type definition is in a closed file, Copilot invents plausible-sounding alternatives.
+
+**Fix:**
+1. Open the files your current work depends on — the interface you're implementing, the model you're using, a similar existing implementation.
+2. Open these before you start working, not after you notice poor suggestions.
+3. If you're generating tests, open an existing test file so Copilot matches your patterns.
+
+---
+
+### Copilot isn't respecting my copilot-instructions.md
+
+**Most likely cause:** The file is in the wrong location, not committed, or not formatted correctly.
+
+**Fix:**
+1. The file must be at `.github/copilot-instructions.md` in the repository root.
+2. It must be committed — a staged-but-uncommitted file may not be picked up.
+3. The content should be plain text (no complex markdown tables). Simple bullet points and short paragraphs work reliably.
+4. Restart VSCode after making changes. Copilot caches this file.
+
+If instructions are still being ignored, test with a very explicit, simple instruction (e.g., "Always add a comment `// Copilot-generated` above every method you write") to confirm the file is being read at all.
+
+---
+
+### Inline suggestions keep appearing when I don't want them
+
+**Fix:** Temporarily disable inline completions without disabling the extension.
+
+Open VSCode Settings (`Ctrl+,`) and search for `github.copilot.editor.enableAutoCompletions`. Toggle it off. Copilot Chat remains available — only the inline ghost text disappears.
+
+Re-enable it when you want completions again. This is faster than toggling the extension.
+
+---
+
+### Copilot Chat gives outdated API suggestions
+
+**Most likely cause:** The model's training data predates the library version you're using, or the version you're using is newer than the model knows.
+
+**Fix:**
+1. Paste the relevant section of the official documentation into the chat before asking your question.
+2. If this is a recurring problem with a specific library, add a note to your copilot-instructions.md: *"We use [Library] version X.Y. Do not suggest APIs from versions below X.Y."*
+3. For .NET: add a pointer to your `Directory.Packages.props` in the instructions file so Copilot has version context.
+
+See [LLM Version Staleness](/context-management/llm-version-context/) for the longer-term fix.
+
+---
+
+### Agent Mode keeps making changes to files I didn't ask it to touch
+
+**Fix:** Scope the request more tightly.
+
+Agent Mode follows implications. If you ask it to "add tests for UserService", it may also modify UserService itself, update the DI registration, and touch the test project configuration. Each of these is a plausible part of "making tests work".
+
+Rewrite the prompt to be explicit about scope:
+- Name exactly which file should be modified
+- Use "only" to prevent lateral changes: *"Add tests for UserService only. Do not modify the service implementation or any configuration files."*
+- For Claude Code's equivalent, you can add `—allowedTools` restrictions or use the `--no-file-writes` flag for exploration runs.
+
+---
+
+## Claude and Claude Code
+
+### Claude Code is ignoring my AGENTS.md
+
+**Most likely cause:** You started Claude Code in the wrong directory.
+
+AGENTS.md is read by Claude Code when it's in the current working directory or a parent directory at session start. If you launch from the repo root, Claude Code reads the root AGENTS.md (if it exists). If you launch from a subdirectory, it reads any AGENTS.md in that subdirectory and parent directories.
+
+**Fix:**
+1. Check that the AGENTS.md exists in the directory where you launch Claude Code — run `ls AGENTS.md` before starting.
+2. If you're working in a monorepo, put AGENTS.md in the specific project directory, not only at the root.
+3. Start a new session and explicitly ask: *"What does my AGENTS.md say?"* If Claude Code can read it, it will summarise it. If the response is empty or confused, the file isn't being picked up.
+
+<Callout type="note">
+  CLAUDE.md and AGENTS.md are both valid filenames — Claude Code reads both. If your project uses CLAUDE.md, that's fine. The content and placement requirements are the same.
+</Callout>
+
+---
+
+### Claude Code keeps going in circles on a task
+
+**Cause:** The task is ambiguous, the working directory contains too much noise, or Claude Code is trying to fix a test that its own earlier change broke.
+
+**Fixes:**
+
+If it's looping on tests: interrupt (`Ctrl+C`), read the test failure message yourself, and give Claude Code a more targeted instruction that addresses the specific error — not the original task.
+
+If the directory is too large: Claude Code works best when scoped to a single project or service directory. If you're in the repo root of a large monorepo, move to the relevant subdirectory and start a new session.
+
+If the task is ambiguous: interrupt and restate the goal in one sentence, specifying what "done" looks like (e.g., "done when the test named X passes and no other tests change").
+
+---
+
+### The context window is filling up mid-session
+
+**Signs:** Responses become less coherent, Claude starts forgetting decisions made earlier in the session, or you see a warning about context length.
+
+**What's happening:** The conversation history, code pastes, and generated output together exceed the model's context window. Older parts of the conversation are dropped.
+
+**Fix:**
+1. Start a new session. Before starting, write a one-paragraph summary of where things stand and what the next step is — paste this at the start of the new session.
+2. For long Claude Code sessions, use the `/compact` command to compress the conversation history before it fills up.
+3. Scope sessions more tightly: finish one logical unit (one method, one file, one test suite) before starting a new task in the same session.
+
+See [Large Repo Strategies](/context-management/large-repo-strategies/) for approaches to working in codebases that push context limits.
+
+---
+
+### Claude confidently suggests a method or package that doesn't exist
+
+This is hallucination — see [Before You Start](/foundations/before-you-start/) for the full explanation.
+
+**Immediate fix:**
+1. Don't run the code. Look up the method name in the official documentation first.
+2. In Claude Code, any unrecognised import will typically produce a build error — treat build errors as the first verification step.
+3. If you're seeing repeated hallucination for a specific library, paste the relevant section of the library's current README or changelog into the prompt before asking your question.
+
+**Longer-term fix:** Add the affected library to your AGENTS.md with a note on the current version and a link to the documentation. This reduces (but doesn't eliminate) hallucination for that library.
+
+---
+
+### Merge conflicts in files Claude Code modified
+
+**Cause:** Claude Code worked on a branch while changes were also made on the main branch, or Claude Code modified a file that was modified by a separate parallel AI session.
+
+**Fix:**
+1. Treat Claude Code sessions like feature branches — merge or rebase before starting a long session on a file that others are likely to touch.
+2. If using git worktrees for parallel AI sessions, keep each session scoped to files that don't overlap.
+3. Resolve conflicts manually rather than asking Claude Code to resolve them — Claude Code will typically pick one side or the other without understanding the semantic intent of both changes.
+
+---
+
+### Claude gave me a great design in the web interface, but Claude Code isn't following it
+
+**Cause:** Claude Code starts a new session with no memory of previous conversations.
+
+**Fix:**
+1. Copy the written plan from the design conversation into a markdown file in your project (e.g., `docs/feature-name-plan.md`).
+2. At the start of the Claude Code session: *"Read docs/feature-name-plan.md and implement Step 1."*
+3. Alternatively, summarise the plan in your opening Claude Code prompt — a paragraph is usually enough to re-establish context.
+
+This is the "two-pass pattern" applied correctly — the design conversation produces a written artifact that the implementation session consumes.
+
+---
+
+## General
+
+### I'm not sure whether to use Copilot, Claude Chat, or Claude Code for a task
+
+A rough decision guide:
+
+| Task | Best tool |
+|------|-----------|
+| Completing a method while typing | Copilot inline |
+| Explaining unfamiliar code | Copilot Chat or Claude web |
+| Designing an approach before coding | Claude web |
+| Multi-file refactoring | Claude Code |
+| Generating a test file | Copilot Chat (with context files open) |
+| Understanding a build error | Copilot Chat |
+| PR description | Claude Code custom command |
+| Security review of a PR | Claude web (paste the diff) |
+
+See [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) for the full decision framework.
+
+---
+
+### The AI output was correct last week but is wrong now
+
+**Cause:** The underlying model was updated. Model names (Claude Sonnet, Copilot's backing model) stay stable while the models themselves change.
+
+This is expected and normal. A prompt that worked in January may behave differently in April — not because you changed it, but because the model did. The fix is to treat prompts as things that require occasional re-evaluation, not permanent configurations.
+
+See [Before You Start](/foundations/before-you-start/#models-change) for more on this.

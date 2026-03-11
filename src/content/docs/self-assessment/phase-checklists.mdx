@@ -1,0 +1,155 @@
+---
+title: "Self-Assessment: Phase Checklists"
+description: Skills checklists for each phase of the learning progression — use these to confirm you're ready to move on before tackling the next phase.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These checklists exist to prevent a common problem: reading every guide but never internalising what's in them. Moving on before genuinely mastering a phase means the next phase's concepts don't land properly — they depend on the earlier skills being reflexive, not intellectual.
+
+The test for each item is simple: can you do it without looking it up?
+
+<Callout type="note">
+  These aren't gatekeeping criteria — there's no consequence for moving on "early". They're a prompt to be honest with yourself about which skills are solid and which are still theoretical.
+</Callout>
+
+---
+
+## Phase 0 — Before You Start
+
+Before using any AI coding tool in real work, you should be able to answer these without hesitation:
+
+- What happens when an AI tool "hallucinates"? Why can't you tell from the tone of the response?
+- Why does a long conversation in Copilot Chat or Claude start producing worse results?
+- What is the training cutoff, and why does it matter for library version suggestions?
+- What does "context window" mean, practically speaking — what goes into it and what gets dropped?
+
+If any of these are unclear, re-read [Before You Start](/foundations/before-you-start/).
+
+---
+
+## Phase 1 — Copilot Foundation
+
+**Skill: you can use Copilot as a daily tool without thinking about the mechanics.**
+
+- You accept or dismiss inline suggestions quickly, without stopping to think about what key to press
+- You have Tab, Esc, and Alt+] as reflexes — not references
+- When suggestions are consistently poor, you know the first thing to check is what files are open
+- You can ask Copilot Chat a specific enough question to get a useful answer (not just "explain this")
+- You understand that generated code requires review — you don't accept suggestions without reading them
+
+**Practical test:** Open a file you've never worked on, accept three Copilot suggestions, and evaluate each one without running the code first. Can you spot what's correct and what needs adjustment?
+
+If not: [Copilot Basics Exercises](/exercises/copilot-basics/)
+
+---
+
+## Phase 2 — Prompting & Context
+
+**Skill: you can write prompts that produce useful output reliably, not by luck.**
+
+- When a prompt produces a generic or wrong result, you can identify what specific information it was missing
+- You use constraint words ("only", "don't", "follow the same pattern as...") naturally
+- You've set up a copilot-instructions.md file for at least one project you work in regularly
+- You can break a multi-step task into a sequence of scoped prompts before running any of them
+- You know the difference between a prompt that works because it was lucky and one that works because it was specific
+
+**Practical test:** Take a task you'd normally do by typing and trying, write the prompt first, then evaluate the output against the plan. How close was the first attempt?
+
+If not: [Prompting & Context Exercises](/exercises/prompting-and-context/)
+
+---
+
+## Phase 3 — Advanced Copilot Workflows
+
+**Skill: you use Agent Mode and workflow tooling without needing to consult references.**
+
+- You can describe a multi-file task to Copilot Agent Mode and review the result before accepting
+- You understand what "incremental mindset" means practically — you've applied it to at least one real change
+- Your commits for AI-assisted work are small, reviewable, and have meaningful messages
+- You've used PR review automation at least once on a real PR
+
+**Practical test:** Look at your last five commits that involved AI-generated code. Are the diffs small enough that a reviewer could evaluate them in under five minutes each?
+
+If not: [Incremental Mindset](/auditable-changes/incremental-mindset/), [Commit Discipline](/auditable-changes/commit-discipline/)
+
+---
+
+## Phase 4 — Claude & Advanced Context
+
+**Skill: you use the two-pass pattern by default, and Claude Code sessions are scoped and productive.**
+
+- You consistently do a design conversation before writing implementation code for non-trivial features
+- You write the plan down before closing the design conversation
+- You have AGENTS.md files in at least two services you work in
+- You can start a Claude Code session, scope it to one directory, and review the diff critically
+- You know when a session is going off-track and how to interrupt and redirect
+- You have at least one custom slash command that you use regularly
+
+**Practical test:** Plan your next feature using Claude web before touching the editor. Write the plan in one paragraph. Then implement it. Did the implementation match the plan? Where did it deviate and was the deviation right?
+
+If not: [Claude & Advanced Workflow Exercises](/exercises/claude-workflows/)
+
+---
+
+## Phase 5 — Testing with AI
+
+**Skill: you use AI for test scaffolding but write the assertions that matter yourself.**
+
+- When AI generates a test, you read every assertion before running it
+- You can identify a too-weak assertion ("does this test fail if the code has the most likely bug?")
+- You know how to ask AI for edge cases you might have missed — and how to evaluate which suggestions are valid
+- You've replaced at least one AI-generated assertion with one you wrote yourself after confirming it fails on a broken version
+
+**Practical test:** Take an AI-generated test file and identify which assertions are strong enough to catch a regression. How many would need rewriting?
+
+If not: [Testing & Quality Exercises](/exercises/testing-and-quality/), [AI-Assisted Testing](/testing/ai-assisted-testing/)
+
+---
+
+## Phase 6 — CI/CD
+
+**Skill: you can draft and evaluate pipeline configuration with AI assistance.**
+
+- You can generate a GitHub Actions workflow from a plain-language description of your build/test requirements
+- You check the generated output against your actual build process — not just whether it's valid YAML
+- You know which pipeline steps to treat as advisory vs. required gates
+- You've identified and removed at least one unnecessary step from an AI-generated workflow
+
+**Practical test:** Ask Claude to generate a pipeline for your current project from scratch. How many changes would it need before it would actually work?
+
+If not: [AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/), [PR Quality Gates](/cicd/pr-quality-gates/)
+
+---
+
+## Phase 7 — Security
+
+**Skill: you review AI-generated code for security issues as a matter of habit.**
+
+- You run through the OWASP checklist on any AI-generated endpoint or service method before it goes to PR
+- You know which patterns AI most commonly introduces in your stack (injection, missing auth checks, secret leakage)
+- You have at least one rule in your copilot-instructions.md that prevents a security-relevant pattern
+- You've never pasted a connection string, API key, or production secret into a prompt
+
+**Practical test:** Pick a recent AI-generated PR or function. Run through the security checklist from [Reviewing AI-Generated Code for Security](/security/reviewing-ai-generated-code/). Find anything?
+
+If not: [Testing & Quality Exercises — Security section](/exercises/testing-and-quality/#exercise-2-security-review-of-ai-generated-code), [Keeping Secrets Out of Prompts](/security/keeping-secrets-out/)
+
+---
+
+## Tracking your progress
+
+There is no certificate or completion marker on this site. The checklists are honest in both directions — if something is checked, it should mean you can actually do it under normal working conditions, not just that you read the guide.
+
+A useful practice: revisit these checklists every month. Skills that were solid can drift if you haven't used them. Skills that were shaky often become solid with a few more weeks of daily use.
+
+---
+
+## Related
+
+- [Backend Track](/tracks/backend/) — full sequenced guide for .NET developers
+- [Frontend Track](/tracks/frontend/) — full sequenced guide for React developers
+- [Exercises](/exercises/copilot-basics/) — hands-on practice for each phase

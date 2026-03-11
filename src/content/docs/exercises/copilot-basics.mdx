@@ -1,0 +1,118 @@
+---
+title: "Exercises: Copilot Basics"
+description: Hands-on practice for Phase 1 — accepting suggestions, comment-driven completion, and getting useful answers from Copilot Chat.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These exercises cover the core habits from Phase 1. They are designed to be done on your own code — not on invented examples. Using familiar code means you can judge whether the output is correct.
+
+Each exercise takes 15–30 minutes. Do them in order the first time through.
+
+---
+
+## Before you start
+
+You need:
+- GitHub Copilot installed and authenticated in VSCode ([Getting Started](/copilot/getting-started/))
+- A codebase you know reasonably well — your own work from the past month is ideal
+
+---
+
+## Exercise 1: The suggestion acceptance loop
+
+**What you'll practice:** Getting a feel for when to accept, cycle, and dismiss suggestions.
+
+Open a file you know well. Find a method or function that has clear, repetitive logic — a validation method, a mapping function, a list of similar conditionals.
+
+Delete the body of the method, leaving only the signature and any comments. Let Copilot suggest a completion.
+
+Do this three times with three different methods. For each:
+
+1. Accept the first suggestion with `Tab`. Read it. Does it match what you had?
+2. On the second method, dismiss the suggestion with `Esc` and keep typing on your own.
+3. On the third, cycle through alternative suggestions with `Alt+]` before deciding.
+
+After all three, ask yourself: in which case was the suggestion most useful? What made the difference?
+
+<Callout type="tip">
+  If you find that suggestions are consistently wrong or generic, check whether the relevant files are open in other tabs. Copilot reads open files — a closed file is invisible to it.
+</Callout>
+
+---
+
+## Exercise 2: Comment-driven completion
+
+**What you'll practice:** Using comments as precise prompts for inline completion.
+
+Pick a method you need to add to an existing class — something real, not invented. Instead of writing the method body, write a comment that describes exactly what it should do. Include:
+- The operation
+- The inputs and what they represent
+- Any constraints or edge cases
+- The expected return behaviour
+
+Example style (adapt to your language and domain):
+
+```
+// Returns active users whose subscription expires within the given number of days.
+// Excludes users on the 'admin' plan, which never expires.
+// Returns an empty list if dayThreshold is zero or negative.
+```
+
+Now let Copilot complete the method from the comment alone.
+
+Review the result:
+- Does it match your intent?
+- Did it invent a method or property that doesn't exist?
+- Is there a case your comment didn't cover that the output got wrong?
+
+Revise the comment and regenerate until the output is correct, or note exactly where you had to manually fix something.
+
+---
+
+## Exercise 3: Getting useful answers from Copilot Chat
+
+**What you'll practice:** Asking questions that produce explanations you can actually use.
+
+Open Copilot Chat (`Ctrl+Shift+I`). Try each of these three question types:
+
+**Type 1 — Explanation.** Select a piece of code in your codebase that you didn't write and don't fully understand. Right-click and choose "Copilot: Explain". Read the explanation. Does it accurately describe what the code does?
+
+**Type 2 — Comparison.** Ask: *"What is the difference between X and Y?"* where X and Y are two things in your technology stack you use but would struggle to explain precisely. Examples: `Task` vs `ValueTask`, `useCallback` vs `useMemo`, `IEnumerable` vs `IQueryable`.
+
+**Type 3 — Second opinion.** Paste a function you wrote recently and ask: *"What edge cases does this not handle?"*. Read the response critically — which suggestions are valid, and which don't apply to your context?
+
+For Type 3, the exercise is partly evaluating the AI's suggestions, not just reading them. If it flags something that isn't actually a risk in your system, that's a valid finding too.
+
+---
+
+## Exercise 4: Keyboard shortcuts under pressure
+
+**What you'll practice:** Building muscle memory so you stop reaching for the mouse.
+
+Open the [Keyboard Shortcuts](/copilot/keyboard-shortcuts/) page. Pick the five shortcuts you currently don't use. Write them on a sticky note.
+
+For the next 30 minutes of your actual work, force yourself to use only those shortcuts when interacting with Copilot. Reach for the mouse and catch yourself — use the keyboard instead.
+
+This is intentionally uncomfortable. The goal is to remove the cognitive step of "what key does this?" so the shortcuts become automatic. That usually requires deliberate repetition over a few sessions, not one read of the reference page.
+
+---
+
+## What good looks like
+
+After these exercises, you should be able to:
+- Decide within a few seconds whether to accept, cycle, or dismiss a suggestion
+- Write a comment that drives a correct completion without post-hoc fixes
+- Ask Copilot Chat a specific enough question to get an answer you can use
+- Navigate Copilot without touching the mouse
+
+If any of those are still uncertain, repeat the corresponding exercise on a different file.
+
+---
+
+## Next exercises
+
+- [Prompting & Context Exercises](/exercises/prompting-and-context/) — Phase 2 practice, once Copilot is a daily habit

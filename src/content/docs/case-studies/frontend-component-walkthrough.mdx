@@ -1,0 +1,160 @@
+---
+title: "Case Study: Building a Component End-to-End (React)"
+description: A full walkthrough of building a filterable data table in React using the two-pass pattern — from design conversation to merged PR, including the missteps.
+track: [frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This walkthrough shows what using AI tools for a real component build actually looks like — including where the generated output needed correction and why. The scenario is a data table with filtering and sorting, a common enough pattern that most frontend developers have built some version of it.
+
+**The task:** Build a `<OrderTable>` component that displays a list of orders, supports client-side filtering by status, and allows sorting by date or amount. The component should use the existing design system tokens and match the pattern of other table components in the codebase.
+
+**Tools used:** Claude (web) for component design, Copilot for implementation, Copilot Chat for test generation.
+
+---
+
+## Step 1 — Design conversation before writing JSX
+
+The first session happens in Claude's web interface. No code is written yet.
+
+**The opening prompt:**
+
+> *"I need to build a data table component in React. It should show a list of orders with columns for date, customer name, status, and amount. It needs client-side filtering by status (a set of checkboxes) and column sorting. I want to think through the component structure and state design before writing anything. The codebase uses TypeScript and has an existing design system with table primitives. What should I think through first?"*
+
+Claude raised three questions worth considering: whether filtering and sorting state should live in the component or be lifted to the parent, whether to use a compound component pattern or a single component with props, and how to handle the case where the data list is empty or loading.
+
+**The useful follow-up:**
+
+> *"The parent component doesn't need to know about the filter state — this is purely a display concern. Given that, what's the simplest state structure for this component that handles filter and sort together?"*
+
+The response suggested a single state object: `{ filterStatuses: string[], sortColumn: string | null, sortDirection: 'asc' | 'desc' }`. Derived state (the filtered and sorted rows) computed from that, not stored. This is the right approach — but it's the kind of decision that's worth thinking through, not something to let AI decide by default.
+
+**Written plan before closing the tab:**
+
+> `<OrderTable orders={Order[]}>`
+> Internal state: `filterStatuses`, `sortColumn`, `sortDirection`
+> Derived: filtered + sorted rows (useMemo)
+> Subcomponents: `<StatusFilter>`, `<SortableHeader>` (extract if they get complex)
+> Props: `orders` only — all control state is internal
+> Empty state: render a message, not null
+
+<Callout type="tip">
+  "Internal state only, no lifting" is a design decision that shapes the component API. Getting this right in a 10-minute conversation is faster than refactoring after the component is built and the parent is already using it.
+</Callout>
+
+---
+
+## Step 2 — Check the AGENTS.md and existing patterns
+
+Before opening the editor, review:
+
+1. **AGENTS.md for the frontend package** — confirms which component library is in use, which state management approach the codebase follows, and any naming conventions.
+
+2. **An existing table component** — open `<ProductTable>` (or whatever your codebase has) in a tab. Copilot will read it and generate code that matches the pattern.
+
+3. **The `Order` type** — open the type definition. If Copilot doesn't have the type in scope, it will invent plausible-sounding property names that don't match.
+
+Opening these three files before writing a single line is the difference between generated code you accept and generated code you rewrite.
+
+---
+
+## Step 3 — Props interface and skeleton (Copilot inline)
+
+Write the component file header and the props comment, then let Copilot suggest the interface:
+
+```tsx
+// OrderTable displays a list of orders with client-side filtering by status
+// and sorting by date or amount. Filter/sort state is internal to this component.
+interface OrderTableProps {
+```
+
+Copilot suggested the interface. It was correct: `orders: Order[]`, no extraneous props. It did add an optional `onRowClick?: (order: Order) => void` that wasn't in the plan — a reasonable addition that was kept after a moment's consideration.
+
+The skeleton — component function, state declarations, empty return — Copilot completed correctly in two suggestions.
+
+---
+
+## Step 4 — Filter and sort logic (Copilot with guidance)
+
+Writing the `useMemo` for derived data needed one directed prompt in Chat:
+
+> *"In OrderTable.tsx, complete the filteredAndSorted useMemo. It should: filter rows where order.status is in filterStatuses (when filterStatuses is empty, show all), then sort by sortColumn (either 'orderDate' or 'amount') in sortDirection. Return the sorted array."*
+
+First suggestion had a bug: the empty-filter case was `filterStatuses.length === 0 ? orders : ...`, which is correct — but it evaluated to all orders when the filter set is empty, which is the right behaviour. On review, this was actually correct. The initial concern was wrong.
+
+The sort comparator had a real error: it used `a[sortColumn] - b[sortColumn]` without handling `sortColumn === null`. This would attempt `a[null] - b[null]`, which produces NaN. The fix was a null guard at the top of the sort function.
+
+<Callout type="warning">
+  TypeScript strict mode would have caught the null case here. If your project runs TypeScript in non-strict mode, you lose this safety net. This is an argument for strict mode, not for trusting the AI-generated comparator.
+</Callout>
+
+---
+
+## Step 5 — StatusFilter subcomponent (Claude)
+
+The filter UI was complex enough to warrant its own component — a set of checkboxes for each distinct status value, controlled by the parent's state. This was given to Claude with a more explicit prompt:
+
+> *"Write a StatusFilter React component. Props: `statuses: string[]` (all available values), `selected: string[]` (currently checked), `onChange: (selected: string[]) => void`. Render a checkbox for each status. When a checkbox is toggled, call onChange with the updated selected array. Use the existing Checkbox component from our design system — here's how it's used: [paste usage example from codebase]."*
+
+Claude generated a working component. The only correction: it used `Array.from(new Set(...))` to deduplicate statuses, when the `statuses` prop is already expected to be deduplicated by the parent. Removed the deduplication — keeping logic in one place.
+
+---
+
+## Step 6 — Tests (Copilot Chat + manual assertions)
+
+**Prompt to Copilot Chat:**
+
+> *"@OrderTable.tsx @OrderTable.test.tsx (if it exists) Generate React Testing Library tests for OrderTable. Include: renders all rows when no filter is active, filtering by status hides non-matching rows, sorting by date ascending changes the row order, empty state renders when orders prop is empty. Follow the same patterns as ProductTable.test.tsx."*
+
+Generated tests had correct structure. Two assertion problems:
+
+**Problem 1:** The sort test asserted `expect(rows).toHaveLength(3)` after sorting. This confirms the right number of rows exist — not that they're in the right order. Replaced with an assertion on the text content of the first row's date cell.
+
+**Problem 2:** The filter test asserted that after checking "Cancelled", some rows are hidden. But it checked `not.toBeInTheDocument()` on the customer name — which could pass even if the table broke entirely and rendered nothing. Replaced with an assertion that confirmed specific rows are shown AND specific rows are hidden.
+
+---
+
+## Step 7 — Storybook story (Copilot inline)
+
+The project uses Storybook. Copilot generated the story file from the component file automatically — correct on first suggestion, matching the existing story conventions exactly. No changes needed.
+
+This is the type of repetitive, pattern-matching task where AI is fastest and most reliable.
+
+---
+
+## Step 8 — PR description
+
+The `/pr-description` custom command was used. The output was accurate and needed no edits — the component was self-contained and the diff was clean.
+
+---
+
+## What this walkthrough demonstrates
+
+**Design conversation prevented one refactor.** The "internal state only" decision in the design conversation prevented a situation where the parent component would have needed to manage filter state it doesn't care about.
+
+**Opening the right files mattered.** Copilot matched the existing `ProductTable` pattern because the file was open. The first generated stub of a different component (without the reference file open) had a different structure.
+
+**Generated test assertions are consistently too weak.** Row count, existence checks, and presence without ordering — these were the common patterns. In every case, the assertion had to be replaced with one that would actually fail if the component regressed.
+
+**The sort bug was real.** The null case in the comparator is the kind of off-by-one or null-handling error that's easy to miss in generated code. It compiled, it ran — it would only surface with specific data. Reading the diff caught it.
+
+---
+
+## Key takeaways for your own components
+
+1. Design props and state shape before writing any code
+2. Open reference components and type definitions before generating anything
+3. Let Copilot handle repetitive structure; write derived logic with explicit prompts
+4. Every generated test assertion needs to be read and often replaced
+5. Clean diffs are easier to review — keep component scope tight
+
+---
+
+## Related
+
+- [Backend Feature Walkthrough](/case-studies/backend-feature-walkthrough/) — same pattern, .NET context
+- [Best Practices for Coding with Claude](/claude/best-practices/) — the two-pass pattern explained
+- [Testing AI-Generated Code](/testing/testing-ai-generated-code/) — more on assertion quality

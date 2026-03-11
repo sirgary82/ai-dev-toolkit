@@ -1,0 +1,127 @@
+---
+title: "Exercises: Prompting & Context"
+description: Hands-on practice for Phase 2 — writing prompts that work, setting up copilot-instructions.md, and scoping requests effectively.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These exercises build on the Copilot basics. They focus on the skill with the highest leverage in Phase 2: writing prompts that consistently produce useful output, and setting up context so you don't repeat yourself every session.
+
+Do these on your own code. Exercises 1–3 take 15–20 minutes each. Exercise 4 is a one-time setup that takes 30–60 minutes.
+
+---
+
+## Before you start
+
+You need:
+- Copilot working daily (complete [Phase 1 exercises](/exercises/copilot-basics/) first)
+- A codebase you work in regularly — ideally one with a consistent naming and architecture pattern
+
+---
+
+## Exercise 1: Diagnose and fix a weak prompt
+
+**What you'll practice:** Recognising why a prompt produces generic output, and rewriting it to get something specific.
+
+Start with this deliberately weak prompt — adapt the domain to match your codebase:
+
+> *"Add validation to the user input"*
+
+Ask Copilot Chat this exact prompt (paste it without any file context or selection). Read the result. It will be generic: probably null checks, length validation, maybe a try/catch.
+
+Now rewrite the prompt with all four elements from [Prompt Engineering Basics](/context-management/prompt-engineering-basics/):
+1. **Role/constraint** — what kind of output you want
+2. **Specific task** — exactly what you're asking for
+3. **Context** — the relevant code or types
+4. **Format constraint** — how the result should look
+
+Example rewrite for a .NET context:
+> *"In UserService, add input validation to the CreateUser method. Validate that email is not null or empty and matches a basic email format. Validate that name is between 2 and 100 characters. Throw a ValidationException with a descriptive message for each failure. Don't use FluentValidation — use guard clauses. Follow the same pattern as the existing ValidateAddress method."*
+
+Run the rewritten prompt. Compare the outputs. Write down what specifically changed in the result and what the extra words in the prompt caused.
+
+<Callout type="tip">
+  The gap between your two outputs is a direct measure of the information you provided. If the improvement is large, that's because the original prompt was missing most of the context the model needed.
+</Callout>
+
+---
+
+## Exercise 2: Use constraints to prevent unwanted changes
+
+**What you'll practice:** Surgical edits — getting Copilot to change exactly what you want and nothing else.
+
+Find a method in your codebase that does several things: validates input, calls a dependency, transforms a result, and returns it.
+
+Ask Copilot Chat to "improve" the method without any constraints. Read what it produces. Note what it changed that you didn't ask it to.
+
+Now ask again, but with explicit constraints:
+- Name the exact thing you want changed
+- Use the word "only" to prevent broader changes
+- Specify what should stay the same
+
+Example:
+> *"Refactor only the null check on line 12. Replace the if/throw with a guard clause using ArgumentNullException.ThrowIfNull. Don't change anything else in the method — keep the existing return type, the existing error handling below, and the method signature."*
+
+Repeat with a different specific change on a different method. The goal is to get confident that "only" and explicit scoping actually works — that Copilot will stay in bounds.
+
+---
+
+## Exercise 3: Set up copilot-instructions.md for a real project
+
+**What you'll practice:** Eliminating repeated context by teaching Copilot your codebase conventions once.
+
+Read [The copilot-instructions.md File](/context-management/copilot-instructions-file/) if you haven't yet.
+
+Create a `.github/copilot-instructions.md` file in a codebase you work in regularly. Write it in three sections:
+
+**Section 1 — Tech stack and conventions (4–6 bullet points)**
+List the framework versions, testing libraries, patterns you follow. Be specific about things Copilot often gets wrong for your stack — for example, if it keeps suggesting a library you don't use.
+
+**Section 2 — Things Copilot should always do**
+Two or three hard rules. Examples: always write async methods when the interface is async; always inject dependencies through the constructor; always include XML doc comments on public methods.
+
+**Section 3 — Things Copilot should never do**
+Two or three prohibited patterns. Examples: never use `Thread.Sleep`; never catch `Exception` directly; never use `dynamic`.
+
+After writing the file, test it. Ask Copilot to generate something that would have previously triggered one of your prohibited patterns — does it respect the instruction? If not, reword that entry to be more explicit.
+
+<Callout type="note">
+  copilot-instructions.md is read automatically by Copilot when it's in .github/. You don't need to reference it in prompts. If Copilot isn't picking it up, confirm the file is committed and on the correct branch.
+</Callout>
+
+---
+
+## Exercise 4: Scope a large request into effective smaller prompts
+
+**What you'll practice:** Breaking down a real task into a sequence of scoped prompts, rather than asking for everything at once.
+
+Take a feature or change you're currently planning — something that would take you a few hours to implement manually. It could be a new endpoint, a new component, a refactor across several files.
+
+Don't ask Copilot for the whole thing. Instead:
+
+1. Write a list of the discrete steps the feature requires. Aim for 5–8 steps where each step is independently reviewable.
+2. For each step, write the prompt you would use — before you run any of them.
+3. Now run them in sequence, reviewing each output before moving to the next.
+
+The point of writing all prompts first is to catch where your planned sequence has gaps or wrong assumptions before you're mid-way through and committed to an approach.
+
+After completing the sequence, note: at which step did Copilot produce something wrong enough to require intervention? What would have happened if you'd tried to do all of this in a single prompt?
+
+---
+
+## What good looks like
+
+After these exercises, you should be able to:
+- Look at a weak prompt and immediately identify what's missing
+- Write a prompt that scopes exactly what changes and what stays the same
+- Have a copilot-instructions.md file that eliminates your most common repeated corrections
+- Break a multi-hour task into a prompt sequence before writing a single line
+
+---
+
+## Next exercises
+
+- [Claude & Advanced Workflow Exercises](/exercises/claude-workflows/) — Phase 4, once prompting is second nature

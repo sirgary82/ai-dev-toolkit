@@ -1,0 +1,161 @@
+---
+title: "Case Study: Adding a Feature End-to-End (.NET)"
+description: A full walkthrough of adding a paginated list endpoint to a .NET API using the two-pass pattern — from design conversation to merged PR, including the missteps.
+track: [backend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This walkthrough shows what using AI tools for a real feature actually looks like — including where things went wrong and required correction. The scenario is generic enough to apply to most .NET API projects, but the pattern applies regardless of domain.
+
+**The task:** Add a paginated `GET /customers/{id}/orders` endpoint to an existing .NET Web API. It should return orders sorted by date descending, support `page` and `pageSize` query parameters, and exclude cancelled orders by default.
+
+**Tools used:** Claude (web) for design, Copilot + Claude Code for implementation, Copilot Chat for test generation.
+
+---
+
+## Step 1 — Design conversation before touching code
+
+The first session happens in Claude's web interface, not in the editor. No code is pasted yet.
+
+**The opening prompt:**
+
+> *"I need to add a paginated list endpoint to a .NET 8 Web API. The endpoint should return a customer's orders, paginated, newest first, with cancelled orders excluded by default. The project uses a repository pattern with EF Core. I want to think through the response shape and pagination approach before writing anything. What are the main design decisions I should make first?"*
+
+Claude returned three questions worth considering: how to represent pagination metadata in the response (envelope vs. headers), whether to use offset or cursor pagination, and where the cancelled-order filter should live (repository vs. service vs. query parameter).
+
+**The useful follow-up:**
+
+> *"We use offset pagination elsewhere in this API. What are the downsides of offset pagination that I should be aware of for this use case?"*
+
+The response covered the "page drift" problem — if a new order is inserted while a client is paginating, the client may see duplicates or skip records. For an orders list sorted by date, this is mostly academic (orders are immutable once placed). For a real-time feed it would matter.
+
+This took 15 minutes. The output was a decision: offset pagination, response envelope with `totalCount` and `pageNumber`, filter as a query parameter defaulting to true.
+
+**Written plan before closing the tab:**
+
+> Endpoint: `GET /customers/{id}/orders?page=1&pageSize=20&includesCancelled=false`
+> Response: envelope with `data: Order[]`, `totalCount`, `pageNumber`, `pageSize`
+> Query: filter at repository layer, pass `includesCancelled` flag down
+> Sorting: `OrderDate` descending, applied at query layer
+
+<Callout type="tip">
+  The plan is written down before any code is generated. This matters: it becomes the reference point for evaluating every piece of generated output that follows.
+</Callout>
+
+---
+
+## Step 2 — Check the AGENTS.md before starting implementation
+
+Before opening Claude Code, review the AGENTS.md for the API project. It contains:
+
+```
+- Use async/await throughout. All repository methods are async.
+- Pagination uses our internal PagedResult<T> wrapper — don't invent a new one.
+- Controllers are thin: no business logic. Services handle orchestration.
+- Throw DomainException (not ArgumentException) for invalid business inputs.
+- NuGet versions: see Directory.Packages.props — don't add packages without checking there first.
+```
+
+The third point is immediately relevant: the plan was to return a custom envelope, but the project already has `PagedResult<T>`. Using the AI-invented structure would have been inconsistent with every other endpoint. AGENTS.md prevented that.
+
+---
+
+## Step 3 — Repository layer (Claude Code)
+
+```
+cd src/OrderManagement.Infrastructure
+claude
+```
+
+**The prompt:**
+
+> *"Add a method to CustomerOrderRepository called GetPagedOrdersForCustomerAsync. It should accept customerId (int), page (int), pageSize (int), and includesCancelled (bool). Return `PagedResult<Order>`. Filter by customerId, exclude cancelled orders when includesCancelled is false, sort by OrderDate descending, and apply offset pagination. Follow the same pattern as GetPagedProductsAsync in ProductRepository.cs."*
+
+Claude Code generated the method. Two things needed correction:
+
+**Correction 1:** It used `.Skip((page - 1) * pageSize).Take(pageSize)` before `.CountAsync()`, which would have returned the wrong `totalCount` — the count of items on the page, not the total matching records. The fix was straightforward: run the count query on the filtered-but-not-paginated queryable, then apply pagination.
+
+**Correction 2:** It ordered by `Order.CreatedAt` instead of `Order.OrderDate`. These are different fields in this model. The column name looked plausible — Claude didn't hallucinate a property, it just picked the wrong one. The AGENTS.md didn't specify this, so the fix was a one-word change.
+
+The diff was reviewed before running tests. Both corrections were visible in the diff — the wrong field name and the misplaced count call.
+
+<Callout type="warning">
+  Always read the full diff before running generated code. Both of these errors were visible in the diff. Neither would have been caught by "does it compile?" — the code was syntactically correct.
+</Callout>
+
+---
+
+## Step 4 — Service and controller layers (Copilot)
+
+With the repository method in place and tested, Copilot (inline) was used for the service method and controller action.
+
+The service method was straightforward: Copilot completed it correctly on first suggestion because the repository method signature was in an open file and the service followed an obvious pattern. No changes were needed.
+
+The controller action required one clarification: Copilot's first suggestion used `[FromQuery] int page = 0`, defaulting to page 0. The convention in this API is 1-indexed. The fix: add a comment `// page is 1-indexed, default 1` above the parameter and let Copilot regenerate. Second suggestion used `= 1`.
+
+---
+
+## Step 5 — Tests (Copilot Chat + manual assertions)
+
+**The prompt to Copilot Chat:**
+
+> *"@CustomerOrderRepositoryTests.cs Generate tests for GetPagedOrdersForCustomerAsync. Include: happy path returning correct page, empty result when customer has no orders, cancelled orders excluded when includesCancelled is false, and correct totalCount. Use xUnit and the same in-memory EF setup as the existing tests."*
+
+The generated test file had correct structure: setup with seeded test data, four test methods, assertions against the returned `PagedResult<T>`.
+
+**The problem with the generated assertions:**
+
+The happy-path test asserted `result.Data.Count == pageSize`. This would pass even if the wrong orders were returned. The assertion was replaced with an explicit check: `result.Data.First().OrderDate` should be the most recent order's date, and the IDs should match the expected records in order.
+
+The `totalCount` test was similar — the generated assertion was `result.TotalCount > 0`, which passes no matter what. Replaced with `result.TotalCount == 3` (matching the exact count of seeded non-cancelled orders).
+
+The filter test was correct: it asserted that cancelled orders are not present in `result.Data` using `result.Data.All(o => o.Status != OrderStatus.Cancelled)`. This is a good assertion and was kept as-is.
+
+---
+
+## Step 6 — PR description (Claude Code custom command)
+
+The `/pr-description` custom command:
+
+```
+Review the staged diff and write a PR description with:
+- one-sentence summary of what changed
+- why it was added (context the reviewer doesn't have)
+- test coverage summary
+- anything the reviewer should pay special attention to
+```
+
+Output required one edit: Claude wrote "adds pagination to the orders list" but the endpoint was new, not a modification to an existing one. Changed to "adds a new paginated orders list endpoint". Everything else was accurate.
+
+---
+
+## What this walkthrough demonstrates
+
+**The two-pass pattern works.** The 15-minute design conversation prevented an inconsistent response shape and clarified the pagination approach before any code existed. The written plan caught the wrong field name immediately when reviewing the diff.
+
+**AGENTS.md prevented real errors.** Without the note about `PagedResult<T>`, the implementation would have created a custom envelope inconsistent with the rest of the API.
+
+**AI-generated assertions are often too weak.** The scaffolding was useful. The generated assertions for "correctness" — right order, right data, right count — were all too weak and required manual replacement.
+
+**Diffs are the review surface.** Both repository errors were caught by reading the diff, not by running tests. Reviewing before running is faster than debugging after.
+
+---
+
+## Key takeaways for your own features
+
+1. Design conversation first, editor second
+2. Check AGENTS.md before generating implementation code
+3. Scope Claude Code to one project directory
+4. Read every diff before running anything
+5. Replace AI-generated assertions with ones you've seen fail
+
+---
+
+## Related
+
+- [Frontend Feature Walkthrough](/case-studies/frontend-component-walkthrough/) — same pattern, React context
+- [Best Practices for Coding with Claude](/claude/best-practices/) — the two-pass pattern explained
+- [AI-Assisted Testing](/testing/ai-assisted-testing/) — more on AI test scaffolding vs. real assertions
