@@ -1,0 +1,166 @@
+---
+title: Before You Start — Understanding AI Coding Tools
+description: What LLMs actually are, how they behave, a plain-language glossary, and an honest guide to learning these tools without burning out or building bad habits.
+track: [backend, frontend]
+status: published
+order: 0
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This page exists because most "getting started" guides skip the part that actually matters: understanding what kind of thing you're working with. Without that, the tools feel unpredictable, the advice in every other guide on this site makes less sense, and it's easy to develop habits that work against you.
+
+Read this once. It will save you a lot of confusion later.
+
+---
+
+## What are these tools, actually?
+
+GitHub Copilot and Claude are both powered by **large language models** (LLMs). Understanding a few basic things about how they work will make everything else click.
+
+An LLM is a system trained on a large amount of text — code, documentation, books, conversations — to predict what comes next in a sequence. When you write a prompt, the model reads it and generates a continuation that, statistically, fits well with what you wrote. It is not searching a database. It is not running your code. It is not retrieving a stored answer. It is generating text that is likely to follow from your input.
+
+This has three practical consequences you need to internalize before using these tools seriously:
+
+**1. The model doesn't know what it doesn't know.**
+When it doesn't have reliable information, it doesn't say "I don't know." It generates a plausible-sounding answer anyway. This is not a bug or a failure — it's how the technology works. The output will look exactly the same whether the model is correct or has completely fabricated something. You cannot tell the difference from tone or confidence. You can only tell the difference by verifying the output against something real.
+
+**2. The model has no memory by default.**
+Each conversation starts empty. The model has no idea what you worked on yesterday, what your codebase looks like, or what you asked in a previous session. Every conversation is a clean slate unless you explicitly provide that context in the prompt. This is why the [Context](/context-management/what-is-context/) section of this toolkit matters so much — context is the mechanism by which you bridge this gap.
+
+**3. The model has a training cutoff.**
+LLMs learn from data collected up to a specific date. After that, the model doesn't know about new library releases, API changes, or new patterns. It will suggest things that were correct when it was trained but may now be outdated or deprecated. This is a constant, not an occasional quirk.
+
+---
+
+## Glossary
+
+These terms appear throughout this toolkit. Knowing them makes every other guide easier to read.
+
+**Model**
+The trained system itself — GPT-4o (Copilot), Claude Sonnet, Claude Opus, etc. Different models have meaningfully different strengths, weaknesses, and behaviours.
+
+**Prompt**
+What you send to the model. A question, an instruction, a code snippet, or any combination. The quality of the prompt is the single biggest factor in the quality of the output.
+
+**Context / Context Window**
+Everything the model can "see" during a single conversation — your messages, its previous replies, any files or code you've pasted. The context window is the size limit for this: how many words (tokens) can fit in one session. Once you hit the limit, older parts of the conversation are no longer visible to the model. This is why long sessions degrade.
+
+**Tokens**
+The unit the model uses internally. Roughly, one token ≈ three-quarters of a word in English, or about four characters. A typical file of 200 lines of C# is roughly 1,500–3,000 tokens. Context window sizes are always measured in tokens.
+
+**Inference**
+The act of generating a response. When you send a message and the model replies, that reply is produced through inference. Inference happens fresh each time — the model is not "remembering" a previous answer; it is generating a new one given the current context.
+
+**Hallucination**
+When the model generates something that sounds correct but is not — a method that doesn't exist, a parameter that was removed, a library that was never real. Hallucination is not random noise; it's plausible-sounding fabrication. It is more likely to occur when you ask about obscure topics, specific version details, or anything near the edges of the model's training data.
+
+**Temperature**
+A setting that controls how predictable or creative the model's output is. Low temperature = consistent, conservative output. High temperature = more varied, sometimes more creative but also more likely to drift. You rarely set this directly as a developer using Copilot or Claude, but knowing it exists explains why the same prompt can produce different results.
+
+**Agent / Agentic Mode**
+A mode in which the AI tool doesn't just answer a question but takes actions: reads files, writes code, runs commands, and checks its own results. Copilot Agent Mode and Claude Code both operate this way. The model plans, acts, observes what happened, and decides the next step.
+
+**CLAUDE.md / copilot-instructions.md**
+Files in your repository that give the AI standing instructions about your codebase — your conventions, architecture, and constraints. Think of them as a persistent briefing that you write once and both tools read automatically.
+
+**MCP (Model Context Protocol)**
+A way to connect external tools — databases, search, documentation — directly to an AI agent, so it can query them during a session without you having to copy-paste information manually.
+
+---
+
+## The thing nobody says out loud: AI will be confidently wrong
+
+This deserves its own section because it's the most important thing to understand before you write your first prompt.
+
+When an AI tool gives you code or an explanation, its confidence level tells you nothing about its accuracy. A hallucinated method name and a correct method name look identical in the response. A working solution and a solution with a subtle off-by-one error are delivered in the same tone.
+
+This is not a reason to avoid these tools. It is a reason to treat everything they produce as a **draft that requires your review**, not a finished answer.
+
+Practical habits that follow from this:
+
+- **Always compile and run.** Not because you don't trust the AI — because compilation and tests are objective. They find errors the AI didn't flag and the AI will confidently claim don't exist.
+- **Look up any method or API you don't recognise.** If Copilot suggests `someObject.GetOrCreateWithFallback()` and you've never seen that method, check the documentation. It may not exist.
+- **Be more sceptical, not less, when the response is very confident and detailed.** Detailed, well-formatted wrong answers are common.
+- **The AI cannot review its own hallucinations.** Asking Claude "is this correct?" and having it confirm doesn't mean it's correct. It means the model's output is internally consistent, which is a different thing.
+
+You are always the last line of defence. These tools are genuinely useful — they are not a way to avoid knowing what your code does.
+
+---
+
+## Models change — "Claude" today is not "Claude" three months ago
+
+Model names are stable. The models themselves are not.
+
+When Anthropic releases an update to Claude Sonnet, or when GitHub updates the model behind Copilot, the name stays the same but the behaviour changes. Prompts that worked reliably six months ago may behave differently today. Patterns that felt unreliable may now work well. New capabilities appear; occasional regressions happen.
+
+This means a few things practically:
+- Tips and forum posts with specific prompt workarounds age out. A trick that was necessary in early 2024 may no longer be needed, or may no longer work.
+- Your own experience with a tool is a moving target. When something stops working the way you expect, the model may have changed — it's not necessarily something you broke.
+- Internal guides like this one (and every other AI toolkit you'll find) need ongoing maintenance. Treat them as living documents, not permanent references.
+
+---
+
+## The adoption reality: switching tools has a real cost
+
+If you've been using Copilot for three months and someone asks you to evaluate a different AI coding tool — Codex, Cursor, a different agent — expect roughly a week of reduced productivity even if you're experienced.
+
+It's not the features that take adjustment. It's the habits:
+- Where you instinctively reach to ask something
+- How you phrase prompts to get good results
+- What you trust the tool to do autonomously vs. what you keep control of
+- Which mental shortcuts you've built up
+
+These habits are deeply embedded and largely invisible until you switch. This is normal and applies to everyone, not just juniors. Acknowledging this upfront helps you not misattribute the adjustment cost to the new tool being bad — it might just be unfamiliar.
+
+The flip side: you **do** learn the quirks and strengths of a model through use. There's no shortcut for this. Reading about Claude's behaviour is useful. Actually using Claude on real work is how the mental model forms. The same goes for Copilot.
+
+---
+
+## A principle for learning these tools without burning out
+
+**New things with familiar tools. Familiar things with new tools.**
+
+When you're learning a new codebase or solving a genuinely novel problem, don't simultaneously also try to learn a new AI tool. The cognitive load of two unknowns compounds. Do the new thing with the tool you already know.
+
+When you want to learn a new AI tool, apply it to work you already understand well. Generating tests for a service you wrote yourself last week is a good Claude Code learning exercise — you can evaluate whether what it produced is correct because you know the domain.
+
+This principle helps you actually internalise what the tool is doing rather than just hoping it's right because everything is unfamiliar.
+
+---
+
+## What "gradual progression" means in this context
+
+The guides on this site cover everything from accepting your first inline Copilot suggestion to running parallel AI workstreams across multiple git worktrees. The backend track alone lists 37 items.
+
+Most of that content is not for Day 1.
+
+Git worktrees, sub-agents, MCP servers, custom slash commands — these are genuinely useful patterns for developers who are already using AI tools daily. They are not how you start. Starting with them is like learning to drive by attempting a highway merge in heavy traffic.
+
+A reasonable progression looks like this:
+
+- **Week 1–2**: Copilot inline suggestions and Chat Mode. Accept suggestions, dismiss suggestions, ask questions. Get comfortable with the interaction.
+- **Week 3–4**: Context and prompting. Understand why some prompts work and others don't. Learn the copilot-instructions.md file.
+- **Month 2**: Copilot Agent Mode for a real task. Claude web interface for design conversations. Start noticing when each tool is the right one.
+- **Month 3+**: Claude Code for multi-file tasks. The design/implement/review pattern. Incremental commit discipline.
+- **Later**: Git worktrees, MCPs, custom commands, sub-agents. These amplify a workflow that already exists — they don't create one.
+
+The guides don't disappear if you don't read them in Week 1. They'll be more useful once you have context for why they exist.
+
+<Callout type="tip">
+  The workflows described in this toolkit are patterns that work well for many developers. They are not the only way to use these tools, and not every pattern will fit your work style or team context. Treat them as options to try and adapt, not mandates to follow exactly.
+</Callout>
+
+---
+
+## Where to go from here
+
+You have two paths depending on your starting point:
+
+**[I want to start with GitHub Copilot →](/copilot/getting-started/)**
+Copilot lives in your editor and works without setup friction. It's the faster path to a first useful experience. Start here if you want to use AI coding tools today with minimal configuration.
+
+**[I want to start with Claude →](/claude/getting-started/)**
+Claude is better suited to design conversations, multi-file reasoning, and understanding unfamiliar code. Start here if you already have Copilot set up and want to add a second tool, or if you're specifically interested in the terminal-based Claude Code workflow.
+
+Most developers will use both. The [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) guide explains the pattern once you've used each tool individually.

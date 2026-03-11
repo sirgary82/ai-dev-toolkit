@@ -56,6 +56,12 @@ export default defineConfig({
 			],
 			sidebar: [
 				{
+					label: 'Start Here',
+					items: [
+						{ label: 'Before You Start', slug: 'foundations/before-you-start' },
+					],
+				},
+				{
 					label: 'Tracks',
 					items: [
 						{ label: 'Backend (.NET / Azure)', slug: 'tracks/backend' },

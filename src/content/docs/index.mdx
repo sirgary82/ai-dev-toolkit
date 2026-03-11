@@ -5,8 +5,8 @@ template: splash
 hero:
   tagline: Get more from AI coding tools — at your own pace, wherever you are today.
   actions:
-    - text: I'm new to AI tools
-      link: /copilot/getting-started/
+    - text: Start here — new to AI tools
+      link: /foundations/before-you-start/
       icon: right-arrow
       variant: primary
     - text: I already use Copilot
@@ -20,19 +20,25 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Where do you want to start?
+## New to AI coding tools?
+
+<Card title="Read this first" icon="open-book">
+  Before diving into Copilot or Claude, spend 10 minutes with **[Before You Start](/foundations/before-you-start/)** — what LLMs actually are, why they're confidently wrong sometimes, key terms explained plainly, and an honest guide to learning at a sustainable pace. Everything else in this toolkit makes more sense after this.
+</Card>
+
+## Pick your path
 
 <CardGrid stagger>
-  <Card title="New to AI coding tools?" icon="rocket">
-    Start with **[Getting Started with GitHub Copilot](/copilot/getting-started/)** — installation, first suggestions, and what to expect.
+  <Card title="GitHub Copilot" icon="laptop">
+    Lives in your editor, works immediately. **[Start with Copilot →](/copilot/getting-started/)** — installation, first suggestions, and what to expect.
   </Card>
-  <Card title="Already using Copilot?" icon="magnifier">
-    The single highest-leverage skill is understanding **[What Is Context?](/context-management/what-is-context/)** — it explains why some prompts work and others don't.
+  <Card title="Claude" icon="rocket">
+    Better for design conversations and multi-file reasoning. **[Start with Claude →](/claude/getting-started/)** — web interface, Projects, and your first coding task.
   </Card>
   <Card title="Backend (.NET / Azure)" icon="setting">
     Follow the curated **[Backend Track](/tracks/backend/)** — a sequenced path through the guides most relevant to server-side work.
   </Card>
-  <Card title="Frontend (React)" icon="laptop">
+  <Card title="Frontend (React)" icon="magnifier">
     Follow the curated **[Frontend Track](/tracks/frontend/)** — a sequenced path through the guides most relevant to UI work.
   </Card>
 </CardGrid>
