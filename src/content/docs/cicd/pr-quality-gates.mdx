@@ -1,0 +1,156 @@
+---
+title: PR Quality Gates
+description: Using AI review as a required check, enforcing AGENTS.md update discipline via the PR template, and what to gate on versus leave as advisory.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+A quality gate is a check that must pass before a PR can merge. The right gates make the review process faster by catching the obvious issues automatically, leaving human reviewers to focus on the things that actually need human judgement. AI review fits naturally into this model — it's fast, consistent, and catches the kinds of issues that reviewers sometimes miss when they're reading quickly.
+
+---
+
+## Copilot code review as a required check
+
+GitHub Copilot can be configured to automatically review every pull request when it's opened or updated. To enable it:
+
+1. Go to your repository → **Settings** → **Rules** → **Rulesets**
+2. Create or edit a ruleset for the `main` branch
+3. Under **Required status checks**, add the Copilot review check
+4. Under **Require review from Code Owners**, you can require both Copilot and human review
+
+Alternatively, configure it at the organisation level so it applies to all repositories by default.
+
+Once enabled, Copilot will post a review comment on every PR. The review covers:
+- Logic errors and potential bugs
+- Missing error handling
+- Code style issues relative to the surrounding code
+- Security concerns (basic — not a replacement for dedicated SAST tools)
+
+<Callout type="note">
+  Copilot's PR review is a first pass, not a final approval. Its value is catching the obvious issues before human reviewers spend time on a PR — not replacing human review for correctness, intent, or architectural concerns.
+</Callout>
+
+---
+
+## What to require versus what to leave advisory
+
+Not every AI finding should block a merge. The right model:
+
+**Require (block merge):**
+- Human approval from at least one reviewer (always)
+- CODEOWNERS approval when agent context files change (see [Team Agent File Management](/context-management/team-agent-file-management/))
+- Your existing required checks: build passing, tests passing, coverage threshold
+
+**Advisory (inform, don't block):**
+- Copilot PR review comments
+- Claude-generated review summaries (if you've added these via API)
+- Automated style suggestions
+
+The reasoning: AI review has false positives. If it blocks merges, developers start dismissing its findings without reading them. As an advisory check, the findings get read and acted on when they're relevant.
+
+---
+
+## The PR template as a quality gate
+
+A well-designed PR template enforces discipline that automated tools can't. Add AGENTS.md as a first-class checklist item:
+
+`.github/pull_request_template.md`:
+
+```markdown
+## What does this PR do?
+
+<!-- One paragraph summary -->
+
+## Checklist
+
+- [ ] Tests added or updated
+- [ ] **If a pattern, convention, or architecture decision changed: AGENTS.md updated**
+- [ ] No sensitive data in committed files (connection strings, API keys, internal hostnames)
+- [ ] PR is small enough to review in one sitting (if not, consider splitting)
+```
+
+The AGENTS.md item makes context file maintenance visible at the point where it's most likely to be done. Reviewers know to check whether the PR establishes a new pattern and whether the context file reflects it.
+
+---
+
+## Detecting AGENTS.md drift automatically
+
+You can add a workflow step that flags PRs where code changes patterns but the context file doesn't change. This isn't a hard gate — it's an advisory warning:
+
+```yaml
+name: Check AGENTS.md update
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-agents-md:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for pattern-significant changes without AGENTS.md update
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD)
+          AGENTS_CHANGED=$(echo "$CHANGED" | grep -c "AGENTS.md" || true)
+          SERVICE_CHANGED=$(echo "$CHANGED" | grep -cE "\.(cs|ts|tsx)$" || true)
+
+          if [ "$SERVICE_CHANGED" -gt "5" ] && [ "$AGENTS_CHANGED" -eq "0" ]; then
+            echo "::warning::This PR changes $SERVICE_CHANGED source files but doesn't update AGENTS.md."
+            echo "::warning::If this PR establishes or changes a convention, update AGENTS.md in the same PR."
+          fi
+```
+
+The threshold (5 files) is a rough proxy for "significant change." Adjust it for your codebase.
+
+---
+
+## Using Claude for PR summaries via API
+
+If your team has Claude API access, you can add a workflow step that posts a Claude-generated summary on every PR. The summary helps reviewers understand what changed before reading the diff:
+
+```yaml
+- name: Generate PR summary
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    PR_DIFF: ${{ steps.diff.outputs.diff }}
+  run: |
+    curl https://api.anthropic.com/v1/messages \
+      -H "x-api-key: $ANTHROPIC_API_KEY" \
+      -H "anthropic-version: 2023-06-01" \
+      -H "content-type: application/json" \
+      -d '{
+        "model": "claude-opus-4-6",
+        "max_tokens": 500,
+        "messages": [{
+          "role": "user",
+          "content": "Summarise this PR diff in 3-5 bullet points for a code reviewer:\n\n'"$PR_DIFF"'"
+        }]
+      }' | jq -r '.content[0].text'
+```
+
+Post the output as a PR comment using the GitHub API or `gh` CLI. Keep it short — the value is the 30-second orientation, not a full analysis.
+
+---
+
+## What gates make pipelines slower and less trusted
+
+**Gating on AI findings directly.** If Copilot review must pass before merge, developers will dismiss findings to unblock themselves. Advisory is better.
+
+**Too many required checks.** Every required check is friction. If your pipeline has eight required checks and half of them flake occasionally, developers learn to retry blindly rather than investigate failures.
+
+**Slow required checks.** If a required check takes 15 minutes, it's a blocker on every PR. Keep required checks fast; move slow checks (integration tests, e2e) to post-merge or scheduled runs.
+
+---
+
+## Next steps
+
+- [AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/) — generating and maintaining GitHub Actions workflows
+- [Dependency Upgrades](/cicd/dependency-upgrades/) — managing version updates with AI assistance
+- [Team Agent File Management](/context-management/team-agent-file-management/) — CODEOWNERS and the update discipline that keeps AGENTS.md accurate

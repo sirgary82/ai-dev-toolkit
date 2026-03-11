@@ -1,0 +1,155 @@
+---
+title: AI for Pipeline Configuration
+description: GitHub Actions YAML is exactly the kind of structured, repetitive config that AI handles well. How to generate, explain, and maintain CI/CD pipelines with Copilot and Claude.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+GitHub Actions YAML sits in an uncomfortable spot for most developers: it's not really code, but it's also not documentation. It has its own syntax, its own gotchas, and it changes just slowly enough that you never quite remember the details when you need them. This makes it one of the best use cases for AI assistance — the structure is predictable, the patterns are documented, and getting it wrong has immediate, visible feedback.
+
+---
+
+## Generating a workflow from a description
+
+The most useful prompt pattern: describe your stack, your test command, and your deploy target. AI will produce a workflow that covers the main cases.
+
+**For a .NET service deploying to Azure:**
+
+```
+Generate a GitHub Actions workflow for a .NET 8 ASP.NET Core service.
+
+Requirements:
+- Trigger on push to main and on pull requests
+- Build and run tests with dotnet test
+- On push to main only: publish and deploy to Azure App Service
+- Cache NuGet packages between runs
+- Use secrets for Azure credentials (assume AZURE_WEBAPP_NAME and
+  AZURE_PUBLISH_PROFILE are in repo secrets)
+```
+
+**For a React app deploying to GitHub Pages:**
+
+```
+Generate a GitHub Actions workflow for a React 18 app built with Vite.
+
+Requirements:
+- Trigger on push to main and on pull requests
+- Install dependencies with npm ci
+- Run tests with npm test
+- Run npm run build
+- On push to main: deploy the dist/ folder to GitHub Pages
+- Cache node_modules between runs
+```
+
+Read the output carefully before committing. The structure will be right; the details need verification.
+
+---
+
+## What to verify in AI-generated workflows
+
+AI will get these right most of the time but check them specifically:
+
+**Action versions.** AI may reference an older version of an action. Check that you're using a current version — `actions/checkout@v4` not `@v2`, `actions/setup-node@v4` not `@v3`. Outdated action versions use deprecated Node runtimes and produce warnings or failures.
+
+**Cache keys.** AI-generated cache configurations are usually plausible but may not be optimal. For NuGet: cache key should include the hash of `**/*.csproj` files. For npm: hash of `package-lock.json`. Wrong cache keys mean cache misses on every run.
+
+```yaml
+# NuGet — correct cache key
+- uses: actions/cache@v4
+  with:
+    path: ~/.nuget/packages
+    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+    restore-keys: ${{ runner.os }}-nuget-
+
+# npm — correct cache key
+- uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+```
+
+**Secret names.** AI will invent plausible secret names. Replace them with your actual secret names from your repository settings.
+
+**Permissions.** If the workflow writes to the repo or deploys to Pages, it needs explicit permissions. AI sometimes omits these:
+
+```yaml
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+```
+
+<Callout type="tip">
+  After generating a workflow, ask: "What would cause this workflow to fail silently — succeeding without actually doing what's intended?" AI will often identify the gaps: missing environment variables, a deploy step that exits 0 even on failure, etc.
+</Callout>
+
+---
+
+## Explaining an inherited workflow
+
+When you inherit a pipeline you didn't write and don't understand:
+
+```
+@.github/workflows/deploy.yml
+Walk me through this workflow step by step. For each step, explain
+what it does and why it's there. Flag anything that looks unusual,
+potentially wrong, or that could be simplified.
+```
+
+This is faster than reading Actions documentation to decode every action invocation. AI will explain the structure and flag anything that looks like a copy-paste from a different context, a deprecated pattern, or a configuration that's doing more (or less) than it appears.
+
+---
+
+## Debugging a failing workflow
+
+Paste the failing step's log output directly:
+
+```
+This step in my GitHub Actions workflow is failing:
+
+[paste the step name and the log output]
+
+Here is the relevant part of the workflow file:
+
+[paste the workflow YAML]
+
+What is causing the failure and how do I fix it?
+```
+
+Common failures AI diagnoses well:
+- Missing permissions for a write operation
+- Wrong working directory (`working-directory:` omitted)
+- Environment variables not passed to a step
+- `npm ci` failing because `package-lock.json` is out of sync
+
+---
+
+## Maintaining pipelines as the project evolves
+
+When your stack changes — new test framework, new deploy target, new required environment variable — update the workflow in the same PR as the code change. Ask AI to help:
+
+```
+We're adding integration tests to this project that require a SQL Server
+instance. Update this workflow to spin up a SQL Server service container
+for the test job.
+@.github/workflows/ci.yml
+```
+
+Or when reviewing a PR that adds a new service dependency:
+
+```
+This PR adds a Redis dependency to the service. Does the CI workflow
+need updating to test against Redis? If so, what changes are needed?
+@.github/workflows/ci.yml @src/Services/CacheService.cs
+```
+
+---
+
+## Next steps
+
+- [PR Quality Gates](/cicd/pr-quality-gates/) — using AI review as a required check in the pipeline
+- [Dependency Upgrades](/cicd/dependency-upgrades/) — using Claude to assess migration impact before touching code
+- [Commit Discipline](/auditable-changes/commit-discipline/) — the commit conventions that make pipeline history readable

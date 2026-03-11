@@ -1,0 +1,241 @@
+---
+title: Custom Slash Commands
+description: Packaging recurring Claude Code workflows as reusable /commands — creating them, sharing them with your team, and the built-in skills worth knowing about.
+track: [backend, frontend]
+status: published
+order: 7
+---
+
+import Callout from '../../../components/Callout.astro';
+import CheatSheet from '../../../components/CheatSheet.astro';
+
+Slash commands in Claude Code are shortcuts to prompts. Instead of typing the same detailed prompt every time you want to do a security review or generate a test file, you define it once as a command and invoke it with `/review` or `/test`. The command expands to the full prompt, with any arguments you pass substituted in.
+
+---
+
+## How custom commands work
+
+Commands are markdown files stored in `.claude/commands/`. When you type `/command-name`, Claude Code reads the corresponding file and uses it as the prompt, substituting `$ARGUMENTS` with whatever you typed after the command name.
+
+```
+.claude/
+  commands/
+    review.md       → invoked as /review
+    test.md         → invoked as /test
+    explain.md      → invoked as /explain
+    daily-check.md  → invoked as /daily-check
+```
+
+A command file is just a markdown prompt:
+
+```markdown
+# /review
+
+Review the following file for issues. Check for:
+- Security vulnerabilities (input validation, auth checks, injection risks)
+- Missing error handling
+- Performance concerns
+- Code that doesn't follow the patterns in AGENTS.md
+
+File to review: $ARGUMENTS
+
+Be specific. For each issue, cite the line and explain why it's a problem.
+```
+
+Invoke it as: `/review src/Services/OrderService.cs`
+
+Claude Code substitutes `$ARGUMENTS` with `src/Services/OrderService.cs` and runs the full prompt.
+
+---
+
+## Creating your first command
+
+**Step 1 — Create the commands directory:**
+
+```bash
+mkdir -p .claude/commands
+```
+
+**Step 2 — Write the command file:**
+
+```bash
+# .claude/commands/test.md
+```
+
+```markdown
+# /test
+
+Generate unit tests for $ARGUMENTS.
+
+- Follow the test patterns in the existing test files for this project
+- Use the same assertion library and mock patterns already in use
+- Cover the happy path, main failure cases, and boundary conditions
+- Don't generate tests for private methods
+
+After generating, list any business rules that you couldn't derive
+from the code alone — I'll need to add those manually.
+```
+
+**Step 3 — Use it:**
+
+```
+/test src/Services/UserService.cs
+```
+
+---
+
+## Useful commands to create
+
+**Security review:**
+```markdown
+# /security
+
+Review $ARGUMENTS for security issues.
+
+Focus on: input validation, authorisation checks (not just authentication),
+sensitive data in logs or responses, injection risks, and any hardcoded
+credentials or secrets.
+
+For each issue: severity (critical/moderate/minor), the specific line,
+and the recommended fix.
+```
+
+**Explain an unfamiliar file:**
+```markdown
+# /explain
+
+Read $ARGUMENTS and explain it to a developer who hasn't seen this code before.
+
+Cover: what it does, how it fits in the system, the main patterns it uses,
+any non-obvious decisions, and what I should know before modifying it.
+```
+
+**PR prep:**
+```markdown
+# /pr-prep
+
+Review the changes I've made and help me prepare a pull request.
+
+1. Summarise the changes in 3-5 bullet points suitable for a PR description
+2. List any tests that should exist but don't
+3. Flag anything that might surprise a reviewer
+4. Check if AGENTS.md needs updating based on the changes
+
+Changed files: $ARGUMENTS (leave blank to check git diff automatically)
+```
+
+**Daily standup helper:**
+```markdown
+# /standup
+
+Look at the git log for today and yesterday (git log --since="2 days ago" --author=me).
+Summarise what was done in plain language suitable for a standup update.
+Group by theme, not by commit. Keep it under five bullet points.
+```
+
+---
+
+## Sharing commands with your team
+
+Commands in `.claude/commands/` are local by default. To share them, commit the `.claude/commands/` directory to your repository — but keep `.claude/settings.local.json` in `.gitignore`.
+
+```
+# .gitignore
+.claude/settings.local.json   # personal permissions — don't commit
+# .claude/commands/ is NOT in .gitignore — share it
+```
+
+Team-level commands live in the repo and every developer gets them when they pull. Document what commands exist and what they do in your `AGENTS.md`:
+
+```markdown
+## Available slash commands
+
+- `/review <file>` — security and quality review
+- `/test <file>` — generate unit tests
+- `/explain <file>` — onboarding explanation for unfamiliar code
+- `/pr-prep` — prepare PR description and checklist
+```
+
+---
+
+## Built-in skills worth knowing
+
+Beyond custom commands, Claude Code has built-in skills — invoked the same way but built into the tool rather than stored as files.
+
+<CheatSheet sections={[
+  {
+    title: "Workflow Skills",
+    items: [
+      { key: "/clear", description: "Clear context and start fresh — use heavily between unrelated tasks" },
+      { key: "/compact", description: "Summarise and compress the current context without losing key info" },
+      { key: "/init", description: "Scan the codebase and generate a CLAUDE.md from scratch" },
+    ]
+  },
+  {
+    title: "User-Defined Skills",
+    items: [
+      { key: "/loop [interval] [command]", description: "Run a command on a recurring interval — e.g. /loop 5m /standup" },
+      { key: "/review", description: "If defined in .claude/commands/ — your custom review prompt" },
+      { key: "/test", description: "If defined in .claude/commands/ — your custom test generation prompt" },
+    ]
+  }
+]} />
+
+---
+
+## The loop skill for recurring checks
+
+The `/loop` skill runs a command repeatedly on an interval. Useful for:
+
+- Monitoring a long-running process during a session
+- Checking the status of a deployment every few minutes
+- Running a quick health check against an API during development
+
+```
+/loop 5m /standup
+```
+
+Runs `/standup` every 5 minutes. The default interval is 10 minutes if you omit it.
+
+More useful in practice:
+
+```
+/loop 2m Check if the dev server is still running and if there are any
+new errors in the console output. If the server crashed, let me know immediately.
+```
+
+Stop the loop with Escape or by ending the session.
+
+---
+
+## The prompt refinement pattern as a command
+
+The prompt refinement pattern from the [Tips & Tricks guide](/claude/claude-code-tips/) is a good candidate for a command:
+
+```markdown
+# /refine
+
+I want help writing a precise prompt for the following task:
+
+$ARGUMENTS
+
+Write the best possible prompt for this task. Include:
+- The specific context Claude needs
+- The exact output format expected
+- Any constraints or patterns to follow
+- Which files to reference
+
+Output only the prompt. I will copy it, /clear, and use it fresh.
+```
+
+Invoke: `/refine add order cancellation to the order service`
+
+Get back a polished prompt. Copy it. `/clear`. Paste. Execute.
+
+---
+
+## Next steps
+
+- [Claude Code Tips & Tricks](/claude/claude-code-tips/) — the underlying patterns that custom commands package up
+- [Sub-agents and Orchestration](/claude/sub-agents/) — commands can trigger orchestration workflows
+- [Team Agent File Management](/context-management/team-agent-file-management/) — treating shared commands like shared context files

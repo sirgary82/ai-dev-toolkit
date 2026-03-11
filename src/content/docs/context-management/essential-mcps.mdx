@@ -1,0 +1,237 @@
+---
+title: Essential MCPs for Development
+description: The MCP servers that give Claude Code the most leverage in daily development — what they do, how to set them up, and when to reach for each one.
+track: [backend, frontend]
+status: published
+order: 11
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The Model Context Protocol lets Claude Code connect to external tools and data sources as if they were native capabilities. Instead of copying output from a browser, terminal, or database client and pasting it into Claude, MCP servers let Claude query those sources directly during a session.
+
+These are the servers that consistently provide the most value for day-to-day development work.
+
+---
+
+## How MCP servers are configured
+
+All MCP servers are added to `~/.claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "server-name": {
+      "command": "npx",
+      "args": ["-y", "package-name"],
+      "env": {
+        "SOME_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Code after adding a new server.
+
+---
+
+## GitHub MCP
+
+**What it does:** Lets Claude Code query GitHub directly — read issues, PRs, repository content, CI status, comments, and more. Works alongside the `gh` CLI but gives Claude a richer, structured interface to GitHub's API.
+
+**Setup:**
+
+```json
+"github": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github"],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-pat"
+  }
+}
+```
+
+Create a token at GitHub → Settings → Developer settings → Personal access tokens. Scope: `repo`, `read:org`.
+
+**Best uses:**
+- "What are the open issues labelled `bug` assigned to me?"
+- "Summarise the comments on PR #247 — what's the main disagreement?"
+- "What did the CI failure on this branch say?"
+- "Find all PRs that touch OrderService and are waiting for review"
+
+---
+
+## Filesystem MCP
+
+**What it does:** Gives Claude structured access to your local filesystem beyond the current working directory. Useful when you need Claude to read configuration files, logs, or documentation that lives outside the project directory.
+
+**Setup:**
+
+```json
+"filesystem": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem",
+    "/Users/you/Documents",
+    "/Users/you/projects"
+  ]
+}
+```
+
+List the directories you want Claude to be able to read.
+
+**Best uses:**
+- Reading log files from a running service without copying them
+- Accessing shared documentation that lives outside the repo
+- Reading configuration from multiple projects in a single session
+
+<Callout type="note">
+  Only add directories you're comfortable with Claude reading. Avoid adding directories that contain sensitive files (password managers, SSH keys, `.env` files).
+</Callout>
+
+---
+
+## PostgreSQL / SQL Server MCP
+
+**What it does:** Lets Claude query your database directly — read schema, run SELECT queries, and reason about data without you copying table structures or query results.
+
+**PostgreSQL:**
+
+```json
+"postgres": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres",
+    "postgresql://user:password@localhost:5432/your_db"
+  ]
+}
+```
+
+**Best uses:**
+- "What columns are in the orders table and what are their types?"
+- "Write a query to find all customers who haven't placed an order in 90 days"
+- "Why is this query slow? Here's the query — can you analyse it against the schema?"
+- "Generate an EF Core entity class for the products table"
+
+<Callout type="warning">
+  Connect to a development or staging database, not production. An MCP-connected Claude session can read data — ensure it connects only to environments appropriate for that.
+</Callout>
+
+---
+
+## Brave Search MCP
+
+**What it does:** Gives Claude the ability to search the web in real time during a session — finding documentation, error explanations, library examples, or Stack Overflow answers without you leaving the terminal.
+
+**Setup:**
+
+Get a free API key at [brave.com/search/api](https://brave.com/search/api).
+
+```json
+"brave-search": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+  "env": {
+    "BRAVE_API_KEY": "your-key"
+  }
+}
+```
+
+**Best uses:**
+- "Search for the EF Core 8 migration guide and summarise the breaking changes"
+- "Find the current syntax for this NuGet package — my code is using the v3 API"
+- "Look up this error message and tell me the most common cause"
+- Researching a library before adding it as a dependency
+
+This is the MCP that has the highest day-to-day frequency of use. Not having to leave the terminal to search for documentation keeps the session focused.
+
+---
+
+## Figma MCP
+
+**What it does:** Gives Claude direct access to Figma files — reading frame layouts, design tokens, and component properties for design-to-code workflows.
+
+See the dedicated guide: [Figma MCP for Design-to-Code](/context-management/figma-mcp/)
+
+---
+
+## Slack MCP
+
+**What it does:** Lets Claude read Slack channels and threads — useful for understanding the context of a decision, finding a discussion about a bug, or summarising what was agreed in a thread.
+
+**Setup:**
+
+```json
+"slack": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-slack"],
+  "env": {
+    "SLACK_BOT_TOKEN": "xoxb-your-token",
+    "SLACK_TEAM_ID": "your-team-id"
+  }
+}
+```
+
+Requires creating a Slack app in your workspace with `channels:history` and `channels:read` scopes.
+
+**Best uses:**
+- "Find the Slack discussion where we decided to use Redis for session storage"
+- "Summarise what the team agreed about the API versioning approach in #backend this week"
+- "What was the context for the decision to deprecate the old auth endpoint?"
+
+This MCP turns Slack threads into searchable context rather than things you have to dig through manually.
+
+---
+
+## Building your own MCP server
+
+For organisation-specific context — your internal API docs, your custom tooling, your architecture documentation — you can build a simple MCP server. Claude Code will then be able to query it the same way it queries the standard servers.
+
+See [MCP for Repo Context](/context-management/mcp-repo-context/) for a full example of building a docs MCP server in TypeScript.
+
+The pattern for any internal tool:
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+
+const server = new Server({ name: 'internal-tools', version: '1.0.0' });
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [{
+    name: 'get_service_docs',
+    description: 'Get the documentation for an internal service',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        service: { type: 'string', description: 'Service name' }
+      }
+    }
+  }]
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name === 'get_service_docs') {
+    const docs = await fetchDocsForService(request.params.arguments.service);
+    return { content: [{ type: 'text', text: docs }] };
+  }
+});
+```
+
+---
+
+## MCP server discovery
+
+The MCP ecosystem is growing rapidly. To find servers beyond the ones listed here:
+
+- **[github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)** — the official reference server collection
+- **[mcp.so](https://mcp.so)** — community directory of available MCP servers
+- Search npm for `@modelcontextprotocol/server-*` for official packages
+
+When evaluating a community MCP server, check: who maintains it, what permissions it requests, and whether it has been reviewed. Only install servers from sources you trust.
+
+---
+
+## Next steps
+
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — building your own MCP server for internal documentation
+- [Figma MCP for Design-to-Code](/context-management/figma-mcp/) — the full design-to-code workflow
+- [Claude + GitHub Integration](/claude/github-integration/) — the GitHub MCP alongside the claude.ai connector and gh CLI

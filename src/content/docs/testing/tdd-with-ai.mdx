@@ -1,0 +1,168 @@
+---
+title: TDD with AI
+description: Test-driven development changes the AI workflow significantly — the test becomes the spec you hand to the agent. How to use the red/green/refactor loop with Copilot and Claude Code.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Test-driven development and AI assistance are a natural fit — but not for the obvious reason. The benefit isn't that AI writes tests faster. It's that writing the test first gives you a precise, executable spec to hand to the AI. Instead of describing what you want in prose, you hand the AI a failing test and say: make this pass.
+
+The result is AI-generated implementation code that's immediately verifiable. You don't have to guess whether it's doing the right thing — you run the test.
+
+---
+
+## Why TDD changes the AI prompt
+
+Without TDD, a typical implementation prompt is:
+
+```
+Add a method to OrderRepository that retrieves all orders for a customer
+placed in the last 30 days, sorted by date descending.
+```
+
+This is good — but it leaves ambiguity. What does "last 30 days" mean at midnight on the 30th day? Is the sort by placed date or updated date? What if the customer has no orders?
+
+With TDD, you write the tests first:
+
+```csharp
+[Fact]
+public async Task GetRecentOrders_ReturnsOrdersWithin30Days()
+{
+    var cutoff = DateTime.UtcNow.AddDays(-30);
+    var recentOrder = new Order { PlacedAt = cutoff.AddHours(1), CustomerId = _customerId };
+    var oldOrder = new Order { PlacedAt = cutoff.AddHours(-1), CustomerId = _customerId };
+    await _repository.AddRangeAsync(recentOrder, oldOrder);
+
+    var result = await _sut.GetRecentOrdersAsync(_customerId);
+
+    Assert.Single(result);
+    Assert.Equal(recentOrder.Id, result[0].Id);
+}
+
+[Fact]
+public async Task GetRecentOrders_ReturnsSortedByPlacedAtDescending()
+{
+    // ... setup with multiple orders
+    var result = await _sut.GetRecentOrdersAsync(_customerId);
+    Assert.Equal(expected order of IDs);
+}
+
+[Fact]
+public async Task GetRecentOrders_ReturnsEmptyList_WhenCustomerHasNoOrders()
+{
+    var result = await _sut.GetRecentOrdersAsync(Guid.NewGuid());
+    Assert.Empty(result);
+}
+```
+
+Now the prompt is:
+
+```
+Here are the failing tests for GetRecentOrdersAsync. Implement the method
+to make them pass. The repository uses Entity Framework Core.
+@OrderRepository.cs @OrderRepositoryTests.cs
+```
+
+The tests are the spec. The ambiguities are resolved by the test assertions, not by AI inference.
+
+---
+
+## The TDD + AI loop
+
+**Red — Write the failing test yourself.**
+
+This is always your responsibility. The test encodes the requirement. Write it to fail in a way that's meaningful — not just "method doesn't exist" but "method exists and returns wrong result."
+
+**Green — Ask AI to implement the code to pass it.**
+
+```
+@PaymentServiceTests.cs
+The tests in the file above are failing. Implement PaymentService.ProcessAsync
+to make them pass. Don't add functionality beyond what the tests require.
+```
+
+The constraint "don't add functionality beyond what the tests require" is important. Without it, AI will implement more than you asked for, and that extra code has no tests.
+
+**Refactor — Ask AI to clean up, then verify tests still pass.**
+
+```
+The tests pass. Now refactor ProcessAsync for readability — no behaviour changes.
+After refactoring, confirm all tests still pass.
+```
+
+Review the refactor, run the tests yourself.
+
+<Callout type="tip">
+  Keep the green step small. If AI's first implementation attempt fails the tests, share the test output and ask it to fix the specific failure — don't ask for a full rewrite.
+</Callout>
+
+---
+
+## Handling the "method doesn't exist yet" problem
+
+When you write a test for a method that doesn't exist, your project won't compile. There are two approaches:
+
+**Option A — Stub first, implement second.**
+Create the method with a `throw new NotImplementedException()` body. This lets the test project compile and the test fail with a clear "not implemented" message. Then ask AI to implement the method.
+
+**Option B — Interface-first.**
+Write the interface, write the test against the interface, ask AI to implement both the concrete class and make the tests pass. This works well for service-layer TDD where you want to keep the interface separate from the implementation.
+
+---
+
+## Where TDD + AI works best
+
+**Service layer business logic.** The logic that processes inputs, applies rules, and produces outputs is exactly what TDD + AI is optimised for. The tests encode the rules; AI implements the mechanics.
+
+**Data transformation.** Mapping between DTOs, transforming collections, aggregating results — these have clear inputs and outputs that tests can specify precisely.
+
+**Validation logic.** Write tests for every rule your validator must enforce, then ask AI to implement the validator. You'll catch every case because you wrote it into the test.
+
+**React custom hooks.** Hooks that encapsulate state logic are testable in isolation with `@testing-library/react`. Write the hook behaviour in tests, ask AI to implement the hook.
+
+---
+
+## Where TDD + AI has limits
+
+**Integration and infrastructure tests.** Tests that require a real database, a message broker, or an external API are harder to write before the implementation exists. The setup complexity grows faster than the value.
+
+**UI behaviour tests.** End-to-end tests or complex component tests with many interactions are difficult to write before the component exists. The combination of Playwright/Cypress + AI works better for generating these *after* the component is working.
+
+**Exploratory work.** When you don't know what the right design is yet, writing the test first can commit you to an interface before you understand the problem. Use AI exploration sessions to understand the problem space first, then switch to TDD once the design is clearer.
+
+---
+
+## Practical prompt patterns
+
+**Implement from failing tests:**
+```
+These tests are failing. Implement [ClassName].[MethodName] to make them pass.
+Use [specific library/pattern]. Don't implement anything the tests don't require.
+@TestFile.cs
+```
+
+**Fix a specific failing test:**
+```
+This test is failing with this error: [paste test output]
+Here is the current implementation: @Implementation.cs
+Fix the implementation to make this specific test pass without breaking the others.
+```
+
+**Refactor after green:**
+```
+All tests pass. Refactor this implementation for clarity — extract any private
+methods that improve readability, but make no behaviour changes.
+Run the tests after to confirm they still pass.
+@Implementation.cs
+```
+
+---
+
+## Next steps
+
+- [AI-Assisted Testing](/testing/ai-assisted-testing/) — generating test scaffolding, surfacing edge cases, knowing what AI gets wrong
+- [Testing AI-Generated Code](/testing/testing-ai-generated-code/) — the review discipline for code you didn't write
+- [Claude Code Tips & Tricks](/claude/claude-code-tips/) — the plan-first pattern applies here: ask for the plan before writing tests

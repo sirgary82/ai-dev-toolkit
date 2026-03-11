@@ -1,0 +1,156 @@
+---
+title: AI-Assisted Debugging
+description: Structured techniques for using Claude Code and Copilot when something is broken — what context to provide, when AI helps most, and when to stop asking and start reading.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Debugging is where AI assistance tends to either be immediately useful or immediately frustrating — and the difference is almost entirely in how you provide context. AI can reason well about failure modes when it has the right inputs. When it doesn't, it generates plausible-sounding guesses that send you in the wrong direction.
+
+This guide covers the techniques that consistently produce useful debugging help.
+
+---
+
+## What to include in a debugging prompt
+
+The minimum useful context for a debugging session:
+
+1. **The error message or unexpected behaviour** — exact text, not a paraphrase
+2. **The relevant code** — the function or component where the error occurs
+3. **What you expected to happen**
+4. **What actually happened**
+5. **What you've already tried** — this prevents AI from suggesting things you've ruled out
+
+```
+I'm getting this exception when calling PlaceOrderAsync:
+
+System.InvalidOperationException: A second operation was started on this context
+instance before a previous operation completed.
+
+Relevant code: @OrderService.cs
+
+Expected: the order is saved and a confirmation email is sent.
+Actual: the exception is thrown during the email send step.
+
+I've already confirmed the DbContext is registered as Scoped (not Singleton).
+```
+
+This is enough context for AI to identify the async/await pattern issue (calling an async method without `await` inside a using block that shares a DbContext) and explain the fix.
+
+---
+
+## The rubber duck effect
+
+There's a well-known debugging technique called rubber duck debugging: explain the problem to an inanimate object. The act of articulating it often surfaces the cause.
+
+AI tools supercharge this. When you explain a bug to Claude and include the relevant code, you frequently identify the problem yourself while writing the explanation — or Claude spots it from your description before you even finish the question.
+
+This is worth doing even when you suspect the answer. Structure your explanation, share the code, and ask the question. The discipline of writing the context down is half the debugging work.
+
+---
+
+## Stack traces: give the full trace, not just the message
+
+A stack trace tells a story. The error message is the conclusion; the frames below it are the cause. Always paste the full trace:
+
+```
+Provide the full stack trace here — don't trim the frames above
+the error message. The call chain often shows the actual cause.
+
+Here is the full trace:
+
+[paste complete stack trace]
+
+Here is the code at the top of the trace:
+@RelevantClass.cs
+```
+
+AI will identify which frame in the trace contains the actionable fix — often it's not the top frame where the exception was thrown but several frames down where the incorrect call was made.
+
+---
+
+## When to use "what are the possible causes?"
+
+When you have an unexpected symptom but no error — wrong output, missing data, intermittent behaviour — ask for causes before asking for a fix:
+
+```
+OrderService.GetRecentOrdersAsync is returning orders older than 30 days.
+The method is supposed to filter to orders placed within the last 30 days.
+
+Here is the implementation: @OrderService.cs
+
+What are the most likely causes of this behaviour? List them in
+order of likelihood. Don't suggest fixes yet.
+```
+
+Reading the list of causes often tells you which one it is before you've investigated any of them. Then you can ask specifically about the most likely candidate.
+
+This approach is faster than asking "what's wrong and how do I fix it?" — that prompt invites a broad answer that may not match the actual cause.
+
+---
+
+## Generating a minimal reproduction
+
+For complex bugs, AI can help you strip the problem down to its smallest reproducible form:
+
+```
+I have a bug in this service that I can reproduce but the code is complex.
+Help me write a minimal reproduction — a small, standalone test or script
+that demonstrates the same failure with no other dependencies.
+
+The bug: [description]
+The relevant code: @Service.cs @Repository.cs
+```
+
+A minimal reproduction isolates the cause. Once you have a reproduction that demonstrates the bug, fixing it is usually straightforward — and the reproduction becomes a regression test.
+
+---
+
+## For React: component debugging
+
+React bugs often involve state, rendering, or hook behaviour. Include the component, the state shape, and the user action that produces the bug:
+
+```
+This component is re-rendering unexpectedly when the user types in
+the search input. The parent component also re-renders on each keystroke,
+which is causing a noticeable lag.
+
+Component: @ProductList.tsx
+Parent: @ProductSearch.tsx
+
+Expected: the list only re-renders when the search is submitted,
+not on every keystroke.
+
+I've wrapped ProductList in React.memo already.
+```
+
+The "I've already tried X" note prevents AI from suggesting `React.memo` again. AI will focus on the remaining causes: unstable prop references, missing `useCallback`, or state being lifted too high.
+
+---
+
+## When to stop using AI for debugging
+
+AI is a strong starting point for most bugs. It's less useful — and can slow you down — in these situations:
+
+**Race conditions and concurrency bugs.** These require understanding the timing of events across threads or async operations. AI can explain the concepts but can't observe the actual execution.
+
+**Environment-specific failures.** If the bug only appears in production and not locally, AI doesn't know what's different about your environment. Focus on logging and observability to surface the environmental difference; then bring that to AI.
+
+**Deep framework internals.** If the bug is inside a framework, ORM, or library you didn't write, AI's knowledge of the internals may be incomplete or dated. Read the library source directly.
+
+**After three AI attempts.** If you've given AI the context three times and the suggestions aren't converging on the answer, stop. Read the code manually, add logging, use the debugger. Sometimes the bug requires following execution with your own eyes, not pattern-matching against known issues.
+
+<Callout type="tip">
+  If you've been in a debugging session for more than 30 minutes without making progress, `/clear` the context and describe the problem fresh. A new session with a clean, focused description often produces better results than a session where the context is cluttered with failed attempts.
+</Callout>
+
+---
+
+## Next steps
+
+- [AI-Assisted Refactoring](/refactoring/ai-assisted-refactoring/) — once the bug is fixed, cleaning up the code that contained it
+- [Claude Code Tips & Tricks](/claude/claude-code-tips/) — `/clear` discipline and the exploration session pattern apply directly to debugging sessions
+- [Testing AI-Generated Code](/testing/testing-ai-generated-code/) — adding the regression test after fixing the bug

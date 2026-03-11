@@ -10,10 +10,6 @@ import Callout from '../../../components/Callout.astro';
 
 This track gives you a sequenced path through the guides most relevant to .NET and Azure backend work. Each guide is independently useful — but in this order they build on each other effectively.
 
-<Callout type="tip">
-  Not all guides are published yet. Follow this page — new guides are added as they're ready.
-</Callout>
-
 ## Phase 1 — Foundation
 
 Work through these if you're new to AI coding tools or using them only occasionally.
@@ -54,7 +50,37 @@ Once you're using Copilot daily and have explored Agent Mode, these guides expan
 19. **[Large Repo Strategies](/context-management/large-repo-strategies/)** — Working with .NET solutions that exceed any context window.
 20. **[Copilot + Claude Together](/multi-tool/copilot-plus-claude/)** — The design/implement/review handoff pattern.
 21. **[MCP for Repo Context](/context-management/mcp-repo-context/)** — Building a docs MCP server so Claude Code agents can query your AGENTS.md files and architecture docs without manual copy-paste.
-22. **[Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/)** — Running Copilot and Claude Code on separate branches simultaneously.
+22. **[Essential MCPs for Development](/context-management/essential-mcps/)** — GitHub, PostgreSQL, Brave Search, Slack — the MCP servers with the highest daily value for backend developers.
+23. **[Sub-agents & Orchestration](/claude/sub-agents/)** — Spawning parallel Claude agents for exploration, research, and multi-service changes.
+24. **[Custom Slash Commands](/claude/custom-commands/)** — Packaging recurring workflows (security review, test generation, PR prep) as reusable `/commands`.
+25. **[Claude + GitHub Integration](/claude/github-integration/)** — claude.ai GitHub connector, autonomous PR creation via `gh` CLI, and `@claude` mentions in issues and PRs.
+26. **[Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/)** — Running Copilot and Claude Code on separate branches simultaneously.
+
+## Phase 5 — Testing
+
+27. **[AI-Assisted Testing](/testing/ai-assisted-testing/)** — Generating test scaffolding, surfacing edge cases, and knowing where AI judgement ends and yours begins.
+28. **[TDD with AI](/testing/tdd-with-ai/)** — Using the failing test as the spec you hand to the agent. Red/green/refactor with Claude Code.
+29. **[Testing AI-Generated Code](/testing/testing-ai-generated-code/)** — Why AI-written code needs more rigorous testing, and the review discipline that catches what coverage misses.
+
+## Phase 6 — CI/CD
+
+30. **[AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/)** — Generating and maintaining GitHub Actions workflows for .NET build, test, and deploy.
+31. **[PR Quality Gates](/cicd/pr-quality-gates/)** — Copilot review as a required check, AGENTS.md drift detection, and what to gate vs leave advisory.
+32. **[Dependency Upgrades](/cicd/dependency-upgrades/)** — Using Claude to assess NuGet migration impact before touching code.
+
+## Phase 7 — Security
+
+33. **[Reviewing AI-Generated Code for Security](/security/reviewing-ai-generated-code/)** — The OWASP patterns AI most commonly introduces and the review checklist for .NET controllers and services.
+34. **[Keeping Secrets Out of Prompts](/security/keeping-secrets-out/)** — What not to paste into AI tools, sanitising connection strings, and `.env` hygiene.
+
+## Phase 8 — Debugging and Refactoring
+
+35. **[AI-Assisted Debugging](/debugging/ai-assisted-debugging/)** — What context to provide with a stack trace, when AI helps most, and when to stop asking and start reading.
+36. **[AI-Assisted Refactoring](/refactoring/ai-assisted-refactoring/)** — The explore-plan-implement pattern, scope control for multi-file refactors, and the AGENTS.md update step.
+
+## Prompt Library
+
+37. **[.NET Prompt Library](/prompts/prompt-library-dotnet/)** — Copy-paste prompts for endpoints, repositories, tests, validation, security review, and more.
 
 ## Backend-specific tips
 

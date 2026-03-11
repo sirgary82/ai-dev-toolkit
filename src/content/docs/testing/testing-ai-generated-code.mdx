@@ -1,0 +1,121 @@
+---
+title: Testing AI-Generated Code
+description: AI-written code needs more rigorous testing than code you wrote yourself. Why the coverage trap is worse for AI output, and the review discipline that catches what automated checks miss.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+There's a counterintuitive discipline that experienced AI tool users develop: AI-generated code requires *more* careful testing than code you wrote yourself, not less. The reasoning is straightforward. When you write code, you understand every decision you made. When you review AI-generated code, you're reading something that looks right but may have subtle errors in places you're not looking.
+
+This guide is about the specific testing discipline for AI-generated code.
+
+---
+
+## Why AI-generated code is different to test
+
+When you write a function yourself, you usually have a mental model of the failure modes — you know which edge cases you thought about and which you deferred. That knowledge guides your testing.
+
+AI-generated code gives you no such knowledge. The code may have:
+
+- **Plausible-looking bugs** — logic that handles the common case correctly but fails on a boundary you didn't specify
+- **Untested assumptions** — AI inferred something about your data that isn't always true
+- **Missing error handling** — AI implemented the happy path and added minimal failure handling
+- **Subtle semantic errors** — the code does what you asked but not what you meant, because the prompt was slightly underspecified
+
+None of these are obvious from reading the code. Tests are the mechanism for finding them.
+
+---
+
+## The coverage trap
+
+Line coverage is a poor signal for AI-generated code. It's easy to generate code and tests together, hit 85% coverage, and still have a significant blind spot.
+
+The problem: when AI generates both the code and the tests in the same session, the tests tend to cover what the code does, not what the code *should* do. If the code has a bug, there's often a corresponding gap in the test — because AI didn't test the case it didn't implement.
+
+<Callout type="warning">
+  If you ask AI to "implement X and write tests for it" in a single prompt, you get implementation-shaped tests. The tests pass because they're testing the implementation. They don't catch the cases the implementation doesn't handle.
+</Callout>
+
+The discipline: generate implementation and tests separately. Write (or generate) the tests from the specification — what the code *should* do. Then generate the implementation. Then run the tests against the implementation. Failures are where the implementation diverged from the spec.
+
+---
+
+## Asking AI to find its own blind spots
+
+After AI generates code, use it as a reviewer of its own output:
+
+```
+You just implemented ProcessPaymentAsync. Now act as a code reviewer.
+What edge cases and failure modes are not covered by the current tests?
+What assumptions does the implementation make that might not hold?
+```
+
+This prompt often surfaces useful things — not because AI has perfect self-awareness, but because the code review framing shifts it from generation mode to evaluation mode. It will flag things like "this assumes the customer ID is always valid" or "there's no handling for concurrent requests."
+
+Then:
+
+```
+Add tests for each of the gaps you identified.
+```
+
+Review those tests. The cases AI flags are candidates for testing — you decide which ones matter enough to cover.
+
+---
+
+## Mutation testing as a calibration tool
+
+Mutation testing modifies your code in small ways (changing `>` to `>=`, negating a condition, removing a return value) and checks whether your tests catch the change. If a mutation survives — the tests still pass with the modified code — your tests have a blind spot.
+
+For AI-generated code, mutation testing is a practical calibration tool:
+
+1. AI generates the implementation and tests
+2. Run a mutation testing tool (.NET: Stryker.NET; JavaScript: Stryker)
+3. Review surviving mutants — each one is a case the tests aren't verifying
+4. Ask AI to add tests that kill the surviving mutants, or add them yourself
+
+This takes longer than just running coverage, but it gives you a much more honest picture of what your tests actually verify.
+
+---
+
+## The review checklist for AI-generated code
+
+Before accepting AI-generated code as reviewed, run through:
+
+**Logic:**
+- [ ] Does the code handle null / undefined inputs?
+- [ ] Does it handle empty collections?
+- [ ] Are boundary conditions (off-by-one, date boundaries, numeric limits) handled?
+- [ ] Are there any assumptions about input ordering or uniqueness?
+
+**Error handling:**
+- [ ] What happens when a dependency throws?
+- [ ] Are exceptions caught at the right level?
+- [ ] Are failure states surfaced to the caller in a useful form?
+
+**Tests:**
+- [ ] Is there a test for each business rule?
+- [ ] Do the tests assert the right thing, or just that no exception was thrown?
+- [ ] Would the tests fail if the implementation had the most obvious bug?
+
+**The obvious bug check:** For each test, mentally introduce the most obvious bug (flip a condition, skip a step, return a default value). Would the test catch it? If not, the assertion is too weak.
+
+---
+
+## When to regenerate vs when to fix
+
+If AI-generated code fails tests:
+
+- **One or two specific failures** — share the test output and ask AI to fix the specific failure. This is usually faster than regenerating.
+- **Multiple failures across different areas** — the implementation has a fundamental misunderstanding. Regenerate with a more precise prompt rather than iterating on a broken foundation.
+- **Tests pass but code review reveals issues** — add tests for the issues you found, then fix the code. Don't fix the code first; fixing without tests means you might fix one bug and introduce another.
+
+---
+
+## Next steps
+
+- [AI-Assisted Testing](/testing/ai-assisted-testing/) — generating test scaffolding and surfacing edge cases
+- [TDD with AI](/testing/tdd-with-ai/) — writing the test first to give AI a precise spec
+- [Reviewing AI-Generated Code for Security](/security/reviewing-ai-generated-code/) — the security-specific review layer on top of the general checklist

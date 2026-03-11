@@ -1,0 +1,191 @@
+---
+title: AI-Assisted Refactoring
+description: Refactoring is one of the highest-value uses of Claude Code — it can hold context across multiple files. The explore-plan-implement pattern, scope control, and the AGENTS.md update step.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Refactoring is where Claude Code earns its place in a serious workflow. Multi-file refactors — extracting a service, introducing an interface, renaming a pattern across a codebase — are exactly the kind of task that's tedious to do manually and error-prone when done quickly. CC can hold the context of a change across ten files and apply it consistently. But only if you give it the right structure.
+
+---
+
+## The explore-plan-implement pattern
+
+Never ask CC to refactor without reading the code first. The sequence that works:
+
+**Step 1 — Explore:**
+```
+Read OrderService.cs, OrderRepository.cs, and the files that use them.
+Summarise the current structure: what does each class own, how do they
+interact, and what would need to change if we introduced the repository
+pattern more consistently?
+Don't make any changes yet.
+```
+
+Read the summary. Correct any misunderstandings. Now CC has the context it needs.
+
+**Step 2 — Plan:**
+```
+Based on your exploration, give me a concrete plan for extracting
+IOrderRepository as a formal interface. What files will change,
+what will be created, and in what order?
+```
+
+Review the plan. Catch the issues before any code is written:
+- "Don't create a new directory for this — put the interface alongside the implementation"
+- "You've missed OrderEventPublisher — it also depends on OrderRepository directly"
+- "Do the interface extraction first, then the DI registration, not simultaneously"
+
+**Step 3 — Implement:**
+```
+Implement the plan we discussed. Start with the interface definition,
+then update the concrete class, then update the DI registration,
+then update the callers one file at a time.
+```
+
+Review each file as it changes. Don't let CC make changes to ten files before you've read the first one.
+
+<Callout type="tip">
+  For any refactor touching more than three files, always start with explore and plan. The larger the scope, the more likely CC's approach and your intended approach diverge on a key assumption — and it's much cheaper to catch that in the plan step than in the diff.
+</Callout>
+
+---
+
+## Scope control: one module at a time
+
+The most common refactoring mistake with AI is asking for too much at once. "Refactor the entire service layer to use `Result<T>` instead of exceptions" is a valid goal but an unmanageable single task.
+
+Break it down:
+
+```
+# Session 1
+Refactor OrderService to return Result<T> for all methods that currently
+throw domain exceptions. Leave the controller layer unchanged for now —
+it can still catch exceptions at the boundary.
+
+# Session 2 (new session after reviewing Session 1)
+The OrderService now returns Result<T>. Update OrdersController to handle
+Result<T> returns from the service instead of catching exceptions.
+
+# Session 3
+The order flow is done. Apply the same Result<T> pattern to UserService.
+@UserService.cs
+```
+
+Each session is small enough to review thoroughly. The AGENTS.md gets updated after Session 1 to say "new code should use `Result<T>`; existing services are being migrated."
+
+---
+
+## Rename refactors across a codebase
+
+Rename refactors — changing a method name, a class name, or a pattern that appears in many files — are where CC's cross-file context is most useful.
+
+```
+We're renaming GetOrder to FindOrder across the codebase to align
+with our naming convention (Find for nullable returns, Get for
+non-nullable).
+
+Find every place GetOrder is called, every place it's defined,
+and every interface or mock that declares it. Then rename them all
+consistently.
+```
+
+Before accepting changes: run the build. A rename that misses one reference breaks the build in a way that's immediately obvious. Fix any remaining references, then run tests.
+
+---
+
+## Extracting an interface
+
+One of the most common refactoring requests: extract an interface from a concrete class to enable testing and DI.
+
+```
+Extract IPaymentGateway from PaymentGateway.cs. The interface should
+include all public methods. Register both in Program.cs using the
+existing DI pattern. Update any constructor dependencies that currently
+take the concrete class to take the interface.
+@PaymentGateway.cs @Program.cs
+```
+
+After the refactor:
+
+```
+Now that IPaymentGateway exists, update PaymentServiceTests to use
+a mock IPaymentGateway instead of depending on the concrete class.
+@PaymentServiceTests.cs @PaymentService.cs
+```
+
+---
+
+## Moving to a new pattern
+
+When the team adopts a new pattern — `Result<T>`, CQRS handlers, a new validation approach — CC can apply it consistently across a service.
+
+**The migration pattern that works:**
+
+1. Establish the pattern on one representative class (manually or with CC)
+2. Commit that as the reference implementation
+3. In a new CC session, reference the reference implementation:
+
+```
+@OrderCommand.cs is our reference implementation of the CQRS command pattern.
+Apply the same pattern to UserCommand.cs. Follow the structure exactly.
+@UserCommand.cs
+```
+
+This is more reliable than describing the pattern in prose — CC reads the reference and matches it.
+
+---
+
+## The AGENTS.md update step
+
+After any refactor that changes how the service works, update the context file:
+
+```
+We've just introduced IOrderRepository and the repository pattern
+consistently across OrderService. Update AGENTS.md to reflect:
+- The repository interface pattern now in use
+- That new repositories should implement IRepository<T>
+- That direct DbContext access in service classes is no longer the pattern
+```
+
+This is part of the refactor, not an afterthought. The PR that changes the code changes the AGENTS.md in the same commit.
+
+---
+
+## React: component refactoring
+
+The same principles apply on the frontend.
+
+**Extracting a custom hook:**
+```
+The user authentication state logic in UserDashboard.tsx is complex
+enough to be its own custom hook. Extract it to useAuthState.ts,
+following the pattern in useCartState.ts.
+@UserDashboard.tsx @useCartState.ts
+```
+
+**Splitting a component:**
+```
+ProductPage.tsx is over 300 lines. Identify the natural split points
+and extract the product detail section and the reviews section into
+separate components. Keep the data fetching in the parent.
+@ProductPage.tsx
+```
+
+**Migrating CSS approach:**
+```
+We're moving from CSS modules to Tailwind. Migrate ButtonGroup.tsx
+from its CSS module to Tailwind utility classes. Here is our Tailwind
+config for reference: @tailwind.config.js
+```
+
+---
+
+## Next steps
+
+- [AI-Assisted Debugging](/debugging/ai-assisted-debugging/) — often the step before refactoring when code is both broken and messy
+- [Commit Discipline](/auditable-changes/commit-discipline/) — keeping refactoring commits separate from feature commits so they're reviewable
+- [Agent File Lifecycle](/context-management/agent-file-lifecycle/) — the self-updating pattern for keeping AGENTS.md current after refactors

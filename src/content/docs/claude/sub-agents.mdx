@@ -1,0 +1,165 @@
+---
+title: Sub-agents and Orchestration
+description: How Claude Code spawns sub-agents to run tasks in parallel, the orchestrator pattern for complex multi-step work, and when multi-agent workflows are worth the setup.
+track: [backend, frontend]
+status: published
+order: 6
+---
+
+import Callout from '../../../components/Callout.astro';
+
+A single Claude Code session has one context window and runs one task at a time. For complex work — researching several things simultaneously, running independent tasks in parallel, or delegating deep investigation without polluting the main context — Claude Code can spawn sub-agents: separate Claude instances that work autonomously and report back.
+
+This is one of the most powerful (and most underused) capabilities in Claude Code.
+
+---
+
+## What sub-agents are
+
+When Claude Code spawns a sub-agent, it starts a new Claude instance with its own context, its own tools, and a specific task. The sub-agent works, finishes, and returns its result to the parent session. The parent session never sees all the intermediate steps — just the output.
+
+This matters for two reasons:
+
+**Parallelism.** Multiple sub-agents can run simultaneously on independent tasks. A parent session can ask three sub-agents to explore three different parts of the codebase at the same time and then synthesise the results.
+
+**Context isolation.** Exploratory work — reading many files, following many chains of code — consumes context quickly. Running that exploration in a sub-agent keeps the main session's context clean. The sub-agent does the deep work; the parent session keeps the high-level plan.
+
+---
+
+## The orchestrator pattern
+
+The orchestrator pattern has three elements:
+
+1. **Orchestrator** — the main Claude Code session that holds the plan and coordinates work
+2. **Sub-agents** — specialised instances spawned for specific tasks
+3. **Synthesis** — the orchestrator reads sub-agent results and decides next steps
+
+**Example: adding a feature that touches multiple services**
+
+```
+Orchestrator session:
+
+We need to add order cancellation to the system. This touches the
+order service, the payment service (refund), the email service
+(notification), and the frontend order detail page.
+
+Spawn sub-agents to explore each area:
+1. Read OrderService.cs and its tests. Summarise: how orders are
+   currently cancelled (if at all), what validation exists, and
+   what would need to change.
+2. Read PaymentService.cs and its tests. Summarise: how refunds
+   are processed, what states they can be in, and any constraints.
+3. Read the frontend OrderDetail component. Summarise: current
+   UI state for order status, and where a Cancel button would fit.
+
+Run these in parallel. When all three are done, present a
+consolidated summary and a proposed implementation plan.
+```
+
+The orchestrator reads the three summaries, spots the dependencies (payment refund must succeed before order is marked cancelled), and plans the implementation in the right order.
+
+---
+
+## Triggering sub-agents in Claude Code
+
+You don't need special syntax — describe the parallel or delegated work and Claude Code will use its Agent tool to spawn sub-agents:
+
+```
+Explore these three areas in parallel and report back:
+
+1. How does authentication work in this codebase? Find the middleware,
+   the token validation, and any permission checks. Summarise the model.
+
+2. What test patterns does this codebase use? Find examples of unit tests,
+   integration tests, and any mocking patterns. Summarise the conventions.
+
+3. What does the AGENTS.md file say about this service? Read it and list
+   the key constraints I should know before making changes.
+```
+
+For tasks that must run sequentially (each depends on the previous), describe the dependency:
+
+```
+First, explore OrderService.cs and identify all the methods that
+modify order state. Once you have that list, check which of those
+methods have corresponding unit tests. Report both findings.
+```
+
+---
+
+## Sub-agents for deep research without polluting context
+
+Long exploration sessions — reading many files, following inheritance chains, understanding how a large system fits together — are useful but expensive. The exploration context is full of intermediate steps you don't need once you have the answer.
+
+The pattern: use a sub-agent to do the exploration, get the summary, then work with the summary in the main session.
+
+```
+Spawn an exploration agent:
+
+Read every file in the /src/Services/ directory. For each service, note:
+- What it owns and what it depends on
+- Any obvious patterns it follows or breaks
+- Any files that look like they need refactoring
+
+Produce a brief structured summary. Don't include file contents —
+just the summary.
+```
+
+The main session gets a clean summary, not 40 files of context.
+
+---
+
+## Parallel test generation
+
+A practical use case that maps well to sub-agents:
+
+```
+I need tests for OrderService, UserService, and PaymentService.
+These are independent — spawn a sub-agent for each service to
+generate tests in parallel. Each agent should:
+
+1. Read the service file
+2. Read any existing tests for that service
+3. Generate additional tests for uncovered cases
+4. Follow the patterns in the existing tests
+
+When all three are done, present a summary of what was generated
+and what cases were added.
+```
+
+Each agent focuses on one service, generates tests without interference from the others, and the results come back in parallel.
+
+---
+
+## When sub-agents are worth the setup
+
+**Worth it:**
+- Independent research tasks that can run simultaneously
+- Exploration that would consume your main session's context
+- Generating similar content across multiple parallel files (tests, docs, configs)
+- Tasks where you want a clean result without the working steps
+
+**Not worth it:**
+- Tasks that depend tightly on each other (just do them sequentially)
+- Simple tasks — spawning a sub-agent has overhead
+- Tasks where you need to see the intermediate steps to verify correctness
+
+<Callout type="tip">
+  The clearest signal to use a sub-agent: you're about to say "first read all of X, then summarise it for me." That's exactly what a sub-agent is for — the read-and-summarise step happens in the sub-agent, and you get the summary without the context cost.
+</Callout>
+
+---
+
+## CLAUDE.md and sub-agent context
+
+Sub-agents automatically read the `CLAUDE.md` in the directory where they run. If your sub-agents need specific context — "this is the payment service, here are the constraints" — keep that context in the service-level `CLAUDE.md` / `AGENTS.md`. The sub-agent will pick it up without you specifying it in the prompt.
+
+This is one of the reasons maintaining accurate context files is important: they benefit not just your interactive sessions but every sub-agent that runs in that directory.
+
+---
+
+## Next steps
+
+- [Custom Slash Commands](/claude/custom-commands/) — packaging recurring orchestration patterns as reusable commands
+- [Claude + GitHub Integration](/claude/github-integration/) — agents that operate autonomously on issues and PRs
+- [Agent File Lifecycle](/context-management/agent-file-lifecycle/) — keeping CLAUDE.md accurate so sub-agents get the right context

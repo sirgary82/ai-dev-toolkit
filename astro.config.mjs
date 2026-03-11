@@ -84,6 +84,8 @@ export default defineConfig({
 						{ label: 'Agent File Lifecycle', slug: 'context-management/agent-file-lifecycle' },
 						{ label: 'Large Repo Strategies', slug: 'context-management/large-repo-strategies' },
 						{ label: 'MCP for Repo Context', slug: 'context-management/mcp-repo-context' },
+						{ label: 'Essential MCPs for Development', slug: 'context-management/essential-mcps' },
+						{ label: 'Figma MCP for Design-to-Code', slug: 'context-management/figma-mcp' },
 					],
 				},
 				{
@@ -94,6 +96,9 @@ export default defineConfig({
 						{ label: 'Claude Code', slug: 'claude/claude-code' },
 						{ label: 'Best Practices for Coding', slug: 'claude/best-practices' },
 						{ label: 'Claude Code Tips & Tricks', slug: 'claude/claude-code-tips' },
+						{ label: 'Sub-agents & Orchestration', slug: 'claude/sub-agents' },
+						{ label: 'Custom Slash Commands', slug: 'claude/custom-commands' },
+						{ label: 'Claude + GitHub Integration', slug: 'claude/github-integration' },
 					],
 				},
 				{
@@ -122,6 +127,48 @@ export default defineConfig({
 					items: [
 						{ label: 'Incremental Mindset', slug: 'auditable-changes/incremental-mindset' },
 						{ label: 'Commit Discipline', slug: 'auditable-changes/commit-discipline' },
+					],
+				},
+				{
+					label: 'Testing with AI',
+					items: [
+						{ label: 'AI-Assisted Testing', slug: 'testing/ai-assisted-testing' },
+						{ label: 'TDD with AI', slug: 'testing/tdd-with-ai' },
+						{ label: 'Testing AI-Generated Code', slug: 'testing/testing-ai-generated-code' },
+					],
+				},
+				{
+					label: 'CI/CD',
+					items: [
+						{ label: 'AI for Pipeline Configuration', slug: 'cicd/ai-for-pipeline-config' },
+						{ label: 'PR Quality Gates', slug: 'cicd/pr-quality-gates' },
+						{ label: 'Dependency Upgrades', slug: 'cicd/dependency-upgrades' },
+					],
+				},
+				{
+					label: 'Security',
+					items: [
+						{ label: 'Reviewing AI-Generated Code', slug: 'security/reviewing-ai-generated-code' },
+						{ label: 'Keeping Secrets Out of Prompts', slug: 'security/keeping-secrets-out' },
+					],
+				},
+				{
+					label: 'Debugging',
+					items: [
+						{ label: 'AI-Assisted Debugging', slug: 'debugging/ai-assisted-debugging' },
+					],
+				},
+				{
+					label: 'Refactoring',
+					items: [
+						{ label: 'AI-Assisted Refactoring', slug: 'refactoring/ai-assisted-refactoring' },
+					],
+				},
+				{
+					label: 'Prompt Library',
+					items: [
+						{ label: '.NET Prompts', slug: 'prompts/prompt-library-dotnet' },
+						{ label: 'React Prompts', slug: 'prompts/prompt-library-react' },
 					],
 				},
 			],

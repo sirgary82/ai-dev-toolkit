@@ -1,0 +1,212 @@
+---
+title: Prompt Library — .NET
+description: Copy-paste prompts for .NET / ASP.NET Core developers, organised by task. Each prompt includes the context you need to provide and what to expect.
+track: [backend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These prompts are starting points, not magic spells. Each one works because it includes the right context — the file references, the constraints, the pattern to follow. Copy the prompt, fill in the specifics, include the referenced files.
+
+---
+
+## Adding a new API endpoint
+
+```
+Add a POST endpoint to @OrdersController.cs for cancelling an order.
+
+Requirements:
+- Route: POST /api/orders/{orderId}/cancel
+- Accept a CancellationRequest body with a Reason property
+- Call OrderService.CancelAsync (not yet implemented — you'll need to add it)
+- Return 204 No Content on success, 404 if order not found, 409 if already cancelled
+- Follow the same pattern as the existing endpoints in the controller
+```
+
+**What to include:** the controller file, the service file, and if it exists, a DTO file so AI matches the naming conventions.
+
+---
+
+## Writing a repository method
+
+```
+Add a method to @OrderRepository.cs that retrieves all orders for a
+given customer placed between two dates, sorted by PlacedAt descending.
+
+Method signature: Task<IReadOnlyList<Order>> GetByCustomerAndDateRangeAsync(
+    Guid customerId, DateTimeOffset from, DateTimeOffset to)
+
+Use the same EF Core patterns as the existing methods in the file.
+Include the interface definition in IOrderRepository.cs.
+@IOrderRepository.cs
+```
+
+---
+
+## Generating unit tests
+
+```
+Write unit tests for the CancelAsync method in @OrderService.cs.
+
+Use xUnit and Moq, following the patterns in @OrderServiceTests.cs.
+Cover:
+- Happy path: order is cancelled successfully
+- Order not found: should throw NotFoundException
+- Order already cancelled: should throw InvalidOperationException
+- Any other cases you identify from reading the implementation
+
+Use the AAA pattern and descriptive test names.
+```
+
+---
+
+## Adding FluentValidation
+
+```
+Add a FluentValidation validator for CreateOrderRequest.
+
+@CreateOrderRequest.cs
+
+Rules:
+- CustomerId: required, must be a non-empty Guid
+- Items: required, at least one item
+- Each item: ProductId required, Quantity between 1 and 100
+- ShippingAddress: required, all fields required
+
+Register the validator in @Program.cs following the existing registration pattern.
+```
+
+---
+
+## Adding middleware
+
+```
+Add request logging middleware to this ASP.NET Core application.
+
+Requirements:
+- Log the HTTP method, path, status code, and duration for every request
+- Use the existing ILogger<T> pattern — don't introduce a new logging library
+- Log at Information level for 2xx/3xx, Warning for 4xx, Error for 5xx
+- Exclude health check endpoints from logging
+- Register in @Program.cs in the correct position in the pipeline
+
+@Program.cs
+```
+
+---
+
+## EF Core migration after model change
+
+```
+I've added a new ShippingAddress value object to the Order entity.
+@Order.cs @DataContext.cs
+
+Generate:
+1. The EF Core configuration for ShippingAddress (owned entity, mapped to columns with prefix "Shipping_")
+2. The migration class (I'll run dotnet ef migrations add myself, but show me what the Up() and Down() methods should contain so I can verify the generated migration is correct)
+
+Follow the existing entity configuration pattern in @OrderConfiguration.cs
+```
+
+---
+
+## Reviewing for security issues
+
+```
+Review this controller and service for security issues.
+
+Context: this endpoint is called by authenticated users. Each user
+should only be able to access and modify their own orders. The
+current user's ID is available via User.GetUserId() (an extension method).
+
+@OrdersController.cs @OrderService.cs
+
+Check specifically for:
+- Missing authorisation checks (can one user access another user's data?)
+- Input validation gaps
+- Sensitive data in responses that shouldn't be there
+- Any SQL or injection risks
+```
+
+---
+
+## Diagnosing a performance issue
+
+```
+This repository method is slow in production. It runs in under 10ms
+in development but takes 2-3 seconds with production data volumes.
+
+@OrderRepository.GetDashboardSummaryAsync
+
+Questions:
+1. What SQL will EF Core generate for this query?
+2. What indexes would improve this query's performance?
+3. Are there any N+1 query risks in this method?
+4. Could this be rewritten as a more efficient query?
+```
+
+---
+
+## Explaining inherited code
+
+```
+Explain what this class does, how it fits into the system, and
+what I should know before modifying it.
+
+@EventPublisher.cs
+
+Specifically:
+- What is its responsibility?
+- What are the main failure modes?
+- What would break if I changed the retry logic?
+- Is there anything here that looks unusual or worth questioning?
+```
+
+---
+
+## Migrating from one pattern to another
+
+```
+We're migrating from throwing exceptions for domain validation failures
+to returning Result<T>. @OrderService.PlaceOrderAsync is the reference
+implementation of the new pattern.
+
+Apply the same pattern to @UserService.RegisterAsync.
+
+The Result<T> type is defined in @Result.cs.
+Keep the same business logic — only change the error-handling mechanism.
+```
+
+---
+
+## Writing an ADR
+
+```
+We've decided to use MediatR for our CQRS implementation going forward.
+
+Write an Architecture Decision Record (ADR) for this decision.
+
+Context:
+- We evaluated MediatR vs a hand-rolled command dispatcher
+- MediatR won on: existing team familiarity, pipeline behaviour support, less boilerplate
+- Concerns noted: adds a dependency, slightly more indirection
+- Decision: adopt MediatR for all new command/query handlers; existing code migrated incrementally
+
+Format the ADR as a markdown file following the template in @docs/decisions/ADR-001.md
+```
+
+---
+
+<Callout type="tip">
+  The prompts that work consistently share one trait: they tell AI what pattern to follow by referencing an existing file, not by describing the pattern in words. `@ExistingFile.cs` is worth more than three paragraphs of description.
+</Callout>
+
+---
+
+## Next steps
+
+- [Prompt Library — React](/prompts/prompt-library-react/) — the equivalent reference for frontend work
+- [Prompt Engineering Basics](/context-management/prompt-engineering-basics/) — the principles behind why these prompts work
+- [Claude Code Tips & Tricks](/claude/claude-code-tips/) — the prompt refinement pattern for tasks not covered here

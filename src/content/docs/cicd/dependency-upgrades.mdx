@@ -1,0 +1,174 @@
+---
+title: Dependency Upgrades with AI
+description: Using Claude to assess migration impact before touching code, generating upgrade checklists from changelogs, and handling the NuGet and npm upgrade workflows.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Dependency upgrades are one of the most consistently underestimated tasks in software maintenance. The package bumps one major version, the changelog is long, and you don't know what will break until you try. AI makes this significantly more manageable — not by doing the upgrade automatically, but by helping you understand the impact before you start.
+
+---
+
+## The assessment prompt: before you touch anything
+
+The most valuable use of Claude for dependency upgrades is the pre-upgrade assessment. Before bumping a version number, give Claude the migration guide and ask it to scope the impact against your actual code.
+
+```
+We're upgrading [PackageName] from v4 to v5. Here is the migration guide:
+
+[paste the migration guide or changelog breaking changes section]
+
+Here is the code that uses this package:
+
+@OrderService.cs @PaymentService.cs @DataContext.cs
+
+What will break? What needs to change? Give me a checklist of
+required changes, ordered by complexity.
+```
+
+This takes three minutes. The alternative is bumping the version, running the build, reading twenty compiler errors, and then working out what they have in common.
+
+Claude will identify:
+- API methods that were renamed or removed
+- Constructor signature changes
+- Namespace changes
+- Behaviour changes that compile but produce different results at runtime (the dangerous ones)
+
+<Callout type="warning">
+  Behaviour changes that compile without errors are the most dangerous category. Ask specifically: "Are there any breaking changes that won't produce a compile error but will change runtime behaviour?"
+</Callout>
+
+---
+
+## NuGet upgrades (.NET)
+
+**Getting the migration guide:**
+For major NuGet packages, the migration guide is usually in the package's GitHub repo or docs site. For Microsoft packages (EF Core, ASP.NET Core, Azure SDK), it's at `learn.microsoft.com`.
+
+**Useful prompt pattern for EF Core migrations:**
+
+```
+We're upgrading from EF Core 7 to EF Core 8.
+
+Here is our DbContext and the relevant entity configurations:
+@DataContext.cs @OrderConfiguration.cs @UserConfiguration.cs
+
+What query behaviours change between EF Core 7 and 8 that could
+affect these models? Flag anything that could produce different
+SQL or different results without throwing an exception.
+```
+
+EF Core upgrades in particular have query translation changes that are silent at compile time but change what SQL gets generated. This prompt surfaces those before they reach production.
+
+**After the upgrade — asking Claude to verify:**
+
+```
+I've upgraded to EF Core 8 and the build passes. Review these
+queries against the EF Core 8 breaking changes list and tell me
+if any of them might now produce different SQL than in EF Core 7.
+@OrderRepository.cs @UserRepository.cs
+```
+
+---
+
+## npm upgrades (React / Node)
+
+**The `npm audit` starting point:**
+
+```bash
+npm audit
+npm outdated
+```
+
+Paste the output to Claude:
+
+```
+Here is the output of npm audit and npm outdated for our React project.
+Prioritise which upgrades to do first based on security severity and
+breaking change risk. For any major version bumps, what should I
+check before upgrading?
+```
+
+**For a specific major upgrade:**
+
+```
+We need to upgrade from React 17 to React 18. Here are our main
+component files:
+
+@App.tsx @UserProvider.tsx @OrderList.tsx
+
+What React 18 changes will require code modifications in these files?
+Focus on: concurrent mode changes, automatic batching effects,
+and any deprecated patterns we're using.
+```
+
+**Handling the `react-scripts` / tooling layer:**
+
+Tooling upgrades (Vite, webpack, babel) are often harder than library upgrades because they affect the build, not just the runtime. Ask:
+
+```
+We're migrating from Create React App (react-scripts 5) to Vite.
+Here is our current package.json and vite would be our new build tool.
+What do we need to change in our project setup, and what common
+CRA patterns don't work in Vite?
+@package.json
+```
+
+---
+
+## Working with Dependabot
+
+If you use Dependabot for automated dependency PRs, AI can help you process them faster.
+
+**When a Dependabot PR opens:**
+
+```
+Dependabot has opened a PR to upgrade [package] from [old] to [new].
+Here is the changelog for this version range:
+
+[paste changelog]
+
+Here is the code that uses this package:
+@RelevantFile.cs
+
+Is this a safe upgrade to merge? What should I test specifically?
+```
+
+For patch and minor version bumps of stable packages, this is usually quick — Claude confirms it's safe and suggests a smoke test. For major bumps, it becomes the assessment prompt from above.
+
+**Batching Dependabot PRs:**
+
+Dependabot creates one PR per package. When you have twenty waiting:
+
+```
+Here are twenty Dependabot PRs waiting to merge. Here are the
+package names and version ranges: [list]
+
+Group these by risk level: (1) safe to merge without review,
+(2) review the changelog, (3) requires testing. Explain your
+reasoning for the high-risk ones.
+```
+
+This doesn't replace reading the changelogs for the risky ones — it prioritises where to spend your time.
+
+---
+
+## The upgrade PR discipline
+
+When you complete an upgrade:
+
+1. **One package per PR** where feasible. Mixing upgrades makes regressions hard to isolate.
+2. **Include the test results** in the PR description — "build passes, all 147 tests pass."
+3. **Note any behaviour changes** you found, even if they didn't cause test failures.
+4. **Update AGENTS.md** if the upgrade changes any patterns the team should follow.
+
+---
+
+## Next steps
+
+- [AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/) — automating dependency checks in CI
+- [PR Quality Gates](/cicd/pr-quality-gates/) — making Dependabot PRs part of a managed process
+- [Testing AI-Generated Code](/testing/testing-ai-generated-code/) — the same rigour applies to upgrade validation

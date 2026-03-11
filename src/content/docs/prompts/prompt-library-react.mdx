@@ -1,0 +1,248 @@
+---
+title: Prompt Library — React
+description: Copy-paste prompts for React developers, organised by task. Each prompt includes the context you need to provide and what to expect.
+track: [frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+These prompts follow the same principle as the .NET library: include a reference file and tell AI what pattern to follow. The most effective React prompts include the component's prop types, a similar existing component to follow, and any relevant design system tokens.
+
+---
+
+## Building a new component
+
+```
+Build a ProductCard component.
+
+Props:
+- product: { id: string, name: string, price: number, imageUrl: string, inStock: boolean }
+- onAddToCart: (productId: string) => void
+
+Requirements:
+- Show the product image, name, and price
+- Show an "Add to cart" button, disabled when inStock is false
+- Follow the same structure and styling approach as @CategoryCard.tsx
+- Use the design system tokens from @src/styles/tokens.css for spacing and colour
+
+Export the component and its props type.
+```
+
+**What to include:** A similar existing component is the most valuable context. AI will match your naming conventions, your import style, and your CSS approach.
+
+---
+
+## Writing a custom hook
+
+```
+Extract the cart management logic from @CartPage.tsx into a custom hook
+called useCart.
+
+The hook should expose:
+- items: CartItem[]
+- addItem: (product: Product, quantity: number) => void
+- removeItem: (productId: string) => void
+- updateQuantity: (productId: string, quantity: number) => void
+- total: number (computed)
+- isEmpty: boolean (computed)
+
+Follow the pattern of @useWishlist.ts for the hook structure.
+Keep the localStorage persistence logic in the hook.
+```
+
+---
+
+## Writing tests for a component
+
+```
+Write tests for @ProductCard.tsx using React Testing Library and Vitest.
+
+Test:
+- Renders the product name, price, and image
+- "Add to cart" button is disabled when inStock is false
+- Clicking "Add to cart" calls onAddToCart with the correct product ID
+- Does not test implementation details (no direct state assertions)
+
+Follow the pattern in @CategoryCard.test.tsx for test structure and imports.
+```
+
+---
+
+## Writing tests for a custom hook
+
+```
+Write tests for @useCart.ts using @testing-library/react renderHook.
+
+Test:
+- Initial state: items is empty, total is 0
+- addItem: adds a new item to the cart
+- addItem: increases quantity if item already exists
+- removeItem: removes the item from the cart
+- updateQuantity: updates the quantity
+- total: recalculates correctly after each operation
+
+@useCart.ts
+```
+
+---
+
+## Adding a form with validation
+
+```
+Add a checkout form to @CheckoutPage.tsx.
+
+Fields: name (required), email (required, valid email), address (required),
+cardNumber (required, 16 digits), expiryDate (required, MM/YY format)
+
+Requirements:
+- Use React Hook Form for form state management (already installed)
+- Validate on blur, not on change
+- Show inline error messages below each field
+- Disable the submit button while submitting
+- Call onSubmit(formData) on valid submission
+
+Follow the form pattern in @LoginForm.tsx for error display and submit handling.
+```
+
+---
+
+## Adding a data-fetching hook
+
+```
+Create a useFetchProducts hook that fetches products from the API.
+
+@src/api/products.ts (contains the API functions)
+
+The hook should:
+- Accept an optional category filter
+- Return { products, isLoading, error }
+- Refetch when the category filter changes
+- Handle errors gracefully (don't throw — return them in the error field)
+
+Use the same pattern as @useOrders.ts.
+```
+
+---
+
+## Performance: fixing unnecessary re-renders
+
+```
+This component re-renders more than expected. Profile it and suggest fixes.
+
+@ProductList.tsx @ProductListItem.tsx
+
+The symptom: when the user types in the search box in the parent component,
+ProductList re-renders on every keystroke even though the products data
+hasn't changed.
+
+What is causing the re-renders and what is the correct fix?
+Don't apply the fix yet — explain the cause first.
+```
+
+---
+
+## Accessibility review
+
+```
+Review this component for accessibility issues.
+
+@NavigationMenu.tsx
+
+Check specifically:
+- Keyboard navigation (can all interactive elements be reached and activated with keyboard?)
+- Screen reader support (appropriate ARIA labels, roles, live regions)
+- Focus management (does focus move correctly when the menu opens/closes?)
+- Colour contrast (flag any text that might have insufficient contrast,
+  referencing the token values in @src/styles/tokens.css)
+
+List issues by severity: critical (blocks a user), moderate (degrades experience), minor.
+```
+
+---
+
+## Converting class components to functional
+
+```
+Convert this class component to a functional component with hooks.
+
+@LegacyProductDetails.tsx
+
+Requirements:
+- Use functional component with TypeScript
+- Replace lifecycle methods with appropriate hooks
+- Preserve all current behaviour exactly
+- Add prop types if they're missing
+- Follow the style of @ProductSummary.tsx
+```
+
+---
+
+## Explaining a complex component
+
+```
+Explain what this component does, how data flows through it, and
+what I should know before modifying it.
+
+@OrderTracker.tsx
+
+Specifically:
+- What does each piece of state represent?
+- What are the side effects and when do they run?
+- What props are required vs optional and what are their constraints?
+- Is there anything unusual here that might surprise me?
+```
+
+---
+
+## Adding Storybook stories
+
+```
+Write Storybook stories for @Button.tsx.
+
+Include stories for:
+- Default (primary variant)
+- Secondary variant
+- Destructive variant
+- Disabled state
+- Loading state
+- All size variants (sm, md, lg)
+
+Follow the story format in @Badge.stories.tsx.
+Export a default meta and named exports for each story.
+```
+
+---
+
+## Migrating to a different state management approach
+
+```
+This component manages complex state with useState and prop drilling.
+We want to migrate it to use Zustand.
+
+@ShoppingCart.tsx @CartItem.tsx @CartSummary.tsx
+
+Our existing Zustand store is at @src/store/index.ts.
+
+Plan the migration:
+1. What state should move to the store?
+2. What stays local to components?
+3. Which components need to be updated?
+
+Don't implement yet — describe the plan.
+```
+
+---
+
+<Callout type="tip">
+  For component prompts, open a similar existing component alongside the one you're building. Copilot reads your open tabs — having a reference component open gives it the pattern without you having to specify it.
+</Callout>
+
+---
+
+## Next steps
+
+- [Prompt Library — .NET](/prompts/prompt-library-dotnet/) — the equivalent reference for backend work
+- [Prompt Engineering Basics](/context-management/prompt-engineering-basics/) — the principles behind why these prompts work
+- [AI-Assisted Testing](/testing/ai-assisted-testing/) — the testing prompts that pair with the component prompts above

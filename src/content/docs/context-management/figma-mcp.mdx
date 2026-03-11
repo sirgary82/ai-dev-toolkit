@@ -1,0 +1,176 @@
+---
+title: Figma MCP for Design-to-Code
+description: Using Figma's MCP server to give Claude Code direct access to your designs — reading frames, extracting tokens, and generating components from source rather than screenshots.
+track: [frontend]
+status: published
+order: 10
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The traditional design-to-code workflow involves screenshots, Zeplin exports, or manual inspection of Figma properties. With Figma's MCP server, Claude Code can read your Figma files directly — querying frames, components, and design tokens without you copying anything. The result is generated code that reflects the actual design values, not a developer's approximation of them.
+
+---
+
+## What Figma MCP gives Claude Code
+
+When the Figma MCP server is connected, Claude Code can:
+
+- **Read frame contents** — layout, component structure, nesting, constraints
+- **Extract design tokens** — exact colour values, spacing, typography, border radius
+- **Inspect component properties** — variants, props, states defined in the Figma component
+- **Navigate the file tree** — find the specific frame or component you reference by name
+
+What it does not do automatically:
+
+- Generate code without your direction — you still drive the session
+- Know your codebase's component API — you need to provide that context
+- Handle complex animations or interactions — those require manual implementation
+
+---
+
+## Setting up Figma MCP
+
+**Step 1 — Get your Figma access token:**
+
+1. In Figma, go to **Account Settings → Security → Personal access tokens**
+2. Create a token with **File content** read scope
+3. Copy the token — you won't see it again
+
+**Step 2 — Add to Claude Code's MCP config:**
+
+Edit `~/.claude/claude_desktop_config.json` (or the equivalent for your setup):
+
+```json
+{
+  "mcpServers": {
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "@figma/mcp-server"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "your-token-here"
+      }
+    }
+  }
+}
+```
+
+**Step 3 — Get the Figma file URL:**
+
+Open the Figma file and copy the URL. The format is:
+`https://www.figma.com/design/FILE_KEY/File-Name`
+
+You'll give Claude the file key and frame name when asking it to read a design.
+
+<Callout type="note">
+  The Figma MCP server reads files you have access to in Figma. If a file is in a team workspace, ensure your Figma account has at least view access.
+</Callout>
+
+---
+
+## The design-to-code workflow
+
+**Step 1 — Name your frames clearly in Figma.**
+
+Claude Code navigates your Figma file by name. Frames named `Frame 47` are useless. Frames named `ProductCard/Default`, `ProductCard/OutOfStock`, `ProductCard/Loading` give Claude the structure it needs. Take five minutes to name the frames you'll be working with before starting a Claude session.
+
+**Step 2 — Start the session with the design reference:**
+
+```
+I want to build a React component for the ProductCard design.
+
+Figma file: [paste the file URL]
+Frame: ProductCard/Default
+
+Also read: ProductCard/OutOfStock and ProductCard/Loading for the variant states.
+
+We use Tailwind for styling. Our existing Card component is @src/components/Card.tsx —
+follow the same pattern for component structure and prop naming.
+```
+
+**Step 3 — Review what Claude read before it codes:**
+
+Ask Claude to summarise what it found before generating code:
+
+```
+Before writing any code, tell me what you found in the Figma frame:
+layout structure, colours, spacing values, text styles, and any
+component variants. I want to confirm you're reading the right frame.
+```
+
+This catches misreads early — wrong frame, outdated cached version, or a frame that's been reworked since you last opened it.
+
+**Step 4 — Generate with your design system:**
+
+```
+Now generate the ProductCard component. Use the exact colour values
+and spacing from the Figma frame. Map them to our Tailwind config
+tokens where they match; flag any values that don't have a matching
+token so I can decide whether to add one or use an arbitrary value.
+```
+
+---
+
+## Design tokens: getting exact values
+
+One of the best uses of Figma MCP is token extraction — getting the exact values before they're defined in code.
+
+```
+Read the Colours and Typography pages in this Figma file and extract
+all the design tokens. Format them as a Tailwind theme extension object
+that I can add to tailwind.config.js.
+
+Figma file: [URL]
+```
+
+Or for CSS custom properties:
+
+```
+Extract all spacing, colour, and typography values from the Design Tokens
+frame and format them as CSS custom properties following the naming
+convention in @src/styles/tokens.css.
+```
+
+This is faster than manually transcribing from Figma and eliminates the rounding errors and hex code typos that happen when copying values by hand.
+
+---
+
+## Tips for better results
+
+**Match your component naming between Figma and code.** If the Figma component is called `Button/Primary/Large`, name the code component `Button` with `variant="primary"` and `size="large"`. Consistent naming makes it easier to reference designs and easier for new developers to find the corresponding Figma component.
+
+**Include the viewport/breakpoint context.** Figma frames are often sized for one viewport. Tell Claude which breakpoint the frame represents:
+
+```
+This frame is the mobile (375px) version. We also need tablet (768px)
+and desktop (1280px). Read all three frames and implement the responsive
+behaviour with Tailwind breakpoints.
+```
+
+**Use Figma components, not flattened frames.** Frames that use Figma's component system (with variants and properties) give Claude much richer information than flattened designs. If a designer gave you a flattened frame, ask them to share the actual component.
+
+**Cross-reference with your design system.** After generating, ask Claude to audit the output against your existing component library:
+
+```
+Review the generated code. Which of the styles used are already
+in our design system components (@src/components/)? Replace any
+reimplemented styling with the existing components where possible.
+```
+
+---
+
+## When Figma MCP doesn't help
+
+**Animations and transitions.** Figma's prototyping layer doesn't translate to CSS transitions via MCP. Implement animations separately using the design spec as reference.
+
+**Complex interactive states.** Hover, focus, and active states in Figma are often in separate frames. You'll need to name and read each state frame individually.
+
+**Auto-layout edge cases.** Figma auto-layout and CSS flexbox are conceptually similar but not identical. Claude will get close; review the layout carefully at edge sizes.
+
+---
+
+## Next steps
+
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — the same MCP approach applied to your codebase documentation
+- [React Prompt Library](/prompts/prompt-library-react/) — the component generation prompts pair with Figma MCP context
+- [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) — using Claude for design implementation, Copilot for ongoing iteration

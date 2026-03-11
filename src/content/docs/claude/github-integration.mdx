@@ -1,0 +1,217 @@
+---
+title: Claude + GitHub Integration
+description: Connecting Claude to your GitHub repositories — the claude.ai GitHub integration for Projects, Claude Code with gh CLI for autonomous PR and issue work, and GitHub Actions triggered by @claude mentions.
+track: [backend, frontend]
+status: published
+order: 8
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Claude's GitHub integration comes in three distinct forms, each useful for different parts of the workflow. Understanding which one applies to what you're trying to do saves a lot of confusion.
+
+| Integration | Where | Best for |
+|---|---|---|
+| claude.ai GitHub connector | Browser | Context-rich conversations about your code |
+| Claude Code + `gh` CLI | Terminal | Autonomous PR/issue operations |
+| claude-code-action | GitHub Actions | Triggered by @claude mentions in issues and PRs |
+
+---
+
+## claude.ai GitHub connector (Projects)
+
+This integration connects your GitHub repository to a Claude Project in the browser UI. Once connected, Claude can read your repository's files as part of any conversation in that Project.
+
+**Setup:**
+
+1. Open [claude.ai](https://claude.ai) and create a new Project
+2. In the Project, go to **Project knowledge → Connect to GitHub**
+3. Authorise the GitHub app and select the repositories to connect
+4. Choose which branches Claude should read
+
+**What it gives you:**
+
+Once connected, every conversation in the Project has access to your codebase. You can ask questions like:
+
+```
+How does authentication work in this codebase?
+Where is the discount calculation logic?
+What would I need to change to add a new payment method?
+```
+
+Claude reads the relevant files and answers with actual references to your code — not generic advice. This is the equivalent of a very experienced developer who has already read your codebase sitting next to you.
+
+**Best uses:**
+
+- Onboarding to an unfamiliar codebase
+- Architecture questions that require reading multiple files
+- Planning work before starting a Claude Code session
+- Asking "where is X?" across a large repository
+
+<Callout type="tip">
+  Set up one Project per repository (or per service in a monorepo). Add the AGENTS.md / CLAUDE.md as Project knowledge in addition to the GitHub connector — this ensures Claude has your team's specific context on top of the raw code.
+</Callout>
+
+---
+
+## Claude Code + gh CLI for autonomous operations
+
+Claude Code can use the `gh` CLI to operate on GitHub autonomously — creating PRs, commenting on issues, managing branches, and querying repository state. This is the terminal-side integration, not a connector — it works because `gh` is an authenticated CLI tool Claude Code can invoke.
+
+**What you can ask Claude Code to do:**
+
+```
+Create a pull request for the changes in this branch. The PR should:
+- Title: "Add order cancellation endpoint"
+- Description: summarise the changes made in this session
+- Request review from the team lead
+- Add the "backend" label
+```
+
+```
+Look at the open issues labelled "bug". Find the ones assigned to me
+and give me a prioritised list based on the description and any
+comments — most impactful first.
+```
+
+```
+Check the CI status on the current branch. If any tests are failing,
+show me the failed test output and suggest what might be wrong.
+```
+
+**The autonomous PR workflow:**
+
+A typical Claude Code session that ends with a PR:
+
+1. Start session: "We're adding X. Read the relevant files and propose a plan."
+2. Review and approve the plan
+3. Implement: "Implement the plan we discussed."
+4. Review changes: "Show me a summary of everything you've changed."
+5. Create PR: "Create a PR. Write the description based on what we implemented. Include the test results."
+
+Claude Code writes the PR description better than most developers do manually — it has seen every file it touched and can summarise accurately.
+
+**Requirements:**
+
+- `gh` CLI installed and authenticated (`gh auth login`)
+- `gh` must be in Claude Code's allowed tools (it is by default in most configurations)
+
+---
+
+## claude-code-action: @claude in GitHub
+
+The `claude-code-action` GitHub Action lets Claude Code respond to `@claude` mentions in issues and pull requests. This is the closest thing to truly autonomous operation — Claude works in response to a human trigger, but without a developer running it locally.
+
+**Setup:**
+
+Add the workflow to your repository:
+
+```yaml
+# .github/workflows/claude.yml
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+**Using it:**
+
+Anyone with access to the repository can mention `@claude` in a comment:
+
+In an issue:
+```
+@claude Can you look at this and suggest an implementation approach?
+The issue is [description of the problem].
+```
+
+In a PR review:
+```
+@claude This function looks complicated. Can you explain what it does
+and whether there's a simpler approach?
+```
+
+On a specific line in a PR:
+```
+@claude This doesn't handle the case where the list is empty. Can you
+suggest a fix and explain why this would be a problem?
+```
+
+Claude Code will check out the repository, read the relevant context, and post a reply as a comment.
+
+**What it does well:**
+
+- Answering questions about code without a developer spinning up a session
+- Suggesting fixes on specific lines of a PR
+- Explaining a PR's changes to a reviewer who's unfamiliar with the area
+- Implementing small, well-scoped requests (add a guard clause, fix a typo, add a null check)
+
+**What requires human oversight:**
+
+For any change that would be committed to the repository, the action can create a branch and PR — but a human should review and merge. Never configure the action to push directly to main.
+
+<Callout type="warning">
+  Scope the `ANTHROPIC_API_KEY` secret carefully and monitor your API usage. Every `@claude` mention triggers a Claude API call. Repositories with high comment volume can generate significant API costs if not monitored.
+</Callout>
+
+---
+
+## Autonomous issue triage
+
+A practical use of `@claude` for teams with high issue volume:
+
+```yaml
+# Trigger Claude on every new issue
+on:
+  issues:
+    types: [opened]
+```
+
+Configure the prompt to triage automatically:
+
+```
+When a new issue is opened, read it and:
+1. Identify which part of the codebase it most likely relates to
+2. Suggest relevant labels from the repository's label list
+3. If the issue is a bug report, ask for any missing information
+   (error message, steps to reproduce, version)
+4. Post a comment acknowledging the issue and your assessment
+```
+
+This gives every issue submitter an immediate response and reduces the triage burden on the team.
+
+---
+
+## Combining the three integrations
+
+The integrations work best in sequence:
+
+1. **claude.ai + GitHub connector** — understand the problem area before starting work
+2. **Claude Code terminal session** — implement the solution
+3. **gh CLI in Claude Code** — create the PR with a generated description
+4. **claude-code-action** — reviewers can ask `@claude` questions about the PR during review
+
+The handoffs are smooth because Claude's context about the codebase accumulates across the workflow: the Project knows the codebase, the terminal session implements the change, and the PR action can explain what was done.
+
+---
+
+## Next steps
+
+- [Sub-agents and Orchestration](/claude/sub-agents/) — autonomous multi-agent workflows for complex tasks
+- [Custom Slash Commands](/claude/custom-commands/) — packaging the PR workflow as a reusable command
+- [PR Quality Gates](/cicd/pr-quality-gates/) — combining claude-code-action with automated pipeline checks

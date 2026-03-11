@@ -1,0 +1,177 @@
+---
+title: Reviewing AI-Generated Code for Security
+description: AI tools don't know your threat model, your trust boundaries, or what's sensitive in your domain. The security review checklist and the OWASP patterns AI most commonly introduces.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+AI coding tools have no security context. They don't know your authentication model, your authorisation rules, which data is sensitive, or what constitutes a privilege escalation in your domain. They know programming patterns — and programming patterns can be implemented securely or insecurely depending on context that only you have.
+
+This guide covers the specific security review layer for AI-generated code: the patterns AI most commonly gets wrong, the checklist to apply, and how to use AI itself as a reviewer.
+
+---
+
+## The patterns AI most commonly introduces
+
+These aren't theoretical — they're the categories of issue most frequently found in AI-generated code during security review.
+
+### SQL injection via string concatenation
+
+AI sometimes generates string-interpolated queries, especially when the prompt doesn't specify the query mechanism:
+
+```csharp
+// What AI might generate
+var query = $"SELECT * FROM Orders WHERE CustomerId = '{customerId}'";
+var results = await _context.Database.ExecuteSqlRawAsync(query);
+
+// What it should be
+var results = await _context.Orders
+    .Where(o => o.CustomerId == customerId)
+    .ToListAsync();
+```
+
+Always use parameterised queries or your ORM's query builder. If AI generates a raw SQL string with interpolated values, replace it.
+
+### Missing input validation at API boundaries
+
+AI generates controller methods that accept input and pass it directly to the service layer:
+
+```csharp
+// What AI might generate — no validation
+[HttpPost]
+public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+{
+    var order = await _orderService.CreateAsync(request);
+    return Ok(order);
+}
+```
+
+Validation belongs at the boundary. Add `[ApiController]` model validation, FluentValidation, or explicit null/range checks before the input reaches service code.
+
+### Insecure direct object references
+
+AI generates endpoints that accept an ID and fetch the object without checking ownership:
+
+```csharp
+// Missing authorisation check — any authenticated user can fetch any order
+[HttpGet("{orderId}")]
+public async Task<IActionResult> GetOrder(Guid orderId)
+{
+    var order = await _orderService.GetByIdAsync(orderId);
+    return Ok(order);
+}
+```
+
+Always verify the requesting user is authorised to access the specific resource, not just authenticated.
+
+### Overly broad CORS or permission configuration
+
+When generating startup configuration, AI tends toward permissive defaults:
+
+```csharp
+// Too permissive — what AI might generate for "quick setup"
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+```
+
+Scope CORS, permissions, and roles to the minimum required. AI defaults to "works everywhere" rather than "secure by default."
+
+### Sensitive data in logs
+
+AI-generated logging often includes full objects for debugging convenience:
+
+```csharp
+// Logs the entire request object, potentially including passwords or card numbers
+_logger.LogInformation("Processing payment request: {@PaymentRequest}", request);
+```
+
+Log identifiers, not data. Never log passwords, tokens, card numbers, or personally identifiable information.
+
+<Callout type="warning">
+  For endpoints that handle authentication, payment, or personally identifiable information — treat every line of AI-generated code as suspect until you've read it with security explicitly in mind. The code that looks most innocuous is often where the issue is.
+</Callout>
+
+---
+
+## The security review checklist
+
+Apply this to every AI-generated function that touches external input, authentication, or sensitive data:
+
+**Input handling:**
+- [ ] Is all external input validated before use?
+- [ ] Are database queries parameterised (no string concatenation with user input)?
+- [ ] Are file paths, URLs, and redirects validated against an allowlist?
+
+**Authorisation:**
+- [ ] Does every endpoint verify the user is authorised to access the specific resource?
+- [ ] Are there any paths that bypass authentication middleware?
+- [ ] Does the code expose more data than the caller should see?
+
+**Data handling:**
+- [ ] Is sensitive data (passwords, tokens, PII) excluded from logs?
+- [ ] Are secrets read from configuration, not hardcoded?
+- [ ] Is sensitive data encrypted at rest where required?
+
+**Error handling:**
+- [ ] Do error responses avoid leaking implementation details or stack traces?
+- [ ] Are exceptions caught at the right level and logged appropriately?
+
+**Dependencies:**
+- [ ] Does the code use a library for cryptography/hashing, rather than implementing it?
+- [ ] Is the library version current and not known-vulnerable?
+
+---
+
+## Using Claude as a security reviewer
+
+After generating code, use Claude in reviewer mode:
+
+```
+Review this code for security issues. Focus specifically on:
+- Input validation and injection risks
+- Authorisation checks (not just authentication)
+- Sensitive data handling and logging
+- Any assumptions about trust that might not hold
+
+Here is the context: this endpoint is called by authenticated users
+of our web application. Users should only be able to access their
+own orders.
+
+@OrdersController.cs
+```
+
+The context about your authorisation model is essential. Without it, Claude can't assess whether the authorisation checks are adequate for your specific requirements.
+
+Then, specifically for the hardest category:
+
+```
+Are there any cases where an authenticated user could access data
+belonging to another user through this code?
+```
+
+This prompts Claude to think specifically about insecure direct object reference patterns.
+
+---
+
+## What AI review misses
+
+AI security review has real limits. It cannot assess:
+
+- **Your specific threat model** — who are your attackers, what are they after
+- **Business logic vulnerabilities** — cases where the code is correct but the rules it enforces create a security issue
+- **Infrastructure-level issues** — network exposure, secret management, deployment configuration
+- **Second-order effects** — how this code interacts with another part of the system to create a vulnerability
+
+For anything handling payment, authentication, or regulated data — get a human with security expertise to review, in addition to using AI tools.
+
+---
+
+## Next steps
+
+- [Keeping Secrets Out of Prompts](/security/keeping-secrets-out/) — what not to paste into AI tools and how to sanitise before sharing
+- [Testing AI-Generated Code](/testing/testing-ai-generated-code/) — the general code review discipline that security review sits on top of
+- [PR Quality Gates](/cicd/pr-quality-gates/) — adding automated security checks to the pipeline
