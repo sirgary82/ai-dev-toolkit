@@ -1,5 +1,5 @@
 ---
-title: "Exercises: Claude & Advanced Workflows"
+title: 'Exercises: Claude & Advanced Workflows'
 description: Hands-on practice for Phase 4 — the two-pass design pattern, writing AGENTS.md, your first Claude Code session, and custom commands.
 track: [backend, frontend]
 status: published
@@ -17,6 +17,7 @@ Exercise 1 takes 20–30 minutes. Exercises 2–4 each take 30–60 minutes.
 ## Before you start
 
 You need:
+
 - Access to Claude (claude.ai web interface minimum; Claude Code for exercises 3 and 4)
 - A codebase you understand well — exercises are harder to evaluate on unfamiliar code
 - Read: [Best Practices for Coding with Claude](/claude/best-practices/), [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)
@@ -37,7 +38,7 @@ Open Claude at claude.ai. Do not paste any code yet.
 
 Describe the problem in plain language: what you're trying to achieve, what constraints you're working within, what you've already considered and rejected. Ask Claude to help you think through the approach.
 
-Push back on the first answer. Ask: *"What are the downsides of that approach?"* or *"Is there a simpler option I'm missing?"* Run this conversation until you have a concrete plan you're willing to commit to — not just the first thing Claude suggested.
+Push back on the first answer. Ask: _"What are the downsides of that approach?"_ or _"Is there a simpler option I'm missing?"_ Run this conversation until you have a concrete plan you're willing to commit to — not just the first thing Claude suggested.
 
 Write down the plan in a single paragraph before you close the tab.
 
@@ -48,7 +49,8 @@ Now implement the plan you wrote down. Whether you use Copilot inline or Claude 
 When you're done, compare the final implementation to the plan. Where did you deviate, and was that deviation right?
 
 <Callout type="tip">
-  The value of writing down the plan before implementing is that you can evaluate whether the implementation matches the intent. Without a written plan, it's easy to end up building whatever the AI suggested, not what you actually needed.
+  The value of writing down the plan before implementing is that you can evaluate whether the implementation matches the
+  intent. Without a written plan, it's easy to end up building whatever the AI suggested, not what you actually needed.
 </Callout>
 
 ---
@@ -104,6 +106,7 @@ After writing it, test it. Open Claude Code in the service directory and ask it 
 6. Run the tests. Do they pass? Is the new test actually testing the right thing?
 
 **What to evaluate:**
+
 - Did Claude Code stay within the directory you started in?
 - Did it respect the patterns in your AGENTS.md?
 - Did it hallucinate any method or class name that doesn't exist?
@@ -112,7 +115,8 @@ After writing it, test it. Open Claude Code in the service directory and ask it 
 If something went wrong, note exactly what broke and at which step. That's the learning.
 
 <Callout type="warning">
-  Never start Claude Code at the repo root for your first session. The amount of code visible is overwhelming, and Claude is more likely to make changes in files you didn't intend. Scope to one directory.
+  Never start Claude Code at the repo root for your first session. The amount of code visible is overwhelming, and
+  Claude is more likely to make changes in files you didn't intend. Scope to one directory.
 </Callout>
 
 ---
@@ -124,6 +128,7 @@ If something went wrong, note exactly what broke and at which step. That's the l
 **Reference:** [Custom Slash Commands](/claude/custom-commands/)
 
 Identify a prompt you've typed more than three times in Claude Code sessions. Good candidates:
+
 - Security review of a new method
 - Test generation for a class
 - PR description generation from a diff
@@ -132,6 +137,7 @@ Identify a prompt you've typed more than three times in Claude Code sessions. Go
 Create a `.claude/commands/` directory in your project (or home directory for global commands). Write a `.md` file for your command.
 
 The file should:
+
 - Have a clear, specific instruction set (not "review this code" but exactly what to check, in what order, with what output format)
 - Use `$ARGUMENTS` if the command needs a target to be specified at run time
 - Include an example of the expected output format if the format matters
@@ -145,6 +151,7 @@ A well-written command should produce output you'd be willing to include in a PR
 ## What good looks like
 
 After these exercises, you should be able to:
+
 - Run a two-pass design conversation and produce a written plan before opening an editor
 - Write an AGENTS.md that meaningfully constrains what Claude generates for a specific service
 - Run a scoped Claude Code session on a real task and review the output critically

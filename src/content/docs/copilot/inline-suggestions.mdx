@@ -24,6 +24,7 @@ The suggestion updates as you type more characters. Copilot is always watching f
 ## What Copilot is reading
 
 When generating a suggestion, Copilot considers:
+
 - The current file, especially the code directly above the cursor
 - Other open tabs in your editor (ordered by relevance)
 - Your comments and function signatures
@@ -31,7 +32,8 @@ When generating a suggestion, Copilot considers:
 It does **not** read your entire codebase. If a file is closed, Copilot doesn't see it.
 
 <Callout type="tip">
-  Open the files that are most relevant to what you're writing. A service class is much easier for Copilot to complete correctly if the interface and model it references are open in other tabs.
+  Open the files that are most relevant to what you're writing. A service class is much easier for Copilot to complete
+  correctly if the interface and model it references are open in other tabs.
 </Callout>
 
 ## Guiding suggestions with comments
@@ -47,9 +49,9 @@ public string GetFormattedName(User user)
 
 The more specific the comment, the better the result. Compare:
 
-| Comment | Quality |
-|---------|---------|
-| `// handle the order` | Vague — Copilot will guess |
+| Comment                                                                       | Quality                                    |
+| ----------------------------------------------------------------------------- | ------------------------------------------ |
+| `// handle the order`                                                         | Vague — Copilot will guess                 |
 | `// Calculate total after applying discount, return 0 if items list is empty` | Specific — Copilot has enough to work with |
 
 ## Guiding suggestions with function signatures
@@ -57,11 +59,7 @@ The more specific the comment, the better the result. Compare:
 A well-named function with typed parameters is itself a form of prompt:
 
 ```typescript
-async function fetchUserOrderHistory(
-  userId: string,
-  sinceDate: Date,
-  limit: number
-): Promise<Order[]>
+async function fetchUserOrderHistory(userId: string, sinceDate: Date, limit: number): Promise<Order[]>;
 ```
 
 Copilot can infer a lot from the parameter names, return type, and function name alone. Make these explicit before asking Copilot to fill in the body.

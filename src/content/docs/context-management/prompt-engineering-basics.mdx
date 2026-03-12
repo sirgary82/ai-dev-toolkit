@@ -22,6 +22,7 @@ A prompt that reliably produces useful output usually contains:
 You don't need all four every time, but adding each one narrows the solution space and reduces the chance of a generic answer.
 
 **Example:**
+
 > "In `OrderService`, add a public method called `GetExpiredOrders`. It should query `orderRepository` for orders where `ExpiresAt` is in the past and `Status` is not `Closed`. Return `IReadOnlyList<Order>`. Follow the same async pattern as `GetPendingOrders`."
 
 This has: task (add a method), context (service name, repository, field names), constraint (return type, async pattern).
@@ -29,6 +30,7 @@ This has: task (add a method), context (service name, repository, field names), 
 ## Pattern 1: Specify the output format
 
 Copilot will match the format you imply. If you want:
+
 - An async method: use `async` in your comment or existing method signature
 - An extension method: write the static class header first
 - A fluent builder: start the builder pattern and let Copilot continue
@@ -45,7 +47,8 @@ When you don't specify format, Copilot picks one. When you do, it follows yours.
 - "Update **only** the `GetById` method, not the class structure"
 
 <Callout type="tip">
-  Without "only", Copilot sometimes helpfully refactors things you didn't ask it to touch. If you want surgical edits, say so explicitly.
+  Without "only", Copilot sometimes helpfully refactors things you didn't ask it to touch. If you want surgical edits,
+  say so explicitly.
 </Callout>
 
 ## Pattern 3: Anchor to existing code
@@ -89,12 +92,12 @@ Copilot respects these boundaries reliably. Use negatives when you know there's 
 
 ## Common weak prompts and stronger alternatives
 
-| Weak | Stronger |
-|------|---------|
-| "Add validation" | "Validate that `email` matches RFC 5322 format; throw `ValidationException` with message 'Invalid email address' if it fails" |
-| "Fix this" | "This throws a NullReferenceException when `user.Address` is null. Add a null guard and return an empty `AddressDto` instead" |
-| "Write tests" | "Write three unit tests for `CalculateDiscount`: one where discount is 0%, one where it's 100%, and one where the input is negative (should throw)" |
-| "Make it async" | "Convert `GetUser` to async. Replace the synchronous `DbContext` call with its async equivalent. Keep the same return type and error handling." |
+| Weak             | Stronger                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Add validation" | "Validate that `email` matches RFC 5322 format; throw `ValidationException` with message 'Invalid email address' if it fails"                       |
+| "Fix this"       | "This throws a NullReferenceException when `user.Address` is null. Add a null guard and return an empty `AddressDto` instead"                       |
+| "Write tests"    | "Write three unit tests for `CalculateDiscount`: one where discount is 0%, one where it's 100%, and one where the input is negative (should throw)" |
+| "Make it async"  | "Convert `GetUser` to async. Replace the synchronous `DbContext` call with its async equivalent. Keep the same return type and error handling."     |
 
 ## Iterating on a prompt
 

@@ -10,11 +10,11 @@ import Callout from '../../../components/Callout.astro';
 
 Claude's GitHub integration comes in three distinct forms, each useful for different parts of the workflow. Understanding which one applies to what you're trying to do saves a lot of confusion.
 
-| Integration | Where | Best for |
-|---|---|---|
-| claude.ai GitHub connector | Browser | Context-rich conversations about your code |
-| Claude Code + `gh` CLI | Terminal | Autonomous PR/issue operations |
-| claude-code-action | GitHub Actions | Triggered by @claude mentions in issues and PRs |
+| Integration                | Where          | Best for                                        |
+| -------------------------- | -------------- | ----------------------------------------------- |
+| claude.ai GitHub connector | Browser        | Context-rich conversations about your code      |
+| Claude Code + `gh` CLI     | Terminal       | Autonomous PR/issue operations                  |
+| claude-code-action         | GitHub Actions | Triggered by @claude mentions in issues and PRs |
 
 ---
 
@@ -49,7 +49,8 @@ Claude reads the relevant files and answers with actual references to your code 
 - Asking "where is X?" across a large repository
 
 <Callout type="tip">
-  Set up one Project per repository (or per service in a monorepo). Add the AGENTS.md / CLAUDE.md as Project knowledge in addition to the GitHub connector — this ensures Claude has your team's specific context on top of the raw code.
+  Set up one Project per repository (or per service in a monorepo). Add the AGENTS.md / CLAUDE.md as Project knowledge
+  in addition to the GitHub connector — this ensures Claude has your team's specific context on top of the raw code.
 </Callout>
 
 ---
@@ -135,18 +136,21 @@ jobs:
 Anyone with access to the repository can mention `@claude` in a comment:
 
 In an issue:
+
 ```
 @claude Can you look at this and suggest an implementation approach?
 The issue is [description of the problem].
 ```
 
 In a PR review:
+
 ```
 @claude This function looks complicated. Can you explain what it does
 and whether there's a simpler approach?
 ```
 
 On a specific line in a PR:
+
 ```
 @claude This doesn't handle the case where the list is empty. Can you
 suggest a fix and explain why this would be a problem?
@@ -166,7 +170,8 @@ Claude Code will check out the repository, read the relevant context, and post a
 For any change that would be committed to the repository, the action can create a branch and PR — but a human should review and merge. Never configure the action to push directly to main.
 
 <Callout type="warning">
-  Scope the `ANTHROPIC_API_KEY` secret carefully and monitor your API usage. Every `@claude` mention triggers a Claude API call. Repositories with high comment volume can generate significant API costs if not monitored.
+  Scope the `ANTHROPIC_API_KEY` secret carefully and monitor your API usage. Every `@claude` mention triggers a Claude
+  API call. Repositories with high comment volume can generate significant API costs if not monitored.
 </Callout>
 
 ---

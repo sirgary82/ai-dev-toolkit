@@ -24,13 +24,15 @@ GitHub Copilot can be configured to automatically review every pull request when
 Alternatively, configure it at the organisation level so it applies to all repositories by default.
 
 Once enabled, Copilot will post a review comment on every PR. The review covers:
+
 - Logic errors and potential bugs
 - Missing error handling
 - Code style issues relative to the surrounding code
 - Security concerns (basic — not a replacement for dedicated SAST tools)
 
 <Callout type="note">
-  Copilot's PR review is a first pass, not a final approval. Its value is catching the obvious issues before human reviewers spend time on a PR — not replacing human review for correctness, intent, or architectural concerns.
+  Copilot's PR review is a first pass, not a final approval. Its value is catching the obvious issues before human
+  reviewers spend time on a PR — not replacing human review for correctness, intent, or architectural concerns.
 </Callout>
 
 ---
@@ -40,11 +42,13 @@ Once enabled, Copilot will post a review comment on every PR. The review covers:
 Not every AI finding should block a merge. The right model:
 
 **Require (block merge):**
+
 - Human approval from at least one reviewer (always)
 - CODEOWNERS approval when agent context files change (see [Team Agent File Management](/context-management/team-agent-file-management/))
 - Your existing required checks: build passing, tests passing, coverage threshold
 
 **Advisory (inform, don't block):**
+
 - Copilot PR review comments
 - Claude-generated review summaries (if you've added these via API)
 - Automated style suggestions

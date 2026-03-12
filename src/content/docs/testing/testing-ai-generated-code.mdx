@@ -8,7 +8,7 @@ order: 3
 
 import Callout from '../../../components/Callout.astro';
 
-There's a counterintuitive discipline that experienced AI tool users develop: AI-generated code requires *more* careful testing than code you wrote yourself, not less. The reasoning is straightforward. When you write code, you understand every decision you made. When you review AI-generated code, you're reading something that looks right but may have subtle errors in places you're not looking.
+There's a counterintuitive discipline that experienced AI tool users develop: AI-generated code requires _more_ careful testing than code you wrote yourself, not less. The reasoning is straightforward. When you write code, you understand every decision you made. When you review AI-generated code, you're reading something that looks right but may have subtle errors in places you're not looking.
 
 This guide is about the specific testing discipline for AI-generated code.
 
@@ -33,13 +33,14 @@ None of these are obvious from reading the code. Tests are the mechanism for fin
 
 Line coverage is a poor signal for AI-generated code. It's easy to generate code and tests together, hit 85% coverage, and still have a significant blind spot.
 
-The problem: when AI generates both the code and the tests in the same session, the tests tend to cover what the code does, not what the code *should* do. If the code has a bug, there's often a corresponding gap in the test — because AI didn't test the case it didn't implement.
+The problem: when AI generates both the code and the tests in the same session, the tests tend to cover what the code does, not what the code _should_ do. If the code has a bug, there's often a corresponding gap in the test — because AI didn't test the case it didn't implement.
 
 <Callout type="warning">
-  If you ask AI to "implement X and write tests for it" in a single prompt, you get implementation-shaped tests. The tests pass because they're testing the implementation. They don't catch the cases the implementation doesn't handle.
+  If you ask AI to "implement X and write tests for it" in a single prompt, you get implementation-shaped tests. The
+  tests pass because they're testing the implementation. They don't catch the cases the implementation doesn't handle.
 </Callout>
 
-The discipline: generate implementation and tests separately. Write (or generate) the tests from the specification — what the code *should* do. Then generate the implementation. Then run the tests against the implementation. Failures are where the implementation diverged from the spec.
+The discipline: generate implementation and tests separately. Write (or generate) the tests from the specification — what the code _should_ do. Then generate the implementation. Then run the tests against the implementation. Failures are where the implementation diverged from the spec.
 
 ---
 
@@ -85,17 +86,20 @@ This takes longer than just running coverage, but it gives you a much more hones
 Before accepting AI-generated code as reviewed, run through:
 
 **Logic:**
+
 - [ ] Does the code handle null / undefined inputs?
 - [ ] Does it handle empty collections?
 - [ ] Are boundary conditions (off-by-one, date boundaries, numeric limits) handled?
 - [ ] Are there any assumptions about input ordering or uniqueness?
 
 **Error handling:**
+
 - [ ] What happens when a dependency throws?
 - [ ] Are exceptions caught at the right level?
 - [ ] Are failure states surfaced to the caller in a useful form?
 
 **Tests:**
+
 - [ ] Is there a test for each business rule?
 - [ ] Do the tests assert the right thing, or just that no exception was thrown?
 - [ ] Would the tests fail if the implementation had the most obvious bug?

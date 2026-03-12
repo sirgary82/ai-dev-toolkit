@@ -27,7 +27,8 @@ The version staleness problem shows up in three ways:
 **Missing newer features.** You ask Claude how to do something complex. It generates a workaround that was the right approach in version 7 but is now a single method call in version 9. The code works but is unnecessary.
 
 <Callout type="tip">
-  The symptom is usually: AI-generated code that compiles cleanly but fails with unexpected method or type errors at runtime, or a code review comment that says "we're past version X, use Y instead."
+  The symptom is usually: AI-generated code that compiles cleanly but fails with unexpected method or type errors at
+  runtime, or a code review comment that says "we're past version X, use Y instead."
 </Callout>
 
 ---
@@ -51,6 +52,7 @@ Most teams will want both: MCP for interactive development where it's configured
 Microsoft released an official NuGet MCP server (preview, 2026) that gives AI tools direct access to NuGet registry data. When configured, Claude or Copilot can query the actual current version rather than relying on training data.
 
 Capabilities:
+
 - Returns the latest stable and pre-release version for any package on your configured feeds (nuget.org, Azure Artifacts, private feeds)
 - Uses NuGetSolver (developed with Microsoft Research) to resolve dependency conflicts automatically
 - Flags packages with known vulnerabilities and suggests the minimum secure version
@@ -84,6 +86,7 @@ claude mcp add -s user package-registry npx package-registry-mcp
 ```
 
 Or add to `claude_desktop_config.json`:
+
 ```json
 "package-registry": {
   "command": "npx",
@@ -166,6 +169,7 @@ For npm projects, `package.json` is already the canonical version source. The sa
 ## Dependencies
 
 Current package versions are in `package.json`. Key runtime dependencies:
+
 - Framework: React 18, TypeScript 5
 - Build: Vite 6
 - Testing: Vitest 2, Playwright 1.48
@@ -221,9 +225,7 @@ Renovate's `postUpgradeTasks` feature can run arbitrary scripts after a dependen
 // renovate.json
 {
   "postUpgradeTasks": {
-    "commands": [
-      "scripts/update-agents-versions.sh {{{depName}}} {{{newVersion}}}"
-    ],
+    "commands": ["scripts/update-agents-versions.sh {{{depName}}} {{{newVersion}}}"],
     "fileFilters": ["AGENTS.md", "CLAUDE.md"],
     "executionMode": "branch"
   }
@@ -233,7 +235,9 @@ Renovate's `postUpgradeTasks` feature can run arbitrary scripts after a dependen
 The `fileFilters` array controls which modified files are committed alongside the dependency bump. The script receives the package name and new version as arguments and updates the relevant section.
 
 <Callout type="note">
-  Dependabot cannot do this — it only updates recognized package manifest formats and does not support running scripts or updating arbitrary markdown files. If automatic AGENTS.md updates on dependency bumps is important to your team, Renovate is the right tool.
+  Dependabot cannot do this — it only updates recognized package manifest formats and does not support running scripts
+  or updating arbitrary markdown files. If automatic AGENTS.md updates on dependency bumps is important to your team,
+  Renovate is the right tool.
 </Callout>
 
 ---
@@ -263,7 +267,7 @@ name: Weekly package update
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Monday 8am UTC
+    - cron: '0 8 * * 1' # Monday 8am UTC
   workflow_dispatch:
 
 jobs:
@@ -276,7 +280,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: /update-packages
           max_turns: 50
-          allowed_tools: "Edit,Bash"
+          allowed_tools: 'Edit,Bash'
 ```
 
 This is ambitious but has been documented as working in production — Claude reads the outdated list, updates the manifest, fixes the compile errors that often come with EF Core or MediatR major bumps, runs tests, and files a PR with a human-readable summary.
@@ -288,18 +292,24 @@ This is ambitious but has been documented as working in production — Claude re
 If you implement nothing else from this guide, add this to your `AGENTS.md`:
 
 **For .NET with CPM:**
+
 ```markdown
 ## Dependencies
+
 All NuGet versions are in `Directory.Packages.props` at the solution root.
 Always read that file before suggesting package versions or additions.
 Target framework: .NET 9.
 ```
 
 **For .NET without CPM:**
+
 ```markdown
 ## Dependencies
+
 <!-- Update this section when upgrading major dependencies -->
+
 Key package versions (as of [date]):
+
 - EF Core: 9.0.x
 - MediatR: 12.x
 - FluentValidation: 11.x
@@ -309,11 +319,14 @@ Always check the .csproj files for exact versions before suggesting updates.
 ```
 
 **For npm:**
+
 ```markdown
 ## Dependencies
+
 Current versions are in `package.json`. Key runtime deps:
+
 - React: 18.x, TypeScript: 5.x, Vite: 6.x
-Always check package.json for exact versions.
+  Always check package.json for exact versions.
 ```
 
 The date comment in the manual version is important — it tells you (and the AI) when the section was last verified. When you see a date from six months ago, you know to update it.

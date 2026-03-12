@@ -55,6 +55,7 @@ Restart Claude Code after adding a new server.
 Create a token at GitHub → Settings → Developer settings → Personal access tokens. Scope: `repo`, `read:org`.
 
 **Best uses:**
+
 - "What are the open issues labelled `bug` assigned to me?"
 - "Summarise the comments on PR #247 — what's the main disagreement?"
 - "What did the CI failure on this branch say?"
@@ -84,6 +85,7 @@ Create a token at GitHub → Settings → Developer settings → Personal access
 Requires .NET 10 SDK. In Visual Studio 2026, it's built-in under the Copilot Chat Tools menu.
 
 **Best uses:**
+
 - "Add the latest stable version of MediatR to this project" — resolves against live registry, not training data
 - "Update all packages to the latest compatible versions"
 - "Which of our packages have known vulnerabilities and what version fixes them?"
@@ -101,6 +103,7 @@ claude mcp add -s user package-registry npx package-registry-mcp
 ```
 
 **Best uses:**
+
 - "What is the latest stable version of react-hook-form?"
 - "What versions of FluentValidation are available for .NET 9?"
 - "Are there any security advisories for these packages?" (exposes GitHub Security Advisories)
@@ -126,12 +129,14 @@ claude mcp add -s user package-registry npx package-registry-mcp
 List the directories you want Claude to be able to read.
 
 **Best uses:**
+
 - Reading log files from a running service without copying them
 - Accessing shared documentation that lives outside the repo
 - Reading configuration from multiple projects in a single session
 
 <Callout type="note">
-  Only add directories you're comfortable with Claude reading. Avoid adding directories that contain sensitive files (password managers, SSH keys, `.env` files).
+  Only add directories you're comfortable with Claude reading. Avoid adding directories that contain sensitive files
+  (password managers, SSH keys, `.env` files).
 </Callout>
 
 ---
@@ -152,13 +157,15 @@ List the directories you want Claude to be able to read.
 ```
 
 **Best uses:**
+
 - "What columns are in the orders table and what are their types?"
 - "Write a query to find all customers who haven't placed an order in 90 days"
 - "Why is this query slow? Here's the query — can you analyse it against the schema?"
 - "Generate an EF Core entity class for the products table"
 
 <Callout type="warning">
-  Connect to a development or staging database, not production. An MCP-connected Claude session can read data — ensure it connects only to environments appropriate for that.
+  Connect to a development or staging database, not production. An MCP-connected Claude session can read data — ensure
+  it connects only to environments appropriate for that.
 </Callout>
 
 ---
@@ -182,6 +189,7 @@ Get a free API key at [brave.com/search/api](https://brave.com/search/api).
 ```
 
 **Best uses:**
+
 - "Search for the EF Core 8 migration guide and summarise the breaking changes"
 - "Find the current syntax for this NuGet package — my code is using the v3 API"
 - "Look up this error message and tell me the most common cause"
@@ -219,6 +227,7 @@ See the dedicated guide: [Figma MCP for Design-to-Code](/context-management/figm
 Requires creating a Slack app in your workspace with `channels:history` and `channels:read` scopes.
 
 **Best uses:**
+
 - "Find the Slack discussion where we decided to use Redis for session storage"
 - "Summarise what the team agreed about the API versioning approach in #backend this week"
 - "What was the context for the decision to deprecate the old auth endpoint?"
@@ -241,16 +250,18 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 const server = new Server({ name: 'internal-tools', version: '1.0.0' });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [{
-    name: 'get_service_docs',
-    description: 'Get the documentation for an internal service',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        service: { type: 'string', description: 'Service name' }
-      }
-    }
-  }]
+  tools: [
+    {
+      name: 'get_service_docs',
+      description: 'Get the documentation for an internal service',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          service: { type: 'string', description: 'Service name' },
+        },
+      },
+    },
+  ],
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {

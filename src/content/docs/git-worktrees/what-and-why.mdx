@@ -44,6 +44,7 @@ Each directory works independently. `npm install` in one doesn't affect the othe
 **AI coding tools are fastest when working on a focused, self-contained task.** When you use Copilot Agent Mode or Claude Code, the tool explores your codebase to understand the task, then makes changes.
 
 With worktrees:
+
 - You can run an agent on a speculative refactor in one worktree while doing regular work in another
 - If the agent's output is wrong or incomplete, you discard the worktree — no stash, no reset, no cleanup
 - You can compare the results of two different AI approaches by looking at two worktrees side by side
@@ -51,16 +52,17 @@ With worktrees:
 **The cost of experimentation drops to near zero.** A worktree is cheap to create and free to discard. This changes the risk calculus of trying speculative AI-generated approaches.
 
 <Callout type="tip">
-  Worktrees aren't exclusively an AI workflow tool — they're useful for any situation where you need to work on multiple things simultaneously. But they're particularly powerful when combined with agentic AI tools.
+  Worktrees aren't exclusively an AI workflow tool — they're useful for any situation where you need to work on multiple
+  things simultaneously. But they're particularly powerful when combined with agentic AI tools.
 </Callout>
 
 ## How worktrees compare to other approaches
 
-| Approach | Parallel branches | No stashing | Separate editor state | Cost to discard |
-|----------|-----------------|-------------|----------------------|-----------------|
-| Branch switching | No | No | No | Low |
-| Multiple clones | Yes | Yes | Yes | Medium (disk space) |
-| Worktrees | Yes | Yes | Yes | Minimal |
+| Approach         | Parallel branches | No stashing | Separate editor state | Cost to discard     |
+| ---------------- | ----------------- | ----------- | --------------------- | ------------------- |
+| Branch switching | No                | No          | No                    | Low                 |
+| Multiple clones  | Yes               | Yes         | Yes                   | Medium (disk space) |
+| Worktrees        | Yes               | Yes         | Yes                   | Minimal             |
 
 Multiple clones work, but they don't share history — pushing from a clone requires keeping it in sync manually. Worktrees share history, so pushing from any worktree works normally.
 

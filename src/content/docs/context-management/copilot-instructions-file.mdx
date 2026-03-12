@@ -17,7 +17,8 @@ But there's a trap: teams often turn this file into a documentation dump that gr
 `.github/copilot-instructions.md` is a Markdown file in your repository that Copilot Chat reads automatically as part of every context window. Whatever you write in it is available in every Copilot Chat and inline suggestion session — without you having to mention it.
 
 <Callout type="note">
-  As of March 2026, this file applies to Copilot Chat and Copilot Agent Mode in VSCode. Support across other Copilot surfaces continues to expand — check the GitHub Copilot documentation for the latest status.
+  As of March 2026, this file applies to Copilot Chat and Copilot Agent Mode in VSCode. Support across other Copilot
+  surfaces continues to expand — check the GitHub Copilot documentation for the latest status.
 </Callout>
 
 ## Creating the file
@@ -45,31 +46,37 @@ Here's an index-style file for a multi-service .NET repo:
 # Copilot Instructions
 
 ## Architecture
+
 - Microservices communicating via Azure Service Bus (events) and REST (sync queries).
 - Each service directory has an AGENTS.md with service-specific conventions.
   For the service you're working on, open and read its AGENTS.md first.
 
 ## Global naming
+
 - Services: {Domain}Service with interface I{Domain}Service
 - Repositories: {Entity}Repository with interface I{Entity}Repository
 - DTOs use the suffix Dto; Commands use the suffix Command
 
 ## Global rules
+
 - Constructor injection only — never service locator or static accessors
 - All data access through repository classes — no direct DbContext in services or handlers
 - Never throw for domain validation failures — use Result<T> or the existing exception pattern
 
 ## Testing
+
 - Framework: xUnit | Mocking: Moq | Integration: TestContainers
 - Test naming: MethodName_Scenario_ExpectedResult
 
 ## Context files (open these when working on the relevant service)
+
 - Architecture overview: /docs/architecture/overview.md
 - OrderService: /services/OrderService/AGENTS.md
 - UserService: /services/UserService/AGENTS.md
 - NotificationService: /services/NotificationService/AGENTS.md
 
 ## What to avoid
+
 - No raw SQL — use EF Core or Dapper through the repository layer
 - No HttpClient instantiation — use IHttpClientFactory
 - No `Console.Write` or `Debug.Write` — use ILogger<T>
@@ -102,6 +109,7 @@ In a multi-service or multi-module repository, each service directory gets its o
 Copilot Agent Mode reads these files when it explores the directory. Claude Code reads them automatically. The root `copilot-instructions.md` references them so developers know they exist.
 
 What goes in a service-level `AGENTS.md`:
+
 - **Service purpose** (2 sentences — what it does and what it doesn't do)
 - **Technology stack** — specific libraries and versions if they matter
 - **Key patterns** — the architecture decisions that govern this service
@@ -114,15 +122,15 @@ See the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/)
 
 ## What goes in the global file vs the service file
 
-| Concern | Global file | Service file |
-|---------|------------|-------------|
-| Constructor injection rule | ✓ | — |
-| xUnit + Moq test stack | ✓ | — |
-| Service Bus vs REST communication | ✓ | — |
-| Service-specific repository interface names | — | ✓ |
-| Domain exceptions specific to this service | — | ✓ |
-| Technology quirks for this service's DB | — | ✓ |
-| Link to this service's API contract | — | ✓ |
+| Concern                                     | Global file | Service file |
+| ------------------------------------------- | ----------- | ------------ |
+| Constructor injection rule                  | ✓           | —            |
+| xUnit + Moq test stack                      | ✓           | —            |
+| Service Bus vs REST communication           | ✓           | —            |
+| Service-specific repository interface names | —           | ✓            |
+| Domain exceptions specific to this service  | —           | ✓            |
+| Technology quirks for this service's DB     | —           | ✓            |
+| Link to this service's API contract         | —           | ✓            |
 
 If a rule applies everywhere, it belongs in the global file. If it's specific to one service's patterns or stack, it belongs in the service's `AGENTS.md`.
 
@@ -136,7 +144,9 @@ If a rule applies everywhere, it belongs in the global file. If it's specific to
 - **Outdated conventions.** A file that describes how code used to be structured is worse than no file. When a convention changes, update or remove the relevant entry in the same PR.
 
 <Callout type="tip">
-  Start with 5–8 high-signal global rules and one `AGENTS.md` for the service you're currently working in. Test whether Copilot follows them. Add more incrementally. An imperfect file that exists today is more useful than a perfect file that takes a week to write.
+  Start with 5–8 high-signal global rules and one `AGENTS.md` for the service you're currently working in. Test whether
+  Copilot follows them. Add more incrementally. An imperfect file that exists today is more useful than a perfect file
+  that takes a week to write.
 </Callout>
 
 ---

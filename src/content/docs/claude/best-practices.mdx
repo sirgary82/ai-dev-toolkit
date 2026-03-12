@@ -72,6 +72,7 @@ Instead of: "Write a method that validates email addresses."
 Try: "Write a method that validates email addresses, and explain the approach you chose and any edge cases it doesn't cover."
 
 The explanation tells you:
+
 - Whether Claude understood the requirement correctly
 - What the method won't catch (so you can decide if that matters)
 - Why it made the choices it made (so you can evaluate the design, not just the implementation)
@@ -83,6 +84,7 @@ This is different from Copilot, where the goal is usually just the code. Claude 
 Negative constraints are as important as positive ones. Claude will helpfully add things you didn't ask for unless you constrain it.
 
 **Effective negative constraints:**
+
 - "Refactor the null handling — do not change the public interface"
 - "Add error logging — do not modify the exception types already thrown"
 - "Implement the query — do not add caching at this stage"
@@ -91,7 +93,8 @@ Negative constraints are as important as positive ones. Claude will helpfully ad
 Without negative constraints, Claude may restructure your method, introduce a new abstraction, or "improve" adjacent code. Sometimes that's welcome; usually it's noise in the diff.
 
 <Callout type="tip">
-  The phrase "only change X" is one of the most effective constraints. "Only change the GetById method. Leave everything else as-is." This keeps the output surgical and easy to review.
+  The phrase "only change X" is one of the most effective constraints. "Only change the GetById method. Leave everything
+  else as-is." This keeps the output surgical and easy to review.
 </Callout>
 
 ## Use Projects for ongoing work on the same codebase
@@ -106,6 +109,7 @@ Each new Claude conversation starts with empty context. If you work with Claude 
 With a Project, your conventions are always present. You start each session by describing the specific task — you don't re-paste the context.
 
 **What to include in Project instructions:**
+
 - Technology stack
 - Key architectural rules (the same as your `AGENTS.md` root file)
 - Patterns in use (CQRS, repository pattern, etc.)
@@ -127,29 +131,29 @@ Claude is confident even when wrong. Specific things to check in every piece of 
 
 ## When to use Claude web vs Claude Code
 
-| Task | Best surface |
-|------|-------------|
-| Design discussion before implementation | Claude web (or Project) |
-| Explaining an unfamiliar codebase | Claude web |
-| Reviewing a PR or diff | Claude web |
-| Implementing a feature across multiple files | Claude Code |
-| Batch refactor across many files | Claude Code |
-| Quick question about a specific method | Copilot Chat |
-| Inline completion while writing | Copilot inline |
+| Task                                         | Best surface            |
+| -------------------------------------------- | ----------------------- |
+| Design discussion before implementation      | Claude web (or Project) |
+| Explaining an unfamiliar codebase            | Claude web              |
+| Reviewing a PR or diff                       | Claude web              |
+| Implementing a feature across multiple files | Claude Code             |
+| Batch refactor across many files             | Claude Code             |
+| Quick question about a specific method       | Copilot Chat            |
+| Inline completion while writing              | Copilot inline          |
 
 Simple heuristic: if your hands need to leave the keyboard to copy-paste files into a browser, Claude Code is probably more efficient. If you're having a design conversation that doesn't require the AI to edit files, the web interface is fine.
 
 ## Comparing Claude and Copilot for common tasks
 
-| Task | Claude | Copilot |
-|------|--------|---------|
-| Completing code as you type | — | Inline suggestions |
-| Explaining a whole service | Large context window, strong | Chat can miss context |
-| Design review before coding | Strong | Limited |
-| Multi-file refactor | Claude Code | Agent Mode |
-| Generating tests from implementation | Strong with full file | Good for adjacent tests |
-| Reviewing AI-generated code | Strong | Chat review |
-| Quick chat in editor | — | Copilot Chat |
+| Task                                 | Claude                       | Copilot                 |
+| ------------------------------------ | ---------------------------- | ----------------------- |
+| Completing code as you type          | —                            | Inline suggestions      |
+| Explaining a whole service           | Large context window, strong | Chat can miss context   |
+| Design review before coding          | Strong                       | Limited                 |
+| Multi-file refactor                  | Claude Code                  | Agent Mode              |
+| Generating tests from implementation | Strong with full file        | Good for adjacent tests |
+| Reviewing AI-generated code          | Strong                       | Chat review             |
+| Quick chat in editor                 | —                            | Copilot Chat            |
 
 See [Copilot + Claude Together](/multi-tool/copilot-plus-claude/) for how to use both in a single workflow without duplication.
 

@@ -40,17 +40,20 @@ Three options depending on your situation:
 Sign in with your Google account when prompted. Gets you the free tier: 60 req/min, 1,000 req/day, Gemini 2.5 models with 1M context window.
 
 **API key**
+
 ```bash
 export GEMINI_API_KEY="your-key-from-aistudio.google.com"
 gemini
 ```
 
 **Vertex AI (enterprise)**
+
 ```bash
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 export GOOGLE_GENAI_USE_VERTEXAI=true
 gemini
 ```
+
 For teams on Google Cloud infrastructure with compliance requirements.
 
 ---
@@ -84,14 +87,17 @@ Gemini CLI uses `GEMINI.md` as its default context file — the direct equivalen
 # GEMINI.md example
 
 ## Project
+
 React + TypeScript frontend. Node 20. Run `npm test` to verify changes.
 
 ## Conventions
+
 - Components live in src/components/, one file per component
 - Use named exports, never default exports
 - CSS modules only — no inline styles
 
 ## Important
+
 Never modify generated files in src/generated/. They are rebuilt by the pipeline.
 ```
 

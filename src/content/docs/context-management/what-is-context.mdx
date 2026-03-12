@@ -25,23 +25,28 @@ AI tools work the same way. The quality of your context determines the quality o
 Every AI model has a **context window** — a limit on how much text it can process at once. Think of it as working memory. Anything outside the window is invisible to the model.
 
 For Copilot's inline suggestions:
+
 - The current file (weighted toward what's near the cursor)
 - Other open tabs in your editor (roughly in order of relevance)
 - The contents of any `.github/copilot-instructions.md` file in your repo
 
 For Copilot Chat:
+
 - The conversation history (up to the session limit)
 - Any code you've selected or explicitly attached
 - `@workspace` context (if you ask for it — it indexes your project)
 
 **What's never in context automatically:**
+
 - Closed files
 - Files outside your workspace
 - Previous chat sessions
 - Tribal knowledge in your team's heads
 
 <Callout type="tip">
-  Open the files that are most relevant to what you're writing. A closed file is invisible. If Copilot is generating incorrect types or calling methods that don't exist, the first fix to try is opening the relevant interface or model file.
+  Open the files that are most relevant to what you're writing. A closed file is invisible. If Copilot is generating
+  incorrect types or calling methods that don't exist, the first fix to try is opening the relevant interface or model
+  file.
 </Callout>
 
 ## Why this matters for output quality
@@ -49,6 +54,7 @@ For Copilot Chat:
 Here's the same request with different amounts of context:
 
 **Low context:**
+
 ```
 // Add validation
 public void ProcessOrder(Order order)
@@ -58,6 +64,7 @@ public void ProcessOrder(Order order)
 Copilot sees: a method name and a type name. It has to guess what validation means in this codebase.
 
 **High context:**
+
 ```csharp
 // Validate that the order meets all requirements before processing:
 // - Order must have at least one item
@@ -102,6 +109,7 @@ This is more effective than trying to describe the pattern abstractly, because C
 "Build me an order management system" is too broad. The broader the request, the more Copilot has to invent from scratch. The more specific the request, the more it can reason from what it's already seen.
 
 Prefer:
+
 - "Add a method to `OrderRepository` that returns orders created in the last 30 days"
 - "Write a unit test for the discount calculation in `PricingService` — the test should cover zero discount, full discount, and invalid discount scenarios"
 

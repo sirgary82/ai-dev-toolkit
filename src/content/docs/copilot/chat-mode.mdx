@@ -12,11 +12,11 @@ Copilot Chat is a conversational interface inside VSCode. Unlike inline suggesti
 
 ## Opening Chat
 
-| Method | Shortcut |
-|--------|----------|
-| Chat sidebar panel | `Ctrl+Shift+I` |
-| Inline chat (in editor) | `Ctrl+I` |
-| Quick Chat (floating) | `Ctrl+Shift+Alt+L` |
+| Method                  | Shortcut           |
+| ----------------------- | ------------------ |
+| Chat sidebar panel      | `Ctrl+Shift+I`     |
+| Inline chat (in editor) | `Ctrl+I`           |
+| Quick Chat (floating)   | `Ctrl+Shift+Alt+L` |
 
 For most conversations, the sidebar panel works best. Use inline chat when you want to modify a specific selection without switching context.
 
@@ -36,14 +36,14 @@ For most conversations, the sidebar panel works best. Use inline chat when you w
 
 Type these at the start of a message to invoke specific modes:
 
-| Command | What it does |
-|---------|-------------|
-| `/explain` | Explain selected or pasted code |
-| `/fix` | Identify and fix a bug in selected code |
-| `/tests` | Generate unit tests for selected code |
-| `/doc` | Generate documentation comments |
+| Command     | What it does                               |
+| ----------- | ------------------------------------------ |
+| `/explain`  | Explain selected or pasted code            |
+| `/fix`      | Identify and fix a bug in selected code    |
+| `/tests`    | Generate unit tests for selected code      |
+| `/doc`      | Generate documentation comments            |
 | `/simplify` | Suggest a simpler version of selected code |
-| `/clear` | Start a new conversation |
+| `/clear`    | Start a new conversation                   |
 
 ## Referencing your code
 
@@ -54,7 +54,8 @@ Type these at the start of a message to invoke specific modes:
 **`#file`:** Type `#file` in the chat input to attach a specific file. Useful when the relevant file isn't currently open.
 
 <Callout type="tip">
-  Chat conversations have memory within a session. You can say "now add error handling to that" after a previous exchange, and Copilot will know what "that" refers to. Start a new chat (`/clear`) when switching to a different task.
+  Chat conversations have memory within a session. You can say "now add error handling to that" after a previous
+  exchange, and Copilot will know what "that" refers to. Start a new chat (`/clear`) when switching to a different task.
 </Callout>
 
 ## Inline chat (`Ctrl+I`)
@@ -63,7 +64,7 @@ Inline chat opens a prompt directly in the editor, overlaying your code. Use it 
 
 1. Select a block of code.
 2. Press `Ctrl+I`.
-3. Type your request: *"Refactor this to use async/await"* or *"Add null checks"*.
+3. Type your request: _"Refactor this to use async/await"_ or _"Add null checks"_.
 4. Copilot shows a diff. Accept or discard.
 
 This keeps you in the editor instead of switching to the sidebar.

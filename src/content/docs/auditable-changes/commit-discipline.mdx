@@ -15,6 +15,7 @@ The commit history is how your team will understand the change after it's merged
 [Conventional Commits](https://www.conventionalcommits.org) is a simple commit message format that makes history scannable and enables automated changelog generation.
 
 **Format:**
+
 ```
 <type>(<scope>): <description>
 
@@ -24,16 +25,17 @@ The commit history is how your team will understand the change after it's merged
 
 **Common types:**
 
-| Type | Use for |
-|------|---------|
-| `feat` | A new feature or behavior |
-| `fix` | A bug fix |
+| Type       | Use for                             |
+| ---------- | ----------------------------------- |
+| `feat`     | A new feature or behavior           |
+| `fix`      | A bug fix                           |
 | `refactor` | Code change with no behavior change |
-| `test` | Adding or updating tests |
-| `docs` | Documentation only |
-| `chore` | Build, config, dependency changes |
+| `test`     | Adding or updating tests            |
+| `docs`     | Documentation only                  |
+| `chore`    | Build, config, dependency changes   |
 
 **Examples:**
+
 ```
 feat(orders): add CalculateTotal with discount support
 fix(auth): handle null claims in token validator
@@ -42,7 +44,8 @@ test(pricing): add boundary cases for zero and negative discounts
 ```
 
 <Callout type="tip">
-  Copilot Chat can draft commit messages for you. After staging changes, ask: "Write a conventional commit message for these changes." Review it — don't accept blindly — but it's usually a good starting point.
+  Copilot Chat can draft commit messages for you. After staging changes, ask: "Write a conventional commit message for
+  these changes." Review it — don't accept blindly — but it's usually a good starting point.
 </Callout>
 
 ## Commit size: one logical change per commit
@@ -50,10 +53,12 @@ test(pricing): add boundary cases for zero and negative discounts
 A commit should answer the question: "what was the one thing changed here?"
 
 **Good:**
+
 - `feat(users): add GetByEmail method to UserRepository`
 - `test(users): add tests for GetByEmail null and not-found cases`
 
 **Not good:**
+
 - `feat: add a bunch of stuff to the user service including email lookup and also fixed that null bug and updated tests`
 
 The second one is harder to review, harder to revert specifically, and harder to understand six months from now.

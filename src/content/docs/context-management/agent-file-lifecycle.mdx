@@ -17,7 +17,10 @@ This guide covers the full lifecycle: starting from zero, daily maintenance disc
 ## Starting from zero: bootstrapping with `/init`
 
 <Callout type="note">
-  `/init` generates a `CLAUDE.md` file — Claude Code's native format. This is intentional: CLAUDE.md supports features AGENTS.md does not, including subdirectory hierarchies, `@import` directives, and auto-memory. If your team uses multiple AI tools and needs a cross-tool standard, you can rename the output to `AGENTS.md`, at the cost of losing those features. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full distinction.
+  `/init` generates a `CLAUDE.md` file — Claude Code's native format. This is intentional: CLAUDE.md supports features
+  AGENTS.md does not, including subdirectory hierarchies, `@import` directives, and auto-memory. If your team uses
+  multiple AI tools and needs a cross-tool standard, you can rename the output to `AGENTS.md`, at the cost of losing
+  those features. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full distinction.
 </Callout>
 
 When you introduce Claude Code to an existing codebase that has no `CLAUDE.md`, the right first step is `/init` — not writing the file from scratch yourself.
@@ -31,6 +34,7 @@ claude
 `/init` instructs Claude Code to scan the current directory, analyse the code structure, infer patterns and conventions, and generate a `CLAUDE.md` file. It reads your source files, configuration, test patterns, and dependency lists, then produces a structured context document.
 
 **What `/init` gets right:**
+
 - Technology stack (frameworks, libraries, language version)
 - Directory and project structure
 - Test patterns (framework, naming conventions it can observe)
@@ -38,7 +42,8 @@ claude
 - Common patterns it can detect from the code
 
 **What `/init` cannot know — and what you must add:**
-- *Why* a pattern exists (the reasoning behind a constraint)
+
+- _Why_ a pattern exists (the reasoning behind a constraint)
 - What the service is responsible for vs what it explicitly doesn't own
 - Constraints that prevent common AI mistakes ("do not add direct DbContext access")
 - Links to API contracts, architecture docs, and relevant ADRs
@@ -47,7 +52,9 @@ claude
 After running `/init`, treat the output as a strong first draft. Read the generated file, then spend 15–20 minutes adding the things only a human knows: the "why", the boundaries, the prohibitions, and the cross-references.
 
 <Callout type="tip">
-  Run `/init` inside a specific service directory, not the repo root. A root-level scan produces a high-level overview; a service-level scan produces the targeted, actionable context that makes AI tools effective. Run it separately for each service.
+  Run `/init` inside a specific service directory, not the repo root. A root-level scan produces a high-level overview;
+  a service-level scan produces the targeted, actionable context that makes AI tools effective. Run it separately for
+  each service.
 </Callout>
 
 ### Reviewing `/init` output before committing
@@ -69,14 +76,14 @@ Agent context files should be updated in response to specific events. If you're 
 
 **Triggers that require an immediate update in the same PR:**
 
-| Trigger | What to update |
-|---------|----------------|
-| Library replaced (e.g., AutoMapper → Mapster) | Remove old library, add new one and any pattern changes |
-| Pattern adopted (e.g., move to `Result<T>` returns) | Add the new pattern; note if old code is being migrated |
-| Pattern retired (e.g., stop using in-process caching) | Remove the instruction; add a "what not to do" if the old approach is tempting |
-| Service boundary changed (e.g., takes ownership of a new domain) | Update purpose statement and cross-service references |
-| New ADR accepted | Add a link to the ADR and a one-line summary of the decision |
-| Test framework or pattern changed | Update testing section |
+| Trigger                                                          | What to update                                                                 |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Library replaced (e.g., AutoMapper → Mapster)                    | Remove old library, add new one and any pattern changes                        |
+| Pattern adopted (e.g., move to `Result<T>` returns)              | Add the new pattern; note if old code is being migrated                        |
+| Pattern retired (e.g., stop using in-process caching)            | Remove the instruction; add a "what not to do" if the old approach is tempting |
+| Service boundary changed (e.g., takes ownership of a new domain) | Update purpose statement and cross-service references                          |
+| New ADR accepted                                                 | Add a link to the ADR and a one-line summary of the decision                   |
+| Test framework or pattern changed                                | Update testing section                                                         |
 
 **Triggers that are easy to miss:**
 
@@ -112,7 +119,8 @@ Update anything that's stale or missing.
 Claude Code will read the current file, compare it against the session's work, and produce a diff for your review. You approve or adjust — you're not outsourcing the decision, you're outsourcing the mechanical work of drafting the update.
 
 <Callout type="tip">
-  This is not about blind automation. You review every change Claude Code proposes to the AGENTS.md before accepting it. The value is that Claude Code spotted the pattern; you decide whether it's a convention worth documenting.
+  This is not about blind automation. You review every change Claude Code proposes to the AGENTS.md before accepting it.
+  The value is that Claude Code spotted the pattern; you decide whether it's a convention worth documenting.
 </Callout>
 
 ### Making self-updating a habit, not an afterthought
@@ -155,31 +163,38 @@ A well-structured root `CLAUDE.md` after reviewing `/init` output:
 # Repository Context
 
 ## Structure
+
 Microservices repo. Services live under /services/. Each has its own
 AGENTS.md with service-specific conventions.
 
 ## Tech stack
+
 - Backend: ASP.NET Core 8 (.NET services under /services/)
 - Frontend: React 18 (app under /web/)
 - Infrastructure: Bicep templates under /infra/
 - CI/CD: GitHub Actions under /.github/workflows/
 
 ## Global conventions
+
 [same as .github/copilot-instructions.md — keep in sync or reference it]
 
 ## Where to look
+
 - Architecture overview: /docs/architecture/overview.md
 - Service-specific context: /services/{ServiceName}/AGENTS.md
 - ADRs: /docs/decisions/
 
 ## Build and run
+
 - All services: docker-compose up
 - Single service: cd services/OrderService && dotnet run
 - Tests: dotnet test from service directory
 ```
 
 <Callout type="note">
-  The root `CLAUDE.md` and `.github/copilot-instructions.md` overlap in purpose. You can reference one from the other, or maintain them as parallel summaries. The key is that they don't contradict each other — if a global convention changes, update both.
+  The root `CLAUDE.md` and `.github/copilot-instructions.md` overlap in purpose. You can reference one from the other,
+  or maintain them as parallel summaries. The key is that they don't contradict each other — if a global convention
+  changes, update both.
 </Callout>
 
 ---

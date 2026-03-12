@@ -38,7 +38,8 @@ claude
 ```
 
 <Callout type="warning">
-  Claude Code has access to your filesystem and can run terminal commands. Always review what it plans to do before approving. Start with lower-stakes tasks to build familiarity with how it behaves before using it on critical code.
+  Claude Code has access to your filesystem and can run terminal commands. Always review what it plans to do before
+  approving. Start with lower-stakes tasks to build familiarity with how it behaves before using it on critical code.
 </Callout>
 
 ## The interaction model
@@ -61,7 +62,9 @@ Claude Code automatically reads `CLAUDE.md` in the repo root (and any `CLAUDE.md
 For a multi-service repo, `CLAUDE.md` at the root contains global conventions, and each service directory can have its own `CLAUDE.md` (or `AGENTS.md` — both are read) with service-specific context.
 
 <Callout type="tip">
-  The same content works for both `CLAUDE.md` and `AGENTS.md`. If you've already written `AGENTS.md` files per the [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide, Claude Code reads them as-is. No duplication needed.
+  The same content works for both `CLAUDE.md` and `AGENTS.md`. If you've already written `AGENTS.md` files per the [Repo
+  Documentation for AI Tools](/context-management/repo-docs-for-ai/) guide, Claude Code reads them as-is. No duplication
+  needed.
 </Callout>
 
 Root-level `CLAUDE.md` structure:
@@ -70,20 +73,24 @@ Root-level `CLAUDE.md` structure:
 # Project Context
 
 ## Architecture
+
 - Microservices communicating via Azure Service Bus and REST
 - Each service has its own AGENTS.md with service-specific context
 - Global naming and testing conventions below
 
 ## Global naming conventions
+
 - Services: {Domain}Service with interface I{Domain}Service
 - Repositories: {Entity}Repository with interface I{Entity}Repository
 - Commands: {Verb}{Entity}Command | Handlers: {Command}Handler
 
 ## Testing
+
 - xUnit + Moq for unit tests; TestContainers for integration tests
 - Test naming: MethodName_Scenario_ExpectedResult
 
 ## What never to do
+
 - No direct DbContext injection outside repository classes
 - No business logic in controllers
 - No synchronous HTTP calls — use HttpClientFactory
@@ -91,26 +98,28 @@ Root-level `CLAUDE.md` structure:
 
 ## Key commands
 
-| Command | What it does |
-|---------|-------------|
-| `/help` | List all available slash commands |
-| `/compact` | Compress conversation history to free up context space |
-| `/clear` | Start a fresh conversation |
-| `/cost` | Show token usage for the current session |
-| `@filename` | Reference a specific file in your message |
-| `#symbol` | Reference a symbol (function, class) by name |
+| Command     | What it does                                           |
+| ----------- | ------------------------------------------------------ |
+| `/help`     | List all available slash commands                      |
+| `/compact`  | Compress conversation history to free up context space |
+| `/clear`    | Start a fresh conversation                             |
+| `/cost`     | Show token usage for the current session               |
+| `@filename` | Reference a specific file in your message              |
+| `#symbol`   | Reference a symbol (function, class) by name           |
 
 ## A practical workflow: adding a new endpoint
 
 Here's how a typical Claude Code session looks for a backend developer adding a `GetOrderHistory` endpoint to a .NET Web API.
 
 **Start from the service directory:**
+
 ```bash
 cd services/OrderService
 claude
 ```
 
 **Describe the task with enough context:**
+
 ```
 Add a GET /orders/history endpoint for the authenticated user.
 It should return the last 50 orders sorted by creation date descending,

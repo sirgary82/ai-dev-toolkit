@@ -23,13 +23,15 @@ The simplest starting point. Create an account at claude.ai, start a conversatio
 For software development, a Project is how you avoid re-pasting your architecture overview, naming conventions, and technology choices in every session. Set it up once; reference it as needed.
 
 What to put in a Project's instructions:
+
 - The technology stack for the codebase you're working on
 - Key architectural rules (e.g., "all data access goes through repositories")
 - Naming conventions
 - Testing framework and patterns
 
 <Callout type="tip">
-  Create one Project per major codebase, not per feature. The Project context is shared across all conversations within it, so keep it at the level of "what's always true about this codebase" rather than the current task.
+  Create one Project per major codebase, not per feature. The Project context is shared across all conversations within
+  it, so keep it at the level of "what's always true about this codebase" rather than the current task.
 </Callout>
 
 ### 2. Claude Code — the agentic terminal tool
@@ -58,7 +60,7 @@ I'm working on a .NET 8 Web API. Here's my UserService:
 The GetByEmail method is returning null even when the user exists. The email comparison is case-sensitive. How should I fix this?
 ```
 
-3. Claude responds with an explanation and a code suggestion. Read both — the explanation tells you *why*, which lets you verify the fix makes sense for your codebase.
+3. Claude responds with an explanation and a code suggestion. Read both — the explanation tells you _why_, which lets you verify the fix makes sense for your codebase.
 
 4. Ask follow-up questions. The conversation has memory: "What if the email address contains unicode characters?" or "Can you write a test for this fix?"
 

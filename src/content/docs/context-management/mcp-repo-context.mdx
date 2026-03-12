@@ -9,7 +9,8 @@ order: 7
 import Callout from '../../../components/Callout.astro';
 import Badge from '../../../components/Badge.astro';
 
-<Badge type="updated" label="As of March 2026" /> MCP is an open protocol supported by Claude Code natively. Copilot's equivalent (Extensions) is in active development.
+<Badge type="updated" label="As of March 2026" /> MCP is an open protocol supported by Claude Code natively. Copilot's
+equivalent (Extensions) is in active development.
 
 The strategies in [Large Repo Strategies](/context-management/large-repo-strategies/) and [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) all rely on you — the developer — deciding what context to provide for each session. You open the right files, paste the relevant `AGENTS.md`, reference the architecture doc.
 
@@ -20,6 +21,7 @@ MCP (Model Context Protocol) shifts this: the AI agent queries your documentatio
 MCP is an open protocol that defines how AI tools (clients) communicate with external data sources (servers). The client — Claude Code — sends a request to a running MCP server. The server responds with data, executes a function, or exposes a tool the AI can call as part of its reasoning.
 
 The protocol is:
+
 - **Transport-agnostic** — servers can run locally via stdio or remotely over HTTP
 - **Language-agnostic** — the official SDKs are TypeScript and Python; the protocol itself is JSON-RPC
 - **Tool-centric** — servers expose named functions ("tools") that the AI can call with parameters
@@ -67,28 +69,32 @@ Claude Code has built-in MCP client support. Configure servers in `~/.claude/cla
 With this configuration, every Claude Code session has `repo-docs` available as a tool. Claude Code can call `repo-docs.get_service_docs("OrderService")` and receive the content of that service's architecture document.
 
 You can also start Claude Code with a specific MCP server for a session:
+
 ```bash
 claude --mcp-server repo-docs
 ```
 
 <Callout type="note">
-  MCP servers run as local processes. They start when Claude Code starts and stop when it stops. The server needs to be available at the path you configure — a simple relative path in the project works well for team setups where the server lives in the repo.
+  MCP servers run as local processes. They start when Claude Code starts and stop when it stops. The server needs to be
+  available at the path you configure — a simple relative path in the project works well for team setups where the
+  server lives in the repo.
 </Callout>
 
 ## What tools a repo docs server should expose
 
 For a multi-service backend, a practical MCP server exposes four to six tools:
 
-| Tool | Parameters | Returns |
-|------|-----------|---------|
-| `get_service_docs` | `service_name: string` | The service's AGENTS.md content |
-| `get_architecture_overview` | — | The top-level architecture overview |
-| `list_services` | — | All service names and one-line descriptions |
-| `get_adr` | `adr_id: string` | The full ADR text |
-| `list_adrs` | — | All ADRs with titles and status |
-| `get_api_contract` | `service_name: string` | The OpenAPI spec or API summary |
+| Tool                        | Parameters             | Returns                                     |
+| --------------------------- | ---------------------- | ------------------------------------------- |
+| `get_service_docs`          | `service_name: string` | The service's AGENTS.md content             |
+| `get_architecture_overview` | —                      | The top-level architecture overview         |
+| `list_services`             | —                      | All service names and one-line descriptions |
+| `get_adr`                   | `adr_id: string`       | The full ADR text                           |
+| `list_adrs`                 | —                      | All ADRs with titles and status             |
+| `get_api_contract`          | `service_name: string` | The OpenAPI spec or API summary             |
 
 This is enough to give Claude Code answers to the questions it needs during most agent sessions:
+
 - "What does `OrderService` do and what are its conventions?" → `get_service_docs`
 - "What other services does this interact with?" → `get_architecture_overview`
 - "Why are we using CQRS here?" → `list_adrs` then `get_adr("ADR-003")`
@@ -106,10 +112,7 @@ import { join } from 'path';
 
 const REPO_ROOT = process.env.REPO_ROOT ?? process.cwd();
 
-const server = new Server(
-  { name: 'repo-docs', version: '1.0.0' },
-  { capabilities: { tools: {} } }
-);
+const server = new Server({ name: 'repo-docs', version: '1.0.0' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler('tools/list', async () => ({
   tools: [
@@ -119,22 +122,22 @@ server.setRequestHandler('tools/list', async () => ({
       inputSchema: {
         type: 'object',
         properties: {
-          service_name: { type: 'string', description: 'Service directory name, e.g. OrderService' }
+          service_name: { type: 'string', description: 'Service directory name, e.g. OrderService' },
         },
-        required: ['service_name']
-      }
+        required: ['service_name'],
+      },
     },
     {
       name: 'list_services',
       description: 'List all services in the repo with brief descriptions',
-      inputSchema: { type: 'object', properties: {} }
+      inputSchema: { type: 'object', properties: {} },
     },
     {
       name: 'get_architecture_overview',
       description: 'Get the top-level architecture overview',
-      inputSchema: { type: 'object', properties: {} }
-    }
-  ]
+      inputSchema: { type: 'object', properties: {} },
+    },
+  ],
 }));
 
 server.setRequestHandler('tools/call', async (request) => {
@@ -149,8 +152,8 @@ server.setRequestHandler('tools/call', async (request) => {
   if (name === 'list_services') {
     const servicesDir = join(REPO_ROOT, 'services');
     const services = readdirSync(servicesDir, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name);
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
     return { content: [{ type: 'text', text: services.join('\n') }] };
   }
 
@@ -170,6 +173,7 @@ await server.connect(transport);
 Add this to your repo as `/mcp-server/index.ts` (with a compiled output or via `ts-node`), configure it in Claude Code's config, and every developer on the team can use it.
 
 **Dependencies:**
+
 ```bash
 npm install @modelcontextprotocol/sdk
 ```
@@ -202,7 +206,8 @@ For an MCP server to reliably serve the right content, the docs directory needs 
 The server maps `get_service_docs("OrderService")` to `services/OrderService/AGENTS.md`. Consistent naming means the mapping is predictable and the server code stays simple.
 
 <Callout type="tip">
-  Put the MCP server in the repo itself (e.g., `/mcp-server/`). This way, when the documentation updates, the server reflects it automatically. The server config in `~/.claude/claude_code_config.json` points to the repo-relative path.
+  Put the MCP server in the repo itself (e.g., `/mcp-server/`). This way, when the documentation updates, the server
+  reflects it automatically. The server config in `~/.claude/claude_code_config.json` points to the repo-relative path.
 </Callout>
 
 ## GitHub Copilot's equivalent — Extensions
@@ -216,6 +221,7 @@ A Copilot Extension can expose the same tools as an MCP server (get service docs
 ```
 
 The concepts are the same; the implementation differs:
+
 - MCP servers run locally, configured per developer
 - Copilot Extensions are published GitHub Apps, configured at the org or repo level
 

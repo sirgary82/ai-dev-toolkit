@@ -17,7 +17,8 @@ GitHub Copilot is an AI coding assistant that suggests code as you type and answ
 - An internet connection (Copilot sends context to GitHub's servers to generate suggestions)
 
 <Callout type="note">
-  Copilot processes your code on GitHub's infrastructure. Check your organization's data handling policy before using it on sensitive codebases.
+  Copilot processes your code on GitHub's infrastructure. Check your organization's data handling policy before using it
+  on sensitive codebases.
 </Callout>
 
 ## Step 1: Install the extension
@@ -56,7 +57,8 @@ Open any code file and start typing. Copilot generates inline suggestions shown 
 5. Press **Esc** to dismiss and keep typing on your own.
 
 <Callout type="tip">
-  Copilot suggestions are better when it has context. Open relevant files in other tabs — Copilot reads your open files when generating suggestions.
+  Copilot suggestions are better when it has context. Open relevant files in other tabs — Copilot reads your open files
+  when generating suggestions.
 </Callout>
 
 ## Step 4: Open GitHub Copilot Chat
@@ -64,9 +66,10 @@ Open any code file and start typing. Copilot generates inline suggestions shown 
 The Chat panel lets you ask questions, get explanations, and make broader requests in natural language.
 
 1. Press `Ctrl+Shift+I` to open the Copilot Chat panel (or click the chat icon in the Activity Bar).
-2. Try asking something like: *"Explain what this method does"* with a method selected, or *"What does the async keyword do in C#?"*
+2. Try asking something like: _"Explain what this method does"_ with a method selected, or _"What does the async keyword do in C#?"_
 
 Chat is particularly useful for:
+
 - Understanding unfamiliar code
 - Asking "why" questions about language features
 - Getting a second opinion before refactoring
@@ -75,23 +78,25 @@ Chat is particularly useful for:
 
 Open VSCode Settings (`Ctrl+,`) and search for **copilot** to review the defaults. A few settings worth knowing about:
 
-| Setting | Default | What it controls |
-|---------|---------|-----------------|
-| `github.copilot.editor.enableAutoCompletions` | `true` | Inline suggestions as you type |
-| `github.copilot.chat.localeOverride` | system | Language for chat responses |
-| `github.copilot.enable` | per-language | Disable Copilot for specific file types |
+| Setting                                       | Default      | What it controls                        |
+| --------------------------------------------- | ------------ | --------------------------------------- |
+| `github.copilot.editor.enableAutoCompletions` | `true`       | Inline suggestions as you type          |
+| `github.copilot.chat.localeOverride`          | system       | Language for chat responses             |
+| `github.copilot.enable`                       | per-language | Disable Copilot for specific file types |
 
 Most developers leave the defaults as-is to start.
 
 ## What Copilot is good at
 
 **Strengths:**
+
 - Completing repetitive patterns (loops, CRUD methods, boilerplate)
 - Translating intent expressed in comments into working code
 - Suggesting tests when the implementation is open
 - Explaining existing code in plain language
 
 **Limitations:**
+
 - Copilot doesn't know your business logic, domain rules, or organizational conventions unless you tell it
 - Suggestions can be confidently wrong — always review generated code before accepting
 - It works best with well-named variables, clear function signatures, and comments that explain intent

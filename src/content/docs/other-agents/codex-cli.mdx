@@ -10,7 +10,8 @@ import Callout from '../../../components/Callout.astro';
 Codex CLI is OpenAI's answer to terminal-native AI coding. It runs locally on your machine, reads your codebase, and can plan and execute multi-step coding tasks — creating files, running shell commands, and iterating on its own output. It is powered by OpenAI models (o3, o4-mini by default) and is fully open source under Apache 2.0.
 
 <Callout type="note">
-Codex CLI is the local terminal agent. OpenAI also has **Codex Web** at chatgpt.com/codex — a cloud-based agent that runs tasks asynchronously in isolated environments. They are different products. This page covers the CLI.
+  Codex CLI is the local terminal agent. OpenAI also has **Codex Web** at chatgpt.com/codex — a cloud-based agent that
+  runs tasks asynchronously in isolated environments. They are different products. This page covers the CLI.
 </Callout>
 
 ---
@@ -46,10 +47,10 @@ Codex reads your project files and executes tasks using a loop: plan → act →
 
 There are three approval modes:
 
-| Mode | What happens |
-|---|---|
-| `suggest` | Codex proposes changes, you apply them manually (default, safest) |
-| `auto-edit` | Codex edits files automatically, asks before running shell commands |
+| Mode        | What happens                                                            |
+| ----------- | ----------------------------------------------------------------------- |
+| `suggest`   | Codex proposes changes, you apply them manually (default, safest)       |
+| `auto-edit` | Codex edits files automatically, asks before running shell commands     |
 | `full-auto` | Codex runs everything autonomously — use in sandboxed environments only |
 
 Set the mode at launch:
@@ -74,14 +75,17 @@ Codex reads `AGENTS.md` natively. Place one at the root of your repository (or i
 # AGENTS.md example for Codex
 
 ## Project
+
 ASP.NET Core API + React frontend. All commands run from repo root.
 
 ## Conventions
+
 - New endpoints go in /src/Api/Controllers/
 - Use ResultPattern<T> for all service return values
 - Run `dotnet test` before considering a task done
 
 ## Off limits
+
 Do not modify migrations directly. Generate them with `dotnet ef migrations add`.
 ```
 

@@ -32,6 +32,7 @@ A command file is just a markdown prompt:
 # /review
 
 Review the following file for issues. Check for:
+
 - Security vulnerabilities (input validation, auth checks, injection risks)
 - Missing error handling
 - Performance concerns
@@ -87,6 +88,7 @@ from the code alone — I'll need to add those manually.
 ## Useful commands to create
 
 **Security review:**
+
 ```markdown
 # /security
 
@@ -101,6 +103,7 @@ and the recommended fix.
 ```
 
 **Explain an unfamiliar file:**
+
 ```markdown
 # /explain
 
@@ -111,6 +114,7 @@ any non-obvious decisions, and what I should know before modifying it.
 ```
 
 **PR prep:**
+
 ```markdown
 # /pr-prep
 
@@ -125,6 +129,7 @@ Changed files: $ARGUMENTS (leave blank to check git diff automatically)
 ```
 
 **Daily standup helper:**
+
 ```markdown
 # /standup
 
@@ -134,6 +139,7 @@ Group by theme, not by commit. Keep it under five bullet points.
 ```
 
 **Side question without derailing the current task (`/btw`):**
+
 ```markdown
 # /btw
 
@@ -174,24 +180,29 @@ Team-level commands live in the repo and every developer gets them when they pul
 
 Beyond custom commands, Claude Code has built-in skills — invoked the same way but built into the tool rather than stored as files.
 
-<CheatSheet sections={[
-  {
-    title: "Workflow Skills",
-    items: [
-      { key: "/clear", description: "Clear context and start fresh — use heavily between unrelated tasks" },
-      { key: "/compact", description: "Summarise and compress the current context without losing key info" },
-      { key: "/init", description: "Scan the codebase and generate a CLAUDE.md from scratch" },
-    ]
-  },
-  {
-    title: "User-Defined Skills",
-    items: [
-      { key: "/loop [interval] [command]", description: "Run a command on a recurring interval — e.g. /loop 5m /standup" },
-      { key: "/review", description: "If defined in .claude/commands/ — your custom review prompt" },
-      { key: "/test", description: "If defined in .claude/commands/ — your custom test generation prompt" },
-    ]
-  }
-]} />
+<CheatSheet
+  sections={[
+    {
+      title: 'Workflow Skills',
+      items: [
+        { key: '/clear', description: 'Clear context and start fresh — use heavily between unrelated tasks' },
+        { key: '/compact', description: 'Summarise and compress the current context without losing key info' },
+        { key: '/init', description: 'Scan the codebase and generate a CLAUDE.md from scratch' },
+      ],
+    },
+    {
+      title: 'User-Defined Skills',
+      items: [
+        {
+          key: '/loop [interval] [command]',
+          description: 'Run a command on a recurring interval — e.g. /loop 5m /standup',
+        },
+        { key: '/review', description: 'If defined in .claude/commands/ — your custom review prompt' },
+        { key: '/test', description: 'If defined in .claude/commands/ — your custom test generation prompt' },
+      ],
+    },
+  ]}
+/>
 
 ---
 
@@ -232,6 +243,7 @@ I want help writing a precise prompt for the following task:
 $ARGUMENTS
 
 Write the best possible prompt for this task. Include:
+
 - The specific context Claude needs
 - The exact output format expected
 - Any constraints or patterns to follow

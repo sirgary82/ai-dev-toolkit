@@ -28,7 +28,8 @@ git worktree add -b feature/new-thing ../project-new-thing main
 The first argument is the **path** for the new directory. The second is the **branch**.
 
 <Callout type="tip">
-  Keep worktrees as siblings to your main repo directory (e.g., `../project-feature-x`) rather than inside it. Putting them inside creates nested repos, which confuses tooling.
+  Keep worktrees as siblings to your main repo directory (e.g., `../project-feature-x`) rather than inside it. Putting
+  them inside creates nested repos, which confuses tooling.
 </Callout>
 
 ## Listing and removing worktrees
@@ -64,11 +65,13 @@ project-spike-y/         ← experimental spike (safe to discard)
 ## VSCode setup
 
 VSCode treats each worktree directory as an independent workspace. Each window has its own:
+
 - Open files and editor state
 - Terminal sessions
 - Source Control view (scoped to that directory's branch)
 
 **Opening a worktree:**
+
 ```bash
 code ../project-feature-x          # opens in current window
 code -n ../project-feature-x       # opens in a new window
@@ -78,10 +81,7 @@ code -n ../project-feature-x       # opens in a new window
 
 ```json
 {
-  "folders": [
-    { "path": "." },
-    { "path": "../project-feature-x", "name": "feature/x" }
-  ]
+  "folders": [{ "path": "." }, { "path": "../project-feature-x", "name": "feature/x" }]
 }
 ```
 
@@ -96,7 +96,8 @@ Each worktree directory is independent at the filesystem level. This means:
 - **.env files:** If you use a `.env` at the repo root, each worktree needs its own copy. Set this up once when creating the worktree.
 
 <Callout type="note">
-  If your project has a local database or running service, each worktree shares the same ports — you'll need to configure different ports if you want to run both simultaneously.
+  If your project has a local database or running service, each worktree shares the same ports — you'll need to
+  configure different ports if you want to run both simultaneously.
 </Callout>
 
 ## Useful shell aliases

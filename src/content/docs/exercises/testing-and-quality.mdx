@@ -1,5 +1,5 @@
 ---
-title: "Exercises: Testing, Security & CI/CD"
+title: 'Exercises: Testing, Security & CI/CD'
 description: Hands-on practice for Phases 5–7 — AI-assisted test scaffolding, security review of generated code, and CI/CD pipeline generation.
 track: [backend, frontend]
 status: published
@@ -17,6 +17,7 @@ Each exercise takes 20–40 minutes. They are independent — do them in any ord
 ## Before you start
 
 You need:
+
 - Claude (web or Code) and Copilot active
 - A codebase with existing tests (at least some) so you have patterns to match
 - Read: [AI-Assisted Testing](/testing/ai-assisted-testing/), [Reviewing AI-Generated Code for Security](/security/reviewing-ai-generated-code/), [AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/)
@@ -38,6 +39,7 @@ Read the generated output before running it.
 **Step 2 — Audit what was generated:**
 
 For each test, ask:
+
 - Does this test assert the correct outcome, or just the current behaviour?
 - Would this test fail if the method had a bug in the most likely place?
 - Is the mock setup realistic — does it match what the real dependency would actually return?
@@ -46,7 +48,7 @@ Mark any test you're not confident about.
 
 **Step 3 — Ask for missing cases:**
 
-Tell Claude: *"Here are the business rules this method must enforce: [list them]. What test cases are missing from the generated file?"*
+Tell Claude: _"Here are the business rules this method must enforce: [list them]. What test cases are missing from the generated file?"_
 
 Evaluate the suggestions. Add the ones that genuinely matter.
 
@@ -55,7 +57,8 @@ Evaluate the suggestions. Add the ones that genuinely matter.
 For the tests covering business rules, replace the AI-generated assertion with one you wrote. Confirm it fails when you introduce a deliberate bug (comment out a guard clause, change a comparison operator, return a wrong value). If the test passes with the bug, the assertion is too weak.
 
 <Callout type="warning">
-  A test suite that always passes — including when the code is wrong — is worse than no tests. It creates false confidence. The only assertion worth trusting is one you've seen fail.
+  A test suite that always passes — including when the code is wrong — is worse than no tests. It creates false
+  confidence. The only assertion worth trusting is one you've seen fail.
 </Callout>
 
 ---
@@ -76,7 +79,7 @@ Run through the checklist from the security guide manually. For each item, mark 
 - **Sensitive data:** Are secrets, tokens, or personally-identifying data logged or returned in error messages?
 - **Error handling:** Does the error response leak internal details — stack traces, file paths, SQL queries?
 
-After the manual review, paste the same code into Claude and ask: *"Review this code for common security issues. Be specific about which lines are problematic and why."*
+After the manual review, paste the same code into Claude and ask: _"Review this code for common security issues. Be specific about which lines are problematic and why."_
 
 Compare the two reviews. What did Claude catch that you missed? What did you catch that Claude missed or understated? What did Claude flag as a concern that isn't actually a risk in your context?
 
@@ -89,6 +92,7 @@ Compare the two reviews. What did Claude catch that you missed? What did you cat
 **Reference:** [AI for Pipeline Configuration](/cicd/ai-for-pipeline-config/)
 
 Describe your project's build and test requirements to Claude in plain language. Include:
+
 - The language and framework
 - What "build" means (compile, lint, bundle, etc.)
 - What "test" means (unit tests, integration tests, which ones are slow)
@@ -118,6 +122,7 @@ Make the changes needed to make it accurate. The goal isn't to generate a perfec
 Ask Copilot or Claude to generate something that involves an external library — a new test helper using your testing framework, a service that calls a third-party API, a utility using a package you know exists but don't use constantly.
 
 Specifically look for:
+
 - Method names you don't recognise — look them up in the official documentation before using them
 - Constructor signatures or parameter names that don't match the current version
 - Import or namespace paths that seem slightly off
@@ -132,6 +137,7 @@ If you find a hallucination: note what it was, how plausible it looked, and what
 ## What good looks like
 
 After these exercises, you should be able to:
+
 - Generate test scaffolding quickly and know which assertions to trust vs. rewrite
 - Run a security review pass on AI-generated code before it goes to PR
 - Draft and evaluate a CI/CD workflow without starting from scratch

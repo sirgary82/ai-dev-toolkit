@@ -17,11 +17,12 @@ A good request is one where you could verify the output correct within 5 minutes
 **Too broad:** "Build the authentication module"
 **Better:** "Add a `ValidateToken` method to `AuthService` that checks the JWT signature, expiry, and required claims. Return `ClaimsPrincipal` on success, throw `AuthenticationException` on failure."
 
-The broader request might produce *something*, but you won't be able to review it efficiently, and it will certainly miss conventions and requirements you haven't explicitly described.
+The broader request might produce _something_, but you won't be able to review it efficiently, and it will certainly miss conventions and requirements you haven't explicitly described.
 
 ## Scope to a method, not a feature
 
 The most reliable unit of work for AI-assisted coding is a **single method or function**. At that level:
+
 - Copilot has enough context to understand the signature, inputs, and expected output
 - You have something small enough to read carefully
 - If the output is wrong, you've lost seconds, not hours
@@ -33,7 +34,8 @@ When you have a multi-method feature to build, write it as a series of single-me
 One request, one responsibility. Not "add validation and logging and update the database" — but "add input validation to `CreateUser`. Throw `ValidationException` if email is empty or malformed."
 
 <Callout type="tip">
-  If your request contains more than one "and", consider splitting it. Each "and" is a separate concern, and combining them makes the output harder to verify.
+  If your request contains more than one "and", consider splitting it. Each "and" is a separate concern, and combining
+  them makes the output harder to verify.
 </Callout>
 
 ## Use existing code as the boundary
@@ -71,6 +73,7 @@ Copilot works best when it has a complete example to reason from. Your own code 
 ## Reviewing scoped output
 
 When the request is well-scoped, review is fast:
+
 - Does it have the right signature?
 - Does it handle the edge cases you mentioned?
 - Does it follow the patterns of the code around it?

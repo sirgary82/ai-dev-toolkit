@@ -11,7 +11,10 @@ import Callout from '../../../components/Callout.astro';
 A single developer maintaining `AGENTS.md` files has one challenge: keeping them current. A team of 10 has additional challenges: consensus on what they say, process for updating them, and accountability when they go stale. These are organisational problems as much as technical ones, and they have straightforward solutions if you address them explicitly.
 
 <Callout type="warning">
-  Context files that are wrong are actively harmful — they instruct AI tools to follow patterns that no longer exist, use libraries that were replaced, or avoid restrictions that were lifted. A missing file is a gap; an inaccurate file is misinformation. Teams that don't manage these files actively will find AI output drifts from their actual codebase over time.
+  Context files that are wrong are actively harmful — they instruct AI tools to follow patterns that no longer exist,
+  use libraries that were replaced, or avoid restrictions that were lifted. A missing file is a gap; an inaccurate file
+  is misinformation. Teams that don't manage these files actively will find AI output drifts from their actual codebase
+  over time.
 </Callout>
 
 ## Treat agent files as production configuration
@@ -58,6 +61,7 @@ The most effective team discipline is a single rule applied consistently:
 Not a follow-up PR. Not a "TODO: update the agent file." The same PR.
 
 This rule:
+
 - Keeps the files current automatically without requiring a separate maintenance process
 - Makes PRs self-documenting (the diff shows both the code change and the convention it establishes)
 - Surfaces disagreements about conventions at PR review time, not after merge
@@ -84,7 +88,9 @@ Add agent file updates as a checklist item in your PR template so it's impossibl
 The bolded item makes it a first-class concern, not an afterthought. Reviewers know to check whether the agent files needed updating when they see code that changes patterns.
 
 <Callout type="tip">
-  If a PR changes how a service handles errors, what library it uses, or how it communicates with other services — the AGENTS.md needs updating. If it's just a bug fix that doesn't affect patterns, it probably doesn't. The test: "would an AI working in this service need to know about this change?" If yes, update the file.
+  If a PR changes how a service handles errors, what library it uses, or how it communicates with other services — the
+  AGENTS.md needs updating. If it's just a bug fix that doesn't affect patterns, it probably doesn't. The test: "would
+  an AI working in this service need to know about this change?" If yes, update the file.
 </Callout>
 
 ## Proposing convention changes: discuss before committing
@@ -103,21 +109,22 @@ The process that avoids conflict:
 
 Some context is appropriate for the shared, committed files. Some is personal preference that shouldn't affect how other developers' AI tools behave.
 
-| Context type | Where it lives |
-|-------------|----------------|
-| Team naming conventions | `.github/copilot-instructions.md` or `AGENTS.md` |
-| Architectural patterns and constraints | `AGENTS.md` |
-| Testing frameworks and patterns | `.github/copilot-instructions.md` or `AGENTS.md` |
+| Context type                                     | Where it lives                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Team naming conventions                          | `.github/copilot-instructions.md` or `AGENTS.md`                                |
+| Architectural patterns and constraints           | `AGENTS.md`                                                                     |
+| Testing frameworks and patterns                  | `.github/copilot-instructions.md` or `AGENTS.md`                                |
 | Personal preferred response style ("be concise") | Personal `~/.claude/claude_code_config.json` or local `CLAUDE.md` not committed |
-| Personal keyboard shortcut preferences | Local tool settings |
-| Exploratory or experimental conventions | Not in committed files until agreed |
-| "Don't suggest X, I personally prefer Y" | Personal config |
+| Personal keyboard shortcut preferences           | Local tool settings                                                             |
+| Exploratory or experimental conventions          | Not in committed files until agreed                                             |
+| "Don't suggest X, I personally prefer Y"         | Personal config                                                                 |
 
 Claude Code supports a local `CLAUDE.md` outside the repo (at `~/.claude/CLAUDE.md`) for personal instructions that don't belong in the shared codebase. This is where individual preferences live. The repo-level files contain only what everyone has agreed applies to everyone.
 
 ## Keeping files accurate: the stale problem
 
 Agent files go stale when:
+
 - A library is replaced but the AGENTS.md still names the old one
 - A pattern is deprecated but the AGENTS.md still instructs AI tools to use it
 - A service boundary changes but the architecture doc still shows the old ownership
@@ -143,6 +150,7 @@ When you're reviewing a PR that includes AGENTS.md changes, review the agent fil
 A well-maintained set of AGENTS.md files has a side benefit: they're the best possible onboarding documentation for new developers.
 
 The format forces the writing discipline that onboarding docs need but rarely get:
+
 - What does this service do (and not do)?
 - What stack is it on?
 - What are the patterns — and more importantly, what are the constraints?

@@ -29,7 +29,11 @@ This means the most useful documentation for AI tools is:
 The canonical pattern for per-service AI context is an `AGENTS.md` file in the service directory. Claude Code reads this file automatically when working in that directory. Copilot Agent Mode picks it up when exploring. It's also referenced from the top-level `.github/copilot-instructions.md` (see the [copilot-instructions guide](/context-management/copilot-instructions-file/)).
 
 <Callout type="note">
-  `AGENTS.md` and `CLAUDE.md` are related but distinct. AGENTS.md is a cross-tool open standard read by Claude Code, Copilot, Cursor, and others — the right choice for multi-tool teams. CLAUDE.md is Claude Code's native format with additional features (subdirectory hierarchy, `@import` support, auto-memory). Claude Code reads both; CLAUDE.md takes priority when both exist. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full breakdown and decision guide.
+  `AGENTS.md` and `CLAUDE.md` are related but distinct. AGENTS.md is a cross-tool open standard read by Claude Code,
+  Copilot, Cursor, and others — the right choice for multi-tool teams. CLAUDE.md is Claude Code's native format with
+  additional features (subdirectory hierarchy, `@import` support, auto-memory). Claude Code reads both; CLAUDE.md takes
+  priority when both exist. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/) for the full
+  breakdown and decision guide.
 </Callout>
 
 ### What to put in a service-level AGENTS.md
@@ -40,17 +44,20 @@ Keep it short, factual, and opinionated. The goal is to give an AI the same orie
 # OrderService — Agent Context
 
 ## Purpose
+
 Handles order lifecycle: creation, status transitions, cancellation, and fulfilment
 notification. Does NOT handle payments (see PaymentService) or inventory (see
 InventoryService).
 
 ## Stack
+
 - ASP.NET Core 8 Web API
 - Entity Framework Core 8 with PostgreSQL
 - Azure Service Bus for event publishing
 - MediatR for CQRS (commands and queries are strictly separated)
 
 ## Key patterns
+
 - All data access through `IOrderRepository` — no direct DbContext access outside
   the repository layer.
 - Handlers return `Result<T>` — never throw for domain validation failures;
@@ -59,16 +66,19 @@ InventoryService).
 - Tests: xUnit, Moq, TestContainers for integration tests.
 
 ## Naming conventions
+
 - Commands: `{Verb}OrderCommand` (e.g. `CreateOrderCommand`, `CancelOrderCommand`)
 - Queries: `Get{Thing}Query` (e.g. `GetOrderByIdQuery`, `GetOrderHistoryQuery`)
 - Handlers: `{CommandOrQuery}Handler`
 
 ## What NOT to do
+
 - Do not add direct DbContext injection to controllers or handlers.
 - Do not throw `ArgumentException` for validation errors — use `Result.Failure`.
 - Do not publish events from the repository layer.
 
 ## Related context
+
 - Architecture overview: /docs/architecture/services/order-service.md
 - API contract: /docs/api/order-service-openapi.yaml
 - ADR-003: Why we chose CQRS for this service: /docs/decisions/ADR-003-cqrs.md
@@ -88,6 +98,7 @@ The critical sections: **Purpose** (what it does and doesn't do), **Stack** (exa
 Alongside per-service AGENTS.md files, a `/docs/architecture/` directory with brief service overviews gives AI tools a map of the whole system.
 
 Each service overview should answer:
+
 - What is this service responsible for?
 - What does it depend on?
 - What depends on it?
@@ -102,10 +113,12 @@ Example (`/docs/architecture/services/order-service.md`):
 **Does not own:** Payment processing, inventory management
 
 **Upstream dependencies:**
+
 - UserService (validates customer identity via REST)
 - InventoryService (checks stock via REST before order creation)
 
 **Downstream consumers:**
+
 - FulfilmentService (subscribes to `OrderConfirmed` event via Service Bus)
 - NotificationService (subscribes to `OrderStatusChanged` event)
 
@@ -128,26 +141,31 @@ An ADR explains the context, decision, and consequences:
 ## Status: Accepted
 
 ## Context
+
 OrderService started as a simple CRUD service. As the domain grew, we needed:
+
 - Different read models for the UI vs internal integrations
 - The ability to audit every state transition
 - Clearer separation of side effects (event publishing) from reads
 
 ## Decision
+
 Use MediatR to implement CQRS. Commands mutate state and publish events.
 Queries return read-optimised DTOs. Handlers are the unit of work.
 
 ## Consequences
+
 - More files per feature (command + handler + query + handler)
 - Clear place for every behaviour
 - Direct DbContext access becomes obviously wrong — it bypasses the CQRS boundary
 - New developers need to understand CQRS before contributing
 ```
 
-When an AI references or reads this ADR, it understands *why* the pattern exists and won't suggest violating it without understanding the trade-off.
+When an AI references or reads this ADR, it understands _why_ the pattern exists and won't suggest violating it without understanding the trade-off.
 
 <Callout type="tip">
-  Link ADRs from the relevant AGENTS.md file. An AI working on a service is more likely to encounter the ADR when it's explicitly referenced than when it has to discover it by searching.
+  Link ADRs from the relevant AGENTS.md file. An AI working on a service is more likely to encounter the ADR when it's
+  explicitly referenced than when it has to discover it by searching.
 </Callout>
 
 ## The full documentation structure

@@ -32,13 +32,15 @@ required changes, ordered by complexity.
 This takes three minutes. The alternative is bumping the version, running the build, reading twenty compiler errors, and then working out what they have in common.
 
 Claude will identify:
+
 - API methods that were renamed or removed
 - Constructor signature changes
 - Namespace changes
 - Behaviour changes that compile but produce different results at runtime (the dangerous ones)
 
 <Callout type="warning">
-  Behaviour changes that compile without errors are the most dangerous category. Ask specifically: "Are there any breaking changes that won't produce a compile error but will change runtime behaviour?"
+  Behaviour changes that compile without errors are the most dangerous category. Ask specifically: "Are there any
+  breaking changes that won't produce a compile error but will change runtime behaviour?"
 </Callout>
 
 ---

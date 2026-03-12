@@ -18,12 +18,14 @@ These are the patterns that separate productive Claude Code sessions from frustr
 The most important habit in Claude Code is treating the context window as a finite, depletable resource — and clearing it aggressively when the current task is done.
 
 **When to `/clear`:**
+
 - After completing any discrete task (feature, bug fix, refactor)
 - Before starting something conceptually different from what you were just doing
 - When you notice Claude Code giving answers that don't fit what you're working on
 - When the session has been going long enough that early conversation is compressed out of view
 
 **Signs that your context has degraded:**
+
 - CC refers to code from an earlier part of the session as if it's still the current state
 - CC repeats solutions you've already rejected
 - CC makes assumptions about what you're building that made sense two hours ago but not now
@@ -36,7 +38,8 @@ A degraded context doesn't announce itself. The output just gets subtly worse. D
 ```
 
 <Callout type="tip">
-  Think of each `/clear` as a clean workbench. You wouldn't try to assemble something new on top of the debris from the last project. The seconds it takes to clear is always faster than unravelling a context-confused session later.
+  Think of each `/clear` as a clean workbench. You wouldn't try to assemble something new on top of the debris from the
+  last project. The seconds it takes to clear is always faster than unravelling a context-confused session later.
 </Callout>
 
 ### `/compact` vs `/clear` — when to use which
@@ -44,10 +47,12 @@ A degraded context doesn't announce itself. The output just gets subtly worse. D
 `/compact` compresses the conversation history to free up context space while keeping a summary of what was discussed. `/clear` wipes everything and starts fresh.
 
 Use **`/compact`** when:
+
 - You're mid-task and have run out of context space, but the work is ongoing
 - The session is long but all of it is relevant to what you're currently doing
 
 Use **`/clear`** when:
+
 - The current task is complete and you're starting a new one
 - You're about to ask something unrelated to the current conversation
 - You want guaranteed fresh context (no carry-over assumptions)
@@ -76,6 +81,7 @@ I want to follow whatever patterns are already established in the service.
 ```
 
 **Step 2 — Ask CC to write the prompt:**
+
 ```
 Based on that description, write me a precise prompt for this task
 that includes all the context you'd need to implement it well.
@@ -91,7 +97,9 @@ Include what files should be referenced and what patterns to follow.
 The refined prompt starts the implementation session with a precise, well-structured request. You skip the wandering turns that come from vague starting instructions.
 
 <Callout type="tip">
-  This pattern is particularly effective for complex tasks or whenever you're not sure exactly what context CC will need. The meta-request (write me the prompt) is cheap — a few seconds. The payoff is an implementation session that starts correctly.
+  This pattern is particularly effective for complex tasks or whenever you're not sure exactly what context CC will
+  need. The meta-request (write me the prompt) is cheap — a few seconds. The payoff is an implementation session that
+  starts correctly.
 </Callout>
 
 ---
@@ -115,7 +123,8 @@ Read the plan. Correct it before a line of code is written:
 Correcting a plan is free. Correcting an implementation that went in the wrong direction costs you the time to review the wrong code plus the time to redirect and re-implement.
 
 <Callout type="note">
-  For tasks that touch more than three files, always start with a plan. The larger the scope, the more likely CC's approach and your intended approach will diverge on a key assumption.
+  For tasks that touch more than three files, always start with a plan. The larger the scope, the more likely CC's
+  approach and your intended approach will diverge on a key assumption.
 </Callout>
 
 ---
@@ -147,35 +156,45 @@ This is also the right workflow when `/init` doesn't capture enough (for older o
 
 ## Quick-reference: commands
 
-<CheatSheet sections={[
-  {
-    title: "Session management",
-    items: [
-      { action: "Start fresh context", shortcut: "/clear", note: "Use between tasks" },
-      { action: "Compress history to free context space", shortcut: "/compact", note: "Use mid-task when context is full" },
-      { action: "Bootstrap CLAUDE.md from current directory", shortcut: "/init", note: "Run once per service, then review" },
-      { action: "Show token usage for this session", shortcut: "/cost" },
-      { action: "List all slash commands", shortcut: "/help" },
-    ]
-  },
-  {
-    title: "File and symbol references",
-    items: [
-      { action: "Reference a specific file", shortcut: "@filename", note: "e.g. @OrderService.cs" },
-      { action: "Reference a symbol by name", shortcut: "#symbol", note: "e.g. #GetOrderById" },
-    ]
-  },
-  {
-    title: "Meta-patterns (type in the prompt)",
-    items: [
-      { action: "Write the prompt for me", shortcut: "\"Write me a prompt for this task...\"" },
-      { action: "Plan before implementing", shortcut: "\"Before writing code, describe your plan\"" },
-      { action: "Explore and summarise", shortcut: "\"Explore X, don't make changes yet\"" },
-      { action: "Update the context file", shortcut: "\"Update AGENTS.md to reflect today's work\"" },
-      { action: "Audit for staleness", shortcut: "\"Read AGENTS.md and check it against the code\"" },
-    ]
-  }
-]} />
+<CheatSheet
+  sections={[
+    {
+      title: 'Session management',
+      items: [
+        { action: 'Start fresh context', shortcut: '/clear', note: 'Use between tasks' },
+        {
+          action: 'Compress history to free context space',
+          shortcut: '/compact',
+          note: 'Use mid-task when context is full',
+        },
+        {
+          action: 'Bootstrap CLAUDE.md from current directory',
+          shortcut: '/init',
+          note: 'Run once per service, then review',
+        },
+        { action: 'Show token usage for this session', shortcut: '/cost' },
+        { action: 'List all slash commands', shortcut: '/help' },
+      ],
+    },
+    {
+      title: 'File and symbol references',
+      items: [
+        { action: 'Reference a specific file', shortcut: '@filename', note: 'e.g. @OrderService.cs' },
+        { action: 'Reference a symbol by name', shortcut: '#symbol', note: 'e.g. #GetOrderById' },
+      ],
+    },
+    {
+      title: 'Meta-patterns (type in the prompt)',
+      items: [
+        { action: 'Write the prompt for me', shortcut: '"Write me a prompt for this task..."' },
+        { action: 'Plan before implementing', shortcut: '"Before writing code, describe your plan"' },
+        { action: 'Explore and summarise', shortcut: '"Explore X, don\'t make changes yet"' },
+        { action: 'Update the context file', shortcut: '"Update AGENTS.md to reflect today\'s work"' },
+        { action: 'Audit for staleness', shortcut: '"Read AGENTS.md and check it against the code"' },
+      ],
+    },
+  ]}
+/>
 
 ---
 
@@ -208,6 +227,7 @@ When CC pauses and asks "shall I proceed?" before making file changes or running
 The last two minutes of a Claude Code session are as important as the first two. Build these habits into your session close:
 
 **1. Update the context file:**
+
 ```
 Before we finish: based on what we built today, update the AGENTS.md
 to reflect any patterns, conventions, or constraints we established.
@@ -229,10 +249,12 @@ If CC got confused, went in the wrong direction, or needed significant correctio
 Claude Code runs in the terminal; Copilot runs in the editor. They coexist without technical conflict.
 
 **The split that works well:**
+
 - CC in the terminal for the task you've planned and scoped explicitly
 - Copilot in the editor for the code you're writing around the CC-generated scaffold
 
 **What to avoid:**
+
 - Asking CC to implement something in a file you're actively editing in the editor (the edits race)
 - Running Copilot Agent Mode and CC on the same files simultaneously
 - Using CC for ambient completions (it's not designed for that; it's deliberately session-oriented)

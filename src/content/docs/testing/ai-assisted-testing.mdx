@@ -18,7 +18,7 @@ This guide covers how to use Copilot and Claude for testing effectively — and 
 
 **Generating test structure from existing code.** Give Copilot or Claude an existing function or class, and they'll produce a test file with plausible structure: setup, happy path, a few sad paths. For a `UserService` with five methods, you'd spend more time creating the file and writing the boilerplate than writing the first tests.
 
-**Naming cases you haven't thought of.** This is underrated. Ask Claude: *"Here is this function and its expected behaviour. What test cases am I missing?"* It will generate a list that includes boundary conditions, null inputs, empty collections, and concurrent-access scenarios — cases that are easy to skip when you're writing tests after writing code.
+**Naming cases you haven't thought of.** This is underrated. Ask Claude: _"Here is this function and its expected behaviour. What test cases am I missing?"_ It will generate a list that includes boundary conditions, null inputs, empty collections, and concurrent-access scenarios — cases that are easy to skip when you're writing tests after writing code.
 
 **Repetitive parameterised tests.** Writing a test that checks ten different input/output combinations? AI can generate the data table. You verify the cases are correct; AI writes the repetition.
 
@@ -30,7 +30,7 @@ This guide covers how to use Copilot and Claude for testing effectively — and 
 
 AI generates tests from what it can see: the function signature, parameter names, return types, and any obvious logic. It does not know:
 
-- What the function's output *means* in your domain
+- What the function's output _means_ in your domain
 - Which edge cases actually matter for your users
 - What a "valid" state looks like for your business objects
 - Which paths carry the highest production risk
@@ -40,7 +40,8 @@ A function named `calculateDiscount` will get AI-generated tests for null inputs
 The consequence: AI-generated tests tend to assert the code's current behaviour rather than the intended behaviour. If the code has a bug, the AI-generated test will often test the buggy behaviour and pass.
 
 <Callout type="warning">
-  Never accept AI-generated tests without reading every assertion. The question isn't "do these tests pass?" — it's "do these tests fail when the code does the wrong thing?"
+  Never accept AI-generated tests without reading every assertion. The question isn't "do these tests pass?" — it's "do
+  these tests fail when the code does the wrong thing?"
 </Callout>
 
 ---
@@ -72,7 +73,7 @@ Read the list. Some will be obvious; some will be genuinely useful.
 
 **Step 3 — Write the assertions yourself.**
 
-The AI-generated test stubs have the right *structure* — the arrange/act/assert skeleton. Fill in the assertions for the cases that matter. For business-rule tests, you write those from scratch.
+The AI-generated test stubs have the right _structure_ — the arrange/act/assert skeleton. Fill in the assertions for the cases that matter. For business-rule tests, you write those from scratch.
 
 **Step 4 — Run and fix.**
 
@@ -83,6 +84,7 @@ AI-generated mock setups are often slightly wrong — a method name off by one c
 ## Prompts that work
 
 **Edge case generation:**
+
 ```
 Here is this function and its signature. List every edge case and boundary
 condition you would test, including inputs that should be rejected and
@@ -90,18 +92,21 @@ any failure modes in the dependencies.
 ```
 
 **Test review:**
+
 ```
 Read these tests and the code they test. Which tests would pass even if
 the code had a bug? Which assertions are too weak to be useful?
 ```
 
 **Coverage gap analysis:**
+
 ```
 Here is the code and the existing test file. What branches or paths in
 the code have no corresponding test?
 ```
 
 **Existing test explanation:**
+
 ```
 Explain what this test is actually asserting and whether the assertion
 is strong enough to catch a regression.

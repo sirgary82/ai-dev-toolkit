@@ -71,6 +71,7 @@ This kind of rename is tedious to do manually and risky to do in your main check
 With multiple worktrees in flight, it helps to be explicit about what each one contains:
 
 **Branch naming convention:**
+
 ```
 ai/task-description         ← work generated primarily by AI
 spike/approach-description  ← exploratory / may be discarded
@@ -78,18 +79,21 @@ feature/name                ← regular feature work
 ```
 
 **Track in-progress worktrees:**
+
 ```bash
 git worktree list
 ```
 
 Clean up completed or abandoned worktrees promptly:
+
 ```bash
 git worktree remove ../project-approach-b
 git branch -d spike/approach-b
 ```
 
 <Callout type="warning">
-  Don't accumulate more worktrees than you can reasonably review. Three or four concurrent sessions is practical. More than that and the review backlog compounds faster than the work gets done.
+  Don't accumulate more worktrees than you can reasonably review. Three or four concurrent sessions is practical. More
+  than that and the review backlog compounds faster than the work gets done.
 </Callout>
 
 ## Review discipline

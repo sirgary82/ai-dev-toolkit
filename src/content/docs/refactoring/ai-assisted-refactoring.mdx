@@ -17,6 +17,7 @@ Refactoring is where Claude Code earns its place in a serious workflow. Multi-fi
 Never ask CC to refactor without reading the code first. The sequence that works:
 
 **Step 1 — Explore:**
+
 ```
 Read OrderService.cs, OrderRepository.cs, and the files that use them.
 Summarise the current structure: what does each class own, how do they
@@ -28,6 +29,7 @@ Don't make any changes yet.
 Read the summary. Correct any misunderstandings. Now CC has the context it needs.
 
 **Step 2 — Plan:**
+
 ```
 Based on your exploration, give me a concrete plan for extracting
 IOrderRepository as a formal interface. What files will change,
@@ -35,11 +37,13 @@ what will be created, and in what order?
 ```
 
 Review the plan. Catch the issues before any code is written:
+
 - "Don't create a new directory for this — put the interface alongside the implementation"
 - "You've missed OrderEventPublisher — it also depends on OrderRepository directly"
 - "Do the interface extraction first, then the DI registration, not simultaneously"
 
 **Step 3 — Implement:**
+
 ```
 Implement the plan we discussed. Start with the interface definition,
 then update the concrete class, then update the DI registration,
@@ -49,7 +53,9 @@ then update the callers one file at a time.
 Review each file as it changes. Don't let CC make changes to ten files before you've read the first one.
 
 <Callout type="tip">
-  For any refactor touching more than three files, always start with explore and plan. The larger the scope, the more likely CC's approach and your intended approach diverge on a key assumption — and it's much cheaper to catch that in the plan step than in the diff.
+  For any refactor touching more than three files, always start with explore and plan. The larger the scope, the more
+  likely CC's approach and your intended approach diverge on a key assumption — and it's much cheaper to catch that in
+  the plan step than in the diff.
 </Callout>
 
 ---
@@ -160,6 +166,7 @@ This is part of the refactor, not an afterthought. The PR that changes the code 
 The same principles apply on the frontend.
 
 **Extracting a custom hook:**
+
 ```
 The user authentication state logic in UserDashboard.tsx is complex
 enough to be its own custom hook. Extract it to useAuthState.ts,
@@ -168,6 +175,7 @@ following the pattern in useCartState.ts.
 ```
 
 **Splitting a component:**
+
 ```
 ProductPage.tsx is over 300 lines. Identify the natural split points
 and extract the product detail section and the reviews section into
@@ -176,6 +184,7 @@ separate components. Keep the data fetching in the parent.
 ```
 
 **Migrating CSS approach:**
+
 ```
 We're moving from CSS modules to Tailwind. Migrate ButtonGroup.tsx
 from its CSS module to Tailwind utility classes. Here is our Tailwind

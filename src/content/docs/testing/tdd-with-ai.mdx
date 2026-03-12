@@ -96,7 +96,8 @@ After refactoring, confirm all tests still pass.
 Review the refactor, run the tests yourself.
 
 <Callout type="tip">
-  Keep the green step small. If AI's first implementation attempt fails the tests, share the test output and ask it to fix the specific failure — don't ask for a full rewrite.
+  Keep the green step small. If AI's first implementation attempt fails the tests, share the test output and ask it to
+  fix the specific failure — don't ask for a full rewrite.
 </Callout>
 
 ---
@@ -129,7 +130,7 @@ Write the interface, write the test against the interface, ask AI to implement b
 
 **Integration and infrastructure tests.** Tests that require a real database, a message broker, or an external API are harder to write before the implementation exists. The setup complexity grows faster than the value.
 
-**UI behaviour tests.** End-to-end tests or complex component tests with many interactions are difficult to write before the component exists. The combination of Playwright/Cypress + AI works better for generating these *after* the component is working.
+**UI behaviour tests.** End-to-end tests or complex component tests with many interactions are difficult to write before the component exists. The combination of Playwright/Cypress + AI works better for generating these _after_ the component is working.
 
 **Exploratory work.** When you don't know what the right design is yet, writing the test first can commit you to an interface before you understand the problem. Use AI exploration sessions to understand the problem space first, then switch to TDD once the design is clearer.
 
@@ -138,6 +139,7 @@ Write the interface, write the test against the interface, ask AI to implement b
 ## Practical prompt patterns
 
 **Implement from failing tests:**
+
 ```
 These tests are failing. Implement [ClassName].[MethodName] to make them pass.
 Use [specific library/pattern]. Don't implement anything the tests don't require.
@@ -145,6 +147,7 @@ Use [specific library/pattern]. Don't implement anything the tests don't require
 ```
 
 **Fix a specific failing test:**
+
 ```
 This test is failing with this error: [paste test output]
 Here is the current implementation: @Implementation.cs
@@ -152,6 +155,7 @@ Fix the implementation to make this specific test pass without breaking the othe
 ```
 
 **Refactor after green:**
+
 ```
 All tests pass. Refactor this implementation for clarity — extract any private
 methods that improve readability, but make no behaviour changes.

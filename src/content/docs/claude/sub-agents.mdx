@@ -134,18 +134,22 @@ Each agent focuses on one service, generates tests without interference from the
 ## When sub-agents are worth the setup
 
 **Worth it:**
+
 - Independent research tasks that can run simultaneously
 - Exploration that would consume your main session's context
 - Generating similar content across multiple parallel files (tests, docs, configs)
 - Tasks where you want a clean result without the working steps
 
 **Not worth it:**
+
 - Tasks that depend tightly on each other (just do them sequentially)
 - Simple tasks — spawning a sub-agent has overhead
 - Tasks where you need to see the intermediate steps to verify correctness
 
 <Callout type="tip">
-  The clearest signal to use a sub-agent: you're about to say "first read all of X, then summarise it for me." That's exactly what a sub-agent is for — the read-and-summarise step happens in the sub-agent, and you get the summary without the context cost.
+  The clearest signal to use a sub-agent: you're about to say "first read all of X, then summarise it for me." That's
+  exactly what a sub-agent is for — the read-and-summarise step happens in the sub-agent, and you get the summary
+  without the context cost.
 </Callout>
 
 ---

@@ -92,7 +92,9 @@ _logger.LogInformation("Processing payment request: {@PaymentRequest}", request)
 Log identifiers, not data. Never log passwords, tokens, card numbers, or personally identifiable information.
 
 <Callout type="warning">
-  For endpoints that handle authentication, payment, or personally identifiable information — treat every line of AI-generated code as suspect until you've read it with security explicitly in mind. The code that looks most innocuous is often where the issue is.
+  For endpoints that handle authentication, payment, or personally identifiable information — treat every line of
+  AI-generated code as suspect until you've read it with security explicitly in mind. The code that looks most innocuous
+  is often where the issue is.
 </Callout>
 
 ---
@@ -102,25 +104,30 @@ Log identifiers, not data. Never log passwords, tokens, card numbers, or persona
 Apply this to every AI-generated function that touches external input, authentication, or sensitive data:
 
 **Input handling:**
+
 - [ ] Is all external input validated before use?
 - [ ] Are database queries parameterised (no string concatenation with user input)?
 - [ ] Are file paths, URLs, and redirects validated against an allowlist?
 
 **Authorisation:**
+
 - [ ] Does every endpoint verify the user is authorised to access the specific resource?
 - [ ] Are there any paths that bypass authentication middleware?
 - [ ] Does the code expose more data than the caller should see?
 
 **Data handling:**
+
 - [ ] Is sensitive data (passwords, tokens, PII) excluded from logs?
 - [ ] Are secrets read from configuration, not hardcoded?
 - [ ] Is sensitive data encrypted at rest where required?
 
 **Error handling:**
+
 - [ ] Do error responses avoid leaking implementation details or stack traces?
 - [ ] Are exceptions caught at the right level and logged appropriately?
 
 **Dependencies:**
+
 - [ ] Does the code use a library for cryptography/hashing, rather than implementing it?
 - [ ] Is the library version current and not known-vulnerable?
 

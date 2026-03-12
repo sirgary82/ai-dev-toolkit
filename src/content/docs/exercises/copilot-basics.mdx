@@ -1,5 +1,5 @@
 ---
-title: "Exercises: Copilot Basics"
+title: 'Exercises: Copilot Basics'
 description: Hands-on practice for Phase 1 — accepting suggestions, comment-driven completion, and getting useful answers from Copilot Chat.
 track: [backend, frontend]
 status: published
@@ -17,6 +17,7 @@ Each exercise takes 15–30 minutes. Do them in order the first time through.
 ## Before you start
 
 You need:
+
 - GitHub Copilot installed and authenticated in VSCode ([Getting Started](/copilot/getting-started/))
 - A codebase you know reasonably well — your own work from the past month is ideal
 
@@ -39,7 +40,8 @@ Do this three times with three different methods. For each:
 After all three, ask yourself: in which case was the suggestion most useful? What made the difference?
 
 <Callout type="tip">
-  If you find that suggestions are consistently wrong or generic, check whether the relevant files are open in other tabs. Copilot reads open files — a closed file is invisible to it.
+  If you find that suggestions are consistently wrong or generic, check whether the relevant files are open in other
+  tabs. Copilot reads open files — a closed file is invisible to it.
 </Callout>
 
 ---
@@ -49,6 +51,7 @@ After all three, ask yourself: in which case was the suggestion most useful? Wha
 **What you'll practice:** Using comments as precise prompts for inline completion.
 
 Pick a method you need to add to an existing class — something real, not invented. Instead of writing the method body, write a comment that describes exactly what it should do. Include:
+
 - The operation
 - The inputs and what they represent
 - Any constraints or edge cases
@@ -65,6 +68,7 @@ Example style (adapt to your language and domain):
 Now let Copilot complete the method from the comment alone.
 
 Review the result:
+
 - Does it match your intent?
 - Did it invent a method or property that doesn't exist?
 - Is there a case your comment didn't cover that the output got wrong?
@@ -81,9 +85,9 @@ Open Copilot Chat (`Ctrl+Shift+I`). Try each of these three question types:
 
 **Type 1 — Explanation.** Select a piece of code in your codebase that you didn't write and don't fully understand. Right-click and choose "Copilot: Explain". Read the explanation. Does it accurately describe what the code does?
 
-**Type 2 — Comparison.** Ask: *"What is the difference between X and Y?"* where X and Y are two things in your technology stack you use but would struggle to explain precisely. Examples: `Task` vs `ValueTask`, `useCallback` vs `useMemo`, `IEnumerable` vs `IQueryable`.
+**Type 2 — Comparison.** Ask: _"What is the difference between X and Y?"_ where X and Y are two things in your technology stack you use but would struggle to explain precisely. Examples: `Task` vs `ValueTask`, `useCallback` vs `useMemo`, `IEnumerable` vs `IQueryable`.
 
-**Type 3 — Second opinion.** Paste a function you wrote recently and ask: *"What edge cases does this not handle?"*. Read the response critically — which suggestions are valid, and which don't apply to your context?
+**Type 3 — Second opinion.** Paste a function you wrote recently and ask: _"What edge cases does this not handle?"_. Read the response critically — which suggestions are valid, and which don't apply to your context?
 
 For Type 3, the exercise is partly evaluating the AI's suggestions, not just reading them. If it flags something that isn't actually a risk in your system, that's a valid finding too.
 
@@ -104,6 +108,7 @@ This is intentionally uncomfortable. The goal is to remove the cognitive step of
 ## What good looks like
 
 After these exercises, you should be able to:
+
 - Decide within a few seconds whether to accept, cycle, or dismiss a suggestion
 - Write a comment that drives a correct completion without post-hoc fixes
 - Ask Copilot Chat a specific enough question to get an answer you can use

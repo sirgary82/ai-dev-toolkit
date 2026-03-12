@@ -83,7 +83,9 @@ permissions:
 ```
 
 <Callout type="tip">
-  After generating a workflow, ask: "What would cause this workflow to fail silently — succeeding without actually doing what's intended?" AI will often identify the gaps: missing environment variables, a deploy step that exits 0 even on failure, etc.
+  After generating a workflow, ask: "What would cause this workflow to fail silently — succeeding without actually doing
+  what's intended?" AI will often identify the gaps: missing environment variables, a deploy step that exits 0 even on
+  failure, etc.
 </Callout>
 
 ---
@@ -120,6 +122,7 @@ What is causing the failure and how do I fix it?
 ```
 
 Common failures AI diagnoses well:
+
 - Missing permissions for a write operation
 - Wrong working directory (`working-directory:` omitted)
 - Environment variables not passed to a step

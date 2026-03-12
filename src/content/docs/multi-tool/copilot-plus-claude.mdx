@@ -20,19 +20,19 @@ The right pattern: Copilot handles the typing; Claude handles the thinking.
 
 ## When to use each
 
-| Task | Best tool |
-|------|-----------|
-| Inline completion while typing | Copilot |
-| Quick question about a specific function | Copilot Chat |
-| Generate repetitive boilerplate (CRUD, DTOs) | Copilot Agent Mode |
-| Design review before starting a feature | Claude |
-| Understand an unfamiliar codebase | Claude |
-| Implement a feature across many files | Claude Code |
-| Review AI-generated code | Claude |
-| Explaining a large system to a new developer | Claude |
-| Writing inline doc comments | Copilot |
-| Batch rename or refactor | Copilot Agent Mode or Claude Code |
-| Checking if your approach makes sense | Claude |
+| Task                                         | Best tool                         |
+| -------------------------------------------- | --------------------------------- |
+| Inline completion while typing               | Copilot                           |
+| Quick question about a specific function     | Copilot Chat                      |
+| Generate repetitive boilerplate (CRUD, DTOs) | Copilot Agent Mode                |
+| Design review before starting a feature      | Claude                            |
+| Understand an unfamiliar codebase            | Claude                            |
+| Implement a feature across many files        | Claude Code                       |
+| Review AI-generated code                     | Claude                            |
+| Explaining a large system to a new developer | Claude                            |
+| Writing inline doc comments                  | Copilot                           |
+| Batch rename or refactor                     | Copilot Agent Mode or Claude Code |
+| Checking if your approach makes sense        | Claude                            |
 
 ## The design / implement / review pattern
 
@@ -76,6 +76,7 @@ What would you change?
 ```
 
 Claude as a reviewer catches what the generator missed:
+
 - Edge cases the implementation doesn't handle
 - Patterns that don't fit the codebase conventions
 - Missing tests or assertions
@@ -84,7 +85,8 @@ Claude as a reviewer catches what the generator missed:
 Then apply Claude's feedback using Copilot Chat's inline edit (`Ctrl+I`) or by making the changes manually. The loop: Claude flags something, Copilot helps you fix it, Claude reviews the fix.
 
 <Callout type="tip">
-  The "reviewer that catches what the generator missed" pattern is genuinely valuable. Copilot and Claude have different biases — using both means each one's blind spots are covered by the other.
+  The "reviewer that catches what the generator missed" pattern is genuinely valuable. Copilot and Claude have different
+  biases — using both means each one's blind spots are covered by the other.
 </Callout>
 
 ## Shared context: write once, both benefit
@@ -117,17 +119,20 @@ When Claude Code is editing files, don't accept Copilot suggestions on those sam
 Here's how a backend developer might add a `GetOrderHistory` endpoint using both tools:
 
 **Monday morning — Design:**
+
 - Open Claude web (or a Claude Project for this codebase)
 - Paste the `OrderService/AGENTS.md` and the `GetOrderById` endpoint as a pattern reference
 - Ask Claude to review the proposed design for a paginated order history endpoint
 - Agree on: the query structure, the DTO shape, pagination approach, error handling
 
 **Implementation:**
+
 - In VSCode, open the relevant files (query, handler, repository interface, controller)
 - Use Copilot Agent Mode: "Implement the `GetOrderHistory` endpoint following the same pattern as `GetOrderById`. Use the design we've agreed on: [paste the agreed design]"
 - Review each file change Copilot proposes before accepting
 
 **Review:**
+
 - Paste the new handler and query into Claude: "Here's what Copilot generated. Does this match the design? What's missing?"
 - Claude identifies a missing edge case in the pagination logic
 - Fix it using Copilot Chat inline edit

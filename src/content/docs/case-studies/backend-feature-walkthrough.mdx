@@ -1,5 +1,5 @@
 ---
-title: "Case Study: Adding a Feature End-to-End (.NET)"
+title: 'Case Study: Adding a Feature End-to-End (.NET)'
 description: A full walkthrough of adding a paginated list endpoint to a .NET API using the two-pass pattern — from design conversation to merged PR, including the missteps.
 track: [backend]
 status: published
@@ -22,13 +22,13 @@ The first session happens in Claude's web interface, not in the editor. No code 
 
 **The opening prompt:**
 
-> *"I need to add a paginated list endpoint to a .NET 8 Web API. The endpoint should return a customer's orders, paginated, newest first, with cancelled orders excluded by default. The project uses a repository pattern with EF Core. I want to think through the response shape and pagination approach before writing anything. What are the main design decisions I should make first?"*
+> _"I need to add a paginated list endpoint to a .NET 8 Web API. The endpoint should return a customer's orders, paginated, newest first, with cancelled orders excluded by default. The project uses a repository pattern with EF Core. I want to think through the response shape and pagination approach before writing anything. What are the main design decisions I should make first?"_
 
 Claude returned three questions worth considering: how to represent pagination metadata in the response (envelope vs. headers), whether to use offset or cursor pagination, and where the cancelled-order filter should live (repository vs. service vs. query parameter).
 
 **The useful follow-up:**
 
-> *"We use offset pagination elsewhere in this API. What are the downsides of offset pagination that I should be aware of for this use case?"*
+> _"We use offset pagination elsewhere in this API. What are the downsides of offset pagination that I should be aware of for this use case?"_
 
 The response covered the "page drift" problem — if a new order is inserted while a client is paginating, the client may see duplicates or skip records. For an orders list sorted by date, this is mostly academic (orders are immutable once placed). For a real-time feed it would matter.
 
@@ -42,7 +42,8 @@ This took 15 minutes. The output was a decision: offset pagination, response env
 > Sorting: `OrderDate` descending, applied at query layer
 
 <Callout type="tip">
-  The plan is written down before any code is generated. This matters: it becomes the reference point for evaluating every piece of generated output that follows.
+  The plan is written down before any code is generated. This matters: it becomes the reference point for evaluating
+  every piece of generated output that follows.
 </Callout>
 
 ---
@@ -72,7 +73,7 @@ claude
 
 **The prompt:**
 
-> *"Add a method to CustomerOrderRepository called GetPagedOrdersForCustomerAsync. It should accept customerId (int), page (int), pageSize (int), and includesCancelled (bool). Return `PagedResult<Order>`. Filter by customerId, exclude cancelled orders when includesCancelled is false, sort by OrderDate descending, and apply offset pagination. Follow the same pattern as GetPagedProductsAsync in ProductRepository.cs."*
+> _"Add a method to CustomerOrderRepository called GetPagedOrdersForCustomerAsync. It should accept customerId (int), page (int), pageSize (int), and includesCancelled (bool). Return `PagedResult<Order>`. Filter by customerId, exclude cancelled orders when includesCancelled is false, sort by OrderDate descending, and apply offset pagination. Follow the same pattern as GetPagedProductsAsync in ProductRepository.cs."_
 
 Claude Code generated the method. Two things needed correction:
 
@@ -83,7 +84,8 @@ Claude Code generated the method. Two things needed correction:
 The diff was reviewed before running tests. Both corrections were visible in the diff — the wrong field name and the misplaced count call.
 
 <Callout type="warning">
-  Always read the full diff before running generated code. Both of these errors were visible in the diff. Neither would have been caught by "does it compile?" — the code was syntactically correct.
+  Always read the full diff before running generated code. Both of these errors were visible in the diff. Neither would
+  have been caught by "does it compile?" — the code was syntactically correct.
 </Callout>
 
 ---
@@ -102,7 +104,7 @@ The controller action required one clarification: Copilot's first suggestion use
 
 **The prompt to Copilot Chat:**
 
-> *"@CustomerOrderRepositoryTests.cs Generate tests for GetPagedOrdersForCustomerAsync. Include: happy path returning correct page, empty result when customer has no orders, cancelled orders excluded when includesCancelled is false, and correct totalCount. Use xUnit and the same in-memory EF setup as the existing tests."*
+> _"@CustomerOrderRepositoryTests.cs Generate tests for GetPagedOrdersForCustomerAsync. Include: happy path returning correct page, empty result when customer has no orders, cancelled orders excluded when includesCancelled is false, and correct totalCount. Use xUnit and the same in-memory EF setup as the existing tests."_
 
 The generated test file had correct structure: setup with seeded test data, four test methods, assertions against the returned `PagedResult<T>`.
 

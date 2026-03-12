@@ -44,9 +44,7 @@ Starting from the solution root lets Claude Code explore everything — which me
 
 ```json
 {
-  "folders": [
-    { "path": "./services/OrderService", "name": "OrderService" }
-  ]
+  "folders": [{ "path": "./services/OrderService", "name": "OrderService" }]
 }
 ```
 
@@ -64,7 +62,8 @@ When writing code that calls a service or repository, open the **interface** fil
 This is the **proxy pattern** for context: the interface is a compact, accurate proxy for the full implementation.
 
 <Callout type="tip">
-  When a generated method calls a non-existent method on a repository or service, the fix is almost always "open the interface file." Copilot was guessing about available methods; the interface removes the guess.
+  When a generated method calls a non-existent method on a repository or service, the fix is almost always "open the
+  interface file." Copilot was guessing about available methods; the interface removes the guess.
 </Callout>
 
 ---
@@ -151,21 +150,22 @@ See [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/) for 
 Large files are a context problem. A 2,000-line class file is harder to scope for AI context than ten 200-line files with clear responsibilities. If a class is so large that you're constantly struggling with what to include in context, that's a signal about the design, not just an AI tooling limitation.
 
 <Callout type="tip">
-  Refactoring for AI readability often improves human readability. Single-responsibility classes, well-named interfaces, and concise methods are good engineering practice that also makes AI tools significantly more effective.
+  Refactoring for AI readability often improves human readability. Single-responsibility classes, well-named interfaces,
+  and concise methods are good engineering practice that also makes AI tools significantly more effective.
 </Callout>
 
 ---
 
 ## A decision guide for large repos
 
-| Situation | What to do |
-|-----------|-----------|
-| Finding where something is implemented | `@workspace` search |
-| Implementing a new method | Interface file + relevant existing method open |
-| Fixing a bug in a specific method | Paste that method + relevant test |
+| Situation                                    | What to do                                     |
+| -------------------------------------------- | ---------------------------------------------- |
+| Finding where something is implemented       | `@workspace` search                            |
+| Implementing a new method                    | Interface file + relevant existing method open |
+| Fixing a bug in a specific method            | Paste that method + relevant test              |
 | Implementing a full feature across a service | Claude Code from service directory + AGENTS.md |
-| Reviewing a large changeset | Claude web with the diff pasted |
-| Understanding an unfamiliar service | Claude web + AGENTS.md + architecture doc |
+| Reviewing a large changeset                  | Claude web with the diff pasted                |
+| Understanding an unfamiliar service          | Claude web + AGENTS.md + architecture doc      |
 
 ---
 
