@@ -6,8 +6,8 @@ import { docsSchema } from '@astrojs/starlight/schema';
 // are defined in frontmatter and used for documentation/content management.
 // Starlight passes through unknown fields without strict validation.
 export const collections = {
-	docs: defineCollection({
-		loader: docsLoader(),
-		schema: docsSchema(),
-	}),
+  docs: defineCollection({
+    loader: docsLoader(),
+    schema: docsSchema(),
+  }),
 };

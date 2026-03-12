@@ -57,9 +57,9 @@ Do not hardcode `/ai-dev-toolkit/` into MDX link hrefs. The integration handles 
    ---
    title: Page Title
    description: One sentence description.
-   track: [backend, frontend]   # or just one
-   status: published            # published | draft | coming-soon
-   order: 8                     # position within section
+   track: [backend, frontend] # or just one
+   status: published # published | draft | coming-soon
+   order: 8 # position within section
    ---
    ```
 2. Add the entry to the sidebar in `astro.config.mjs`:
