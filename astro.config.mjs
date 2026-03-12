@@ -209,6 +209,15 @@ export default defineConfig({
 						{ label: 'Phase Checklists', slug: 'self-assessment/phase-checklists' },
 					],
 				},
+				{
+					label: 'Other Coding Agents',
+					items: [
+						{ label: 'Overview', slug: 'other-agents' },
+						{ label: 'Codex CLI', slug: 'other-agents/codex-cli' },
+						{ label: 'Gemini CLI', slug: 'other-agents/gemini-cli' },
+						{ label: 'GitHub Copilot CLI', slug: 'other-agents/copilot-cli' },
+					],
+				},
 			],
 		}),
 	],

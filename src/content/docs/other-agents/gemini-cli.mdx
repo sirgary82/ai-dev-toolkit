@@ -1,0 +1,162 @@
+---
+title: Gemini CLI
+description: Google's open-source terminal AI agent. Generous free tier, 1M token context window, built-in Google Search grounding, and configurable AGENTS.md support.
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Gemini CLI is Google's open-source terminal coding agent. It is fully open source (Apache 2.0), runs in your terminal, and gives you direct access to Gemini models with a notably generous free tier — 60 requests per minute and 1,000 requests per day using a personal Google account, no credit card required.
+
+Like Claude Code and Codex CLI, it can read files, run shell commands, and iterate autonomously on coding tasks. Its standout differentiators are the 1M token context window (useful for large codebases), built-in Google Search grounding, and the ability to run completely non-interactively in scripts.
+
+---
+
+## Installation
+
+```bash
+# npx — no install required
+npx @google/gemini-cli
+
+# Global install via npm
+npm install -g @google/gemini-cli
+
+# Homebrew (macOS/Linux)
+brew install gemini-cli
+```
+
+Then run:
+
+```bash
+gemini
+```
+
+## Authentication
+
+Three options depending on your situation:
+
+**Google OAuth (recommended for individuals)**
+Sign in with your Google account when prompted. Gets you the free tier: 60 req/min, 1,000 req/day, Gemini 2.5 models with 1M context window.
+
+**API key**
+```bash
+export GEMINI_API_KEY="your-key-from-aistudio.google.com"
+gemini
+```
+
+**Vertex AI (enterprise)**
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_GENAI_USE_VERTEXAI=true
+gemini
+```
+For teams on Google Cloud infrastructure with compliance requirements.
+
+---
+
+## How it works
+
+Gemini CLI works in an agentic loop: it reads your prompt, uses built-in tools (file operations, shell commands, web fetch, Google Search), and iterates until the task is done or it needs your input. It defaults to interactive mode but supports fully non-interactive scripting via the `-p` flag.
+
+```bash
+# Interactive — opens the REPL
+gemini
+
+# Non-interactive — single prompt, returns result
+gemini -p "Summarise what changed in the last 5 commits"
+
+# JSON output for scripting
+gemini -p "List all API endpoints in this codebase" --output-format json
+```
+
+The **1M token context window** means you can point Gemini at a large repository without the context management overhead that smaller windows require. It will read more before it starts summarising or dropping information.
+
+**Google Search grounding** is a built-in tool that Gemini can invoke during a session to verify information or look up current docs. This is useful when working with libraries or APIs that postdate its training data.
+
+---
+
+## Context files: GEMINI.md and AGENTS.md
+
+Gemini CLI uses `GEMINI.md` as its default context file — the direct equivalent of `CLAUDE.md` for Claude Code. It supports a hierarchical model: a global `~/.gemini/GEMINI.md` applies to all projects, and per-project or per-directory `GEMINI.md` files provide more specific context.
+
+```markdown
+# GEMINI.md example
+
+## Project
+React + TypeScript frontend. Node 20. Run `npm test` to verify changes.
+
+## Conventions
+- Components live in src/components/, one file per component
+- Use named exports, never default exports
+- CSS modules only — no inline styles
+
+## Important
+Never modify generated files in src/generated/. They are rebuilt by the pipeline.
+```
+
+**To also read `AGENTS.md`**, add this to `~/.gemini/settings.json` or the project-level equivalent:
+
+```json
+{
+  "context": {
+    "fileName": ["AGENTS.md", "GEMINI.md"]
+  }
+}
+```
+
+With this configuration, Gemini will load both files when present. This means a single `AGENTS.md` in your repo gives context to Claude Code, Codex CLI, and Gemini CLI simultaneously.
+
+You can manage loaded context from within a session:
+
+```
+/memory show      — see the full context currently loaded
+/memory reload    — pick up changes to context files without restarting
+/memory add <text> — append a note to your global GEMINI.md on the fly
+```
+
+---
+
+## Session checkpointing
+
+Gemini CLI can save and resume sessions, which is useful for long multi-step tasks that span breaks or interruptions. Use `/checkpoint save` to save state mid-session and restore it later.
+
+---
+
+## MCP support
+
+Configure MCP servers in `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"] }
+  }
+}
+```
+
+Once configured, reference them in prompts with `@servername`:
+
+```
+> @github List my open pull requests
+```
+
+---
+
+## Good practices
+
+**Let the 1M context work for you — but still scope tasks clearly.** A large context window means Gemini can hold your whole codebase in mind, but it does not make vague prompts more effective. Clear, bounded tasks still produce better results than "fix the bugs in this project".
+
+**Use `GEMINI.md` to set non-negotiable constraints.** Test commands, off-limits files, naming conventions — things you would say in every prompt anyway. Write them once in the context file.
+
+**Configure `AGENTS.md` as a fallback if your team uses multiple agents.** If your repo already has an `AGENTS.md` from Claude Code, add the `fileName` setting so Gemini reads it too. One source of truth for all tools.
+
+**Use non-interactive mode for repeatable tasks.** `gemini -p "..." --output-format json` integrates cleanly into scripts, CI steps, and automation. It is one of the cleaner options among terminal agents for scripted use.
+
+**Use Google Search grounding when working with rapidly-changing APIs.** Gemini can search to verify that a library's API matches what you think it is — useful when you're not sure if your training-data knowledge of a package is stale.
+
+---
+
+## When to reach for it
+
+Gemini CLI is the strongest option if cost is a constraint (the free tier is genuinely useful), if you work in a Google Cloud environment and want Vertex AI integration, or if you need a large context window for codebase-level tasks. Being fully open source also makes it auditable in ways that matter for some teams.

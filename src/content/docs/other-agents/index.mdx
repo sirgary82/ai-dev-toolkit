@@ -1,0 +1,32 @@
+---
+title: Other Coding Agents
+description: A reference overview of other terminal-based AI coding agents — Codex CLI, Gemini CLI, and GitHub Copilot CLI — and how they relate to the tools covered in this toolkit.
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+This section covers three AI coding agents that sit outside the main learning tracks but are worth knowing about. They share the same general model as Claude Code and GitHub Copilot — an AI that can read your code, run commands, and iterate in a loop — but differ in backing model, authentication, and ecosystem integration.
+
+These are reference pages, not full guides. They cover what each tool is, how to get started, and what makes it worth reaching for.
+
+<Callout type="note">
+The tools here are complementary to what this toolkit teaches. Everything you've learned about context management, AGENTS.md, prompt discipline, and reviewing AI output applies equally when working with any of these agents.
+</Callout>
+
+## AGENTS.md works here too
+
+The `AGENTS.md` file you set up in your repository is not a Claude Code exclusive. It is part of a shared convention:
+
+- **Codex CLI** reads `AGENTS.md` natively — it is the primary way to give Codex project context.
+- **Gemini CLI** reads `GEMINI.md` by default, but can be configured to also read `AGENTS.md` (and any other files you specify) via `settings.json`.
+- **GitHub Copilot CLI** reads instruction files from `.github/instructions/` and understands your repository structure through its GitHub integration.
+
+A well-written `AGENTS.md` in your repo gives any of these tools a useful starting point without extra setup.
+
+---
+
+- [Codex CLI](/other-agents/codex-cli/) — OpenAI's terminal coding agent
+- [Gemini CLI](/other-agents/gemini-cli/) — Google's open-source terminal agent with a generous free tier
+- [GitHub Copilot CLI](/other-agents/copilot-cli/) — Copilot's agentic terminal experience, new in early 2026

@@ -1,0 +1,110 @@
+---
+title: GitHub Copilot CLI
+description: GitHub's agentic terminal experience — Copilot's coding agent brought directly into your command line, with GitHub context built in. Reached general availability in March 2026.
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+
+GitHub Copilot CLI brings the same agentic capabilities as GitHub Copilot's coding agent into your terminal. It is terminal-native, authenticated with your existing GitHub account, and deeply integrated with GitHub context — repositories, issues, pull requests — through natural language. It reached general availability in early March 2026 and is actively being developed.
+
+<Callout type="note">
+This tool is very new. Resources and community knowledge are still limited. What is documented here comes directly from the [official repository](https://github.com/github/copilot-cli). Expect the feature set to grow quickly.
+</Callout>
+
+<Callout type="warning">
+GitHub Copilot CLI requires an **active Copilot subscription** — individual, team, or enterprise. If your organisation manages Copilot access, an administrator may need to enable it first.
+</Callout>
+
+---
+
+## Installation
+
+```bash
+# macOS / Linux (install script)
+curl -fsSL https://gh.io/copilot-install | bash
+
+# Homebrew (macOS / Linux)
+brew install copilot-cli
+
+# Windows (WinGet)
+winget install GitHub.Copilot
+
+# npm (cross-platform)
+npm install -g @github/copilot
+```
+
+Then launch it:
+
+```bash
+copilot
+```
+
+On first launch you will be prompted to log in with your GitHub account. You can also authenticate with a fine-grained personal access token that has the "Copilot Requests" permission.
+
+---
+
+## How it works
+
+Copilot CLI runs as an interactive REPL in your terminal. It is powered by the same agentic harness as GitHub's Copilot coding agent. The default model is **Claude Sonnet 4.5** — you can switch models with the `/model` slash command, including Claude Sonnet 4 and GPT-5.
+
+Every action is shown to you before it executes. Nothing happens without your explicit approval, which makes it safe to use on real codebases from the start.
+
+Key capabilities:
+- Build, edit, debug, and refactor code through conversation
+- Access your GitHub repositories, issues, and pull requests in natural language
+- Execute shell commands with approval prompts
+- MCP support — ships with GitHub's MCP server by default, and accepts additional MCP servers for custom integrations
+- LSP support for enhanced code intelligence (go-to-definition, diagnostics) — configured separately per language
+
+### Autopilot mode
+
+Experimental. Press `Shift+Tab` to cycle into Autopilot mode, where the agent continues working until it considers the task complete rather than pausing for approval at each step. Activate experimental features first with `copilot --experimental`.
+
+---
+
+## Useful slash commands
+
+| Command | What it does |
+|---|---|
+| `/model` | Switch the backing model |
+| `/lsp` | View configured LSP servers |
+| `/pr view` | View PR status locally or open in browser |
+| `/feedback` | Submit feedback via a confidential survey |
+| `/experimental` | Toggle experimental features on/off |
+| `/restart` | Hot restart while preserving your session |
+
+---
+
+## GitHub context
+
+Because Copilot CLI authenticates with your GitHub account, it can reason about your repositories and GitHub objects directly:
+
+```
+> What issues are currently open in this repo that relate to authentication?
+> Summarise the changes in the last merged PR
+> Help me write a fix for issue #142
+```
+
+This GitHub awareness is what distinguishes it from other terminal agents — it has context that goes beyond the local filesystem.
+
+---
+
+## Good practices
+
+**Keep the client updated.** The tool is iterating rapidly. New features and fixes are published frequently, and the `/update` command restarts automatically to apply them.
+
+**Run it from the root of the repository you are working in.** Copilot CLI uses the current directory as its working context. Starting from the repo root gives it the widest useful view.
+
+**Use the approval flow, do not bypass it.** The default behaviour of previewing every action is a feature, not friction — especially on a tool this new. Autopilot mode is there when you trust it on a specific task, not as a default.
+
+**Provide project instructions in `.github/instructions/`.** Copilot CLI reads instruction files from this directory. Use them to give it project-specific conventions, constraints, and test commands — the same things you would put in `AGENTS.md` for other tools.
+
+---
+
+## When to reach for it
+
+Copilot CLI is the natural choice if you are already paying for a GitHub Copilot subscription and want a terminal agent without adding another tool or billing account. Its tight GitHub integration makes it especially useful for work that spans code and GitHub objects — triaging issues, understanding PR history, or working on tasks that are anchored to specific issues.
+
+It is early-stage software. The fundamentals work well, but expect rough edges and rapid change.
