@@ -30,6 +30,8 @@ corrections, and new tool coverage. These are the steps before that makes sense.
 - [x] `linkedin_post.md` and `content_notes.md` added to `.gitignore`
 - [x] `AGENTS.md` in place for AI coding tool context
 - [x] 6-month landscape update (September 2026 sweep)
+- [x] Agentic Flows section added (5 guides on ReAct, plan-first, TDD loops, delegation, guardrails)
+- [x] Universal AGENTS.md parity documented across all major coding agents
 
 ---
 

@@ -1,0 +1,141 @@
+---
+title: The Plan-First Workflow
+description: Why jumping directly into code generation causes agent thrashing, and how to implement the Plan -> Approve -> Execute pattern for rock-solid autonomous coding.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The most common failure mode when working with autonomous coding agents is **premature execution**.
+
+When a developer prompts an agent with a vague request like _"Refactor our payment handling to support multiple currencies"_, an unconstrained agent will immediately start editing files. Three minutes later:
+
+- It has modified 12 files without understanding your existing abstractions.
+- It created a circular dependency between two core modules.
+- It filled 60,000 tokens of your context window with discarded diffs and compiler error logs.
+- When you ask it to fix the problem, its context is so degraded that it begins hallucinating.
+
+The remedy is an essential discipline in agentic software engineering: **The Plan-First Workflow**.
+
+---
+
+## Why Planning Must Precede Code
+
+Separating the **planning phase** from the **execution phase** transforms agent reliability:
+
+```
+❌ The Premature Execution Anti-Pattern:
+[Prompt] ───────────────► [Agent edits 10 files immediately] ──► [Build breaks] ──► [Context exhausts]
+
+✅ The Plan-First Pattern:
+[Prompt] ──► [Research (Read-only)] ──► [Draft Plan & Interview] ──► [Human Approval] ──► [Targeted Execution]
+```
+
+1. **Context Economy:** Researching and planning costs very few tokens compared to writing, failing, and rewriting code across multiple files.
+2. **Blast-Radius Awareness:** An agent forced to plan must explicitly inventory every file it intends to create, edit, or delete before modifying a single byte on disk.
+3. **Architectural Alignment:** You can correct a fundamental design misunderstanding in 10 seconds on a 20-line markdown plan, rather than untangling a 500-line broken git diff.
+
+---
+
+## The Three-Phase Protocol
+
+A robust plan-first flow consists of three distinct phases:
+
+### Phase 1: Read-Only Research & Discovery
+
+During the discovery phase, the agent operates in strictly read-only mode:
+
+- Inspect `AGENTS.md` and repository conventions.
+- Locate existing patterns, shared utilities, and types.
+- Trace downstream consumers and call sites of the code to be modified.
+
+<Callout type="tip">
+  **Explicit Instruction:** Instruct the agent: *"Do not write, edit, or delete any code during this phase. Only read
+  files and search the codebase until you fully map out the dependencies."*
+</Callout>
+
+### Phase 2: Implementation Plan & The "Grill Me" Interview
+
+The agent produces a structured implementation plan artifact. A high-quality plan contains:
+
+- **Objective & Scope:** What problem is being solved, and what is intentionally out of scope?
+- **Impacted Files:** Explicit list of files marked `[NEW]`, `[MODIFY]`, or `[DELETE]`.
+- **Proposed Architecture:** Interface definitions, database schema changes, and algorithmic approaches.
+- **Verification Milestones:** Exact commands (`dotnet test`, `npm run test:e2e`) that will prove the change works.
+- **Open Questions:** Ambiguities or edge cases requiring developer clarification.
+
+#### The "Grill Me" Technique
+
+The most effective way to eliminate ambiguity is to instruct the agent to interview you before finalizing the plan:
+
+```
+You are an expert software architect. Read the codebase, analyze the issue description,
+and interview me about any ambiguities, edge cases, error handling strategies, or
+backwards-compatibility constraints before writing any code.
+Ask me 2 to 3 targeted questions at a time until you have complete clarity.
+```
+
+By answering these targeted questions upfront, you eliminate the assumptions that lead to rewritten code.
+
+### Phase 3: Targeted Execution & Verification
+
+Once you review and approve the implementation plan:
+
+1. The agent executes the plan step-by-step in logical dependency order (types and domain models first, business logic second, UI/API layers third).
+2. The agent runs verification tests at each milestone.
+3. If an unexpected hurdle occurs, the agent pauses, updates the plan, and requests your approval before deviating.
+
+---
+
+## Plan-First Prompt Template
+
+Use this reusable prompt in Claude Code, VS Code Copilot Agent Mode, or Codex CLI whenever tackling a non-trivial feature or refactor:
+
+```markdown
+I want to implement: [describe feature or bug fix].
+
+Before modifying or creating ANY code files, follow this Plan-First workflow:
+
+1. RESEARCH: Read relevant source files and tests to understand the current architecture.
+   Do not modify any files during this step.
+2. IMPLEMENTATION PLAN: Write a structured implementation plan including:
+   - Summary of architectural approach
+   - Exact files to create [NEW], modify [MODIFY], or delete [DELETE]
+   - Potential breaking changes or side effects
+   - Concrete test & verification plan (commands to run)
+   - Any open questions or trade-offs for my review
+3. STOP & WAIT: Present the plan and stop. Do not write implementation code until
+   I explicitly review and approve the plan.
+```
+
+---
+
+## Tool-Native Planning Modes
+
+Several modern coding agents now offer native support for this workflow:
+
+- **Codex CLI (`--plan`):** Launching Codex with `--plan --reasoning-effort high` activates an explicit architectural deliberation mode where it generates a step-by-step plan before requesting approval to execute tools.
+- **Claude Code (`/plan` or prompt directive):** You can instruct Claude to use a dedicated planning scratchpad artifact, locking it into read-only tools until you reply with _"Approved, execute the plan"_.
+- **VS Code Copilot Agent Mode:** Set `github.copilot.chat.agent.runTasks: false` in `.vscode/settings.json` so the agent cannot execute modifying terminal scripts without individual confirmation prompts.
+
+---
+
+## Checklist: Evaluating an Agent's Plan
+
+Before replying _"Proceed"_, scan the agent's plan for these red flags:
+
+| Red Flag                                                 | Why It Matters                                        | What to Tell the Agent                                                |
+| :------------------------------------------------------- | :---------------------------------------------------- | :-------------------------------------------------------------------- |
+| **Omits test verification**                              | The agent will guess when it's done without checking. | _"Add specific test commands to verify each phase."_                  |
+| **Modifies shared interfaces without listing consumers** | High risk of cascading compilation breaks.            | _"Search all references to `IUserService` and list every call site."_ |
+| **Proposes new external dependencies**                   | Unnecessary third-party packages bloat bundles.       | _"Use our existing libraries; do not add new npm packages."_          |
+| **Lacks error handling strategy**                        | Agent defaults to happy-path implementations.         | _"Detail how we handle network timeouts and database failure cases."_ |
+
+---
+
+## Next Steps
+
+- **[Test-Driven Agentic Loops](/agentic-flows/test-driven-agentic-loop/)** — How to use unit tests as the deterministic steering wheel during execution.
+- **[Sub-Agent Delegation](/agentic-flows/multi-agent-delegation/)** — Splitting research and implementation across isolated agents.

@@ -19,9 +19,10 @@ All 60+ pages are published and live at https://sirgary82.github.io/ai-dev-toolk
 | foundations/ | 2 | Before you start, glossary |
 | tracks/ | 2 | Backend (.NET), Frontend (React) |
 | copilot/ | 5 | Getting started, inline, chat, agent mode, shortcuts |
-| context-management/ | 13 | AGENTS.md, CLAUDE.md, prompt basics, MCP, version staleness, Figma MCP |
+| context-management/ | 14 | AGENTS.md, CLAUDE.md, prompt basics, MCP, custom MCPs, version staleness, Figma MCP |
 | claude/ | 9 | Getting started, tips, sub-agents, custom commands, gh-integration |
 | multi-tool/ | 1 | Copilot + Claude combined workflow |
+| agentic-flows/ | 5 | Overview, plan-first flow, TDD loops, sub-agent delegation, guardrails & sandboxing |
 | git-worktrees/ | 3 | Setup, workflow, parallel AI workstreams |
 | pr-review/ | 2 | Automated review, impact assessment |
 | auditable-changes/ | 2 | Incremental mindset, commit discipline |
@@ -35,7 +36,7 @@ All 60+ pages are published and live at https://sirgary82.github.io/ai-dev-toolk
 | case-studies/ | 2 | Backend & frontend walkthroughs |
 | troubleshooting/ | 1 | Common failure modes & fixes |
 | self-assessment/ | 1 | Phase checklists |
-| other-agents/ | 4 | Codex CLI, Gemini CLI, Copilot CLI, index |
+| other-agents/ | 5 | Codex CLI, Gemini CLI, Copilot CLI, agentic IDEs, index |
 
 ---
 

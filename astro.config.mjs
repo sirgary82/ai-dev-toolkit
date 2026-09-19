@@ -135,6 +135,25 @@ export default defineConfig({
           items: [{ label: 'Using Both Tools', slug: 'multi-tool/copilot-plus-claude' }],
         },
         {
+          label: 'Agentic Flows',
+          items: [
+            { label: 'Overview', slug: 'agentic-flows' },
+            { label: 'The Plan-First Workflow', slug: 'agentic-flows/plan-first-flow' },
+            {
+              label: 'Test-Driven Agentic Loops',
+              slug: 'agentic-flows/test-driven-agentic-loop',
+            },
+            {
+              label: 'Sub-Agents & Task Delegation',
+              slug: 'agentic-flows/multi-agent-delegation',
+            },
+            {
+              label: 'Guardrails & Sandboxing',
+              slug: 'agentic-flows/guardrails-and-approvals',
+            },
+          ],
+        },
+        {
           label: 'Git Worktrees',
           items: [
             { label: 'What and Why', slug: 'git-worktrees/what-and-why' },

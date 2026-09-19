@@ -1,0 +1,170 @@
+---
+title: Sub-Agents & Task Delegation
+description: Decomposing complex engineering tasks across specialized sub-agents to prevent context degradation, enforce separation of concerns, and accelerate parallel development.
+track: [backend, frontend]
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+
+When you ask a single agent to handle an entire end-to-end engineering initiative — investigating a legacy module, designing an architecture, modifying 8 files, writing unit tests, updating migrations, and writing documentation — the session usually breaks down around turn 25.
+
+The cause is **context window exhaustion**:
+
+- As hundreds of thousands of tokens accumulate in a single session history, models suffer from the "Lost in the Middle" phenomenon: they forget early instructions, lose track of constraints set in `AGENTS.md`, and start repeating past mistakes.
+- Huge dumps of compiler logs and raw file contents pollute the prompt, leaving little room for fresh reasoning.
+
+The architectural solution is **Sub-Agent Delegation**: breaking work down across ephemeral, specialized agents that perform a discrete task, return a clean summary to a coordinator, and terminate.
+
+---
+
+## The Coordinator-Specialist Pattern
+
+Instead of one monolithic agent doing everything, structure your workflow with a **Coordinator** directing **Specialist Sub-Agents**:
+
+```
+                       ┌───────────────────────────────┐
+                       │       Coordinator Agent       │
+                       │   - High-level plan & state   │
+                       │   - Evaluates milestone gates │
+                       │   - Never reads raw 10MB logs │
+                       └──────────────┬────────────────┘
+                                      │
+        ┌─────────────────────────────┼─────────────────────────────┐
+        ▼                             ▼                             ▼
+┌───────────────┐             ┌───────────────┐             ┌───────────────┐
+│  Researcher   │             │  Implementer  │             │   Reviewer    │
+│   Sub-Agent   │             │   Sub-Agent   │             │   Sub-Agent   │
+│ (Exploration) │             │ (Target Code) │             │ (Adversarial) │
+└───────┬───────┘             └───────┬───────┘             └───────┬───────┘
+        │                             │                             │
+        └─────────────────────────────┼─────────────────────────────┘
+                                      ▼
+                        [Concise Synthesized Brief]
+```
+
+### 1. The Researcher / Explorer Agent
+
+- **Responsibility:** Maps dependencies, searches symbols, locates existing patterns, and reads documentation.
+- **Why isolate it:** Reading 15 large source files consumes 80,000 tokens. By delegating this to a sub-agent, the sub-agent absorbs the token cost, distills its findings into a 500-token brief, and returns to the coordinator. The coordinator’s context stays lean.
+
+### 2. The Implementation Agent
+
+- **Responsibility:** Receives the clean brief and focuses exclusively on editing files and making local tests pass.
+- **Why isolate it:** Keeps the agent hyper-focused on the active feature without the distraction of unrelated modules.
+
+### 3. The Adversarial Reviewer Agent
+
+- **Responsibility:** Reviews the git diff created by the implementation agent against security rules, performance budgets, and project conventions.
+- **Why isolate it:** When the same agent writes code and reviews it, it suffers from confirmation bias. A fresh reviewer agent with an adversarial prompt (_"Identify every potential edge case, race condition, or style violation in this diff"_) catches subtle flaws that the author missed.
+
+---
+
+## Clean State Handoffs: The Artifact Bridge
+
+The key to successful delegation is the **clean state handoff**. If sub-agents simply dump their full conversational history back to the parent, context bloat still occurs.
+
+Instead, sub-agents communicate via structured markdown artifacts or concise return messages:
+
+```markdown
+<!-- Summary returned by Researcher Sub-Agent to Coordinator -->
+
+### Research Summary: Order Processing Pipeline
+
+1. **Core Entrypoint:** `src/orders/processor.ts::processOrder()`
+2. **Current Limitations:** Hardcoded USD currency; assumes synchronous payment settlement.
+3. **Target Files to Modify:**
+   - `src/types/currency.ts` (needs ISO currency codes)
+   - `src/orders/processor.ts` (needs multi-currency conversion hook)
+4. **Existing Tests:** `tests/orders/processor.test.ts` (passes, covers single-currency flow)
+5. **Watch Out For:** Circular dependency between `currency.ts` and `pricing.ts`.
+```
+
+With this 150-token brief, the coordinator can now launch an implementer agent with crystal-clear instructions and virtually zero context baggage.
+
+---
+
+## Parallel Execution vs. Sequential Pipelines
+
+Sub-agents can be orchestrated in two fundamental topologies:
+
+### 1. Sequential Pipelines (Staged Handoffs)
+
+Each agent runs in sequence, with each stage gated by validation:
+
+```
+[Plan Specialist] ──► [Test Author Specialist] ──► [Implementation Specialist] ──► [Reviewer Specialist]
+```
+
+This is the most reliable topology for production features, ensuring that code is never written before specifications exist and never merged without independent review.
+
+### 2. Parallel Workstreams (Independent Sub-Tasks)
+
+When sub-tasks are orthogonal and do not depend on each other, spawn parallel sub-agents:
+
+- **Sub-Agent A:** Implements the backend REST endpoint and integration test in Node.js.
+- **Sub-Agent B:** Implements the mock frontend UI component and Storybook stories in React.
+- **Sub-Agent C:** Updates documentation and OpenAPI schema definitions.
+
+When paired with [Git Worktrees](/git-worktrees/parallel-ai-workstreams/), parallel sub-agents can work in completely isolated directory trees on separate branches, preventing file edit conflicts.
+
+---
+
+## Real-World Delegation in Modern Tools
+
+### In Claude Code
+
+Claude Code natively supports sub-agents. You can instruct Claude in any session:
+
+```bash
+claude "Launch a sub-agent to investigate all places where we calculate tax in the repository.
+Have it return a summary of active tax providers. Do not make any edits yourself."
+```
+
+Claude Code spawns an isolated execution context, completes the investigation, and returns only the synthesized summary to your main session.
+
+### In Custom Agent Frameworks (Codex, Gemini, Python SDKs)
+
+When orchestrating agents programmatically, use discrete system prompts for each role:
+
+```python
+# Coordinator pattern pseudo-code
+def run_feature_workflow(task_description):
+    # 1. Research phase (isolated context)
+    research = spawn_agent(
+        role="researcher",
+        prompt=f"Investigate codebase for: {task_description}"
+    ).run()
+
+    # 2. Implementation phase (clean context with research brief)
+    diff = spawn_agent(
+        role="implementer",
+        context=research.summary,
+        prompt=f"Implement feature adhering to: {research.summary}"
+    ).run()
+
+    # 3. Adversarial review phase
+    review = spawn_agent(
+        role="reviewer",
+        context=diff,
+        prompt="Audit this diff for security vulnerabilities and regressions."
+    ).run()
+
+    return review
+```
+
+---
+
+## Delegation Rules of Thumb
+
+- **Delegate when file reading exceeds 5 files:** If an investigation requires scanning dozens of files, always offload it to an explorer sub-agent.
+- **Delegate review to a fresh session:** Never let the agent that wrote the code be the sole judge of whether the code is production-ready.
+- **Keep coordinator prompts high-level:** The coordinator should track milestones and deliverables, not micro-manage line numbers.
+
+---
+
+## Next Steps
+
+- **[Guardrails & Approvals](/agentic-flows/guardrails-and-approvals/)** — Setting permission boundaries and sandboxes for autonomous agents.
+- **[Parallel AI Workstreams with Git Worktrees](/git-worktrees/parallel-ai-workstreams/)** — Running multiple agents on physical worktrees concurrently.

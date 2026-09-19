@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.4.0] - 2026-09-19
+
+### Added
+
+- **New Section: Agentic Flows (5 guides)**:
+  - `agentic-flows/index.mdx` — Overview of autonomous agent loops, ReAct patterns, and levels of agency.
+  - `agentic-flows/plan-first-flow.mdx` — Preventing premature execution with research phases, implementation plans, and the "Grill Me" interview technique.
+  - `agentic-flows/test-driven-agentic-loop.mdx` — Red-Green-Refactor autonomous loops, deterministic feedback, and defenses against test tampering.
+  - `agentic-flows/multi-agent-delegation.mdx` — Coordinator-specialist patterns, context window preservation, and clean state handoffs.
+  - `agentic-flows/guardrails-and-approvals.mdx` — Three-tiered permission models, disposable Git worktree sandboxing, and pre-flight checkpoints.
+- **Deepened "Other Coding Agents" Coverage**:
+  - Added distinct "What's the Jam?" superpower profiles and step-by-step quickstarts for Codex CLI, Gemini CLI, and Copilot CLI.
+  - Documented the major industry milestone: **Claude Code native `AGENTS.md` support** unifying context across all major coding agents.
+
 ## [0.3.0] - 2026-09-18
 
 ### Added

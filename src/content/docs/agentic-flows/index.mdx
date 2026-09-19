@@ -1,0 +1,126 @@
+---
+title: Agentic Flows Overview
+description: What defines an agentic workflow in software development, how the ReAct loop operates, and when to shift from interactive assistance to autonomous execution.
+track: [backend, frontend]
+status: published
+order: 1
+---
+
+import Callout from '../../../components/Callout.astro';
+
+Most developers begin their AI journey with **assistive AI**: autocomplete ghost text in an editor or single-turn questions in a chat sidebar. While helpful, assistive AI requires you to do all the heavy lifting — you must copy errors, paste snippets, inspect test failures, decide which files to open, and manually apply every diff.
+
+**Agentic Flows** represent a fundamental phase change. Instead of answering questions in isolation, an **agentic coding flow** grants an AI model tools to act directly upon your environment: reading files, searching directories, running terminal commands, observing errors, and iterating autonomously until an objective is achieved.
+
+---
+
+## Assistive AI vs. Agentic Flows
+
+Understanding the difference determines how you design your development workflows:
+
+| Dimension             | Assistive AI (Autocomplete / Chat)                           | Agentic Flow (Agent Mode / CLIs)                                       |
+| :-------------------- | :----------------------------------------------------------- | :--------------------------------------------------------------------- |
+| **Execution Loop**    | Single-turn: prompt in, response out.                        | Multi-turn: observes, plans, executes tools, evaluates output.         |
+| **Context Access**    | Limited to active editor tab or manually pasted text.        | Explores the entire repository, reads config files, traces imports.    |
+| **Tool Capabilities** | None (pure text generation).                                 | Read/write files, execute bash commands, query MCP servers, run tests. |
+| **Error Handling**    | Hallucinates or requires developer to re-prompt with errors. | Reads compiler/test failures and self-heals in the same session.       |
+| **Cognitive Load**    | High developer coordination; manual copy-pasting.            | Developer shifts to architect, supervisor, and reviewer.               |
+
+---
+
+## The Core Agentic Loop: ReAct (Reason + Act)
+
+Every modern coding agent (whether Claude Code, VS Code Copilot Agent Mode, Cursor, or Codex CLI) operates on a variation of the **ReAct pattern**:
+
+```
+      ┌──────────────────────────────────────────────┐
+      │               User Goal / Prompt              │
+      └──────────────────────┬───────────────────────┘
+                             │
+                             ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 1. OBSERVE & ORIENT                                    │
+ │    - Inspect workspace & project rules (AGENTS.md)     │
+ │    - Search codebase & read relevant source files      │
+ └───────────────────────────┬────────────────────────────┘
+                             │
+                             ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 2. PLAN & REASON                                       │
+ │    - Formulate hypothesis / implementation strategy    │
+ │    - Determine next tool to invoke                     │
+ └───────────────────────────┬────────────────────────────┘
+                             │
+                             ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 3. ACT (Tool Execution)                                │
+ │    - Edit file / create test / run terminal command    │
+ └───────────────────────────┬────────────────────────────┘
+                             │
+                             ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 4. OBSERVE & EVALUATE                                  │
+ │    - Parse command exit code, compiler errors, diffs   │
+ │    - Did the action succeed?                           │
+ └─────────────┬────────────────────────────┬─────────────┘
+               │ No                         │ Yes
+               ▼                            ▼
+       [Iterate Loop]               [Goal Complete]
+```
+
+1. **Observe & Orient:** The agent investigates the current state. It searches for relevant symbols, reads imports, and checks project constraints.
+2. **Plan & Reason:** The agent decides what needs to happen next based on what it learned.
+3. **Act:** The agent executes a discrete tool call (e.g. writing a test, patching a file, or running `npm test`).
+4. **Evaluate:** The agent inspects the tool output. If a test fails or a compiler error occurs, it feeds that output back into step 1 and self-corrects.
+
+<Callout type="note">
+  **The Agent Objective Function:** An agent does not know whether its code works because it "thinks" well. It knows
+  whether its code works only if you give it **deterministic verification tools** (compilers, test runners, linters,
+  type checkers). Without automated verification, an agent loop is just guessing in a circle.
+</Callout>
+
+---
+
+## The Spectrum of Agency
+
+Agentic workflows are not all-or-nothing. Mature engineering teams operate across three distinct operational tiers:
+
+### 1. Human-in-the-Loop (Interactive Supervision)
+
+The agent proposes every file edit and terminal command, waiting for developer confirmation (`[Y/n]`) at each step.
+
+- **Best for:** Core architectural migrations, unfamiliar legacy codebases, production infrastructure changes, or developers learning the tool.
+
+### 2. Guardrailed Autonomy (Supervised Loops)
+
+The agent is permitted to make file edits and run non-destructive verification commands (`npm test`, `git status`) automatically, but pauses for approval before any destructive operation (git commits, pushes, database drops, network calls).
+
+- **Best for:** Day-to-day feature implementation, bug fixes, and unit test generation. This is the sweet spot for maximum velocity and safety.
+
+### 3. Full Autonomy (Sandboxed Headless Runs)
+
+The agent runs without human intervention inside an isolated environment (such as a temporary Git worktree, a Docker container, or a CI runner), stopping only when tests pass or a token threshold is exceeded.
+
+- **Best for:** Dependency upgrades, mass formatting/refactoring, nightly vulnerability remediation, or exploratory benchmark scripts.
+
+---
+
+## The Four Pillars of Reliable Agentic Flows
+
+To prevent autonomous agents from running amok or hallucinating broken solutions, robust workflows rely on four engineering pillars covered in this section:
+
+1. **[The Plan-First Workflow](/agentic-flows/plan-first-flow/)** — Forcing the agent to produce an auditable design and clarify ambiguities before touching code.
+2. **[Test-Driven Agentic Loops](/agentic-flows/test-driven-agentic-loop/)** — Using automated test suites as the steering mechanism for autonomous self-healing.
+3. **[Sub-Agent Delegation](/agentic-flows/multi-agent-delegation/)** — Decomposing complex tasks across specialized agents to preserve clean context windows.
+4. **[Guardrails & Sandboxing](/agentic-flows/guardrails-and-approvals/)** — Establishing safe execution policies, rollback checkpoints, and isolated worktrees.
+
+---
+
+## Next Steps
+
+Explore the core patterns of agentic engineering:
+
+- **[The Plan-First Workflow](/agentic-flows/plan-first-flow/)** — Why you must separate planning from execution.
+- **[Test-Driven Agentic Loops](/agentic-flows/test-driven-agentic-loop/)** — Harnessing Red-Green-Refactor with autonomous tools.
+- **[Sub-Agent Delegation](/agentic-flows/multi-agent-delegation/)** — Coordinating multi-agent swarms without context exhaustion.
+- **[Guardrails & Approvals](/agentic-flows/guardrails-and-approvals/)** — Designing permission boundaries and safe sandboxes.

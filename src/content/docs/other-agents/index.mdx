@@ -1,34 +1,66 @@
 ---
 title: Other Coding Agents
-description: A reference overview of other terminal-based AI coding agents — Codex CLI, Gemini CLI, and GitHub Copilot CLI — and how they relate to the tools covered in this toolkit.
+description: A reference overview and comparison of terminal-based AI coding agents — Codex CLI, Gemini CLI, and GitHub Copilot CLI — their unique strengths, execution models, and unified AGENTS.md support.
 status: published
 order: 1
 ---
 
 import Callout from '../../../components/Callout.astro';
 
-This section covers three AI coding agents that sit outside the main learning tracks but are worth knowing about. They share the same general model as Claude Code and GitHub Copilot — an AI that can read your code, run commands, and iterate in a loop — but differ in backing model, authentication, and ecosystem integration.
+While the core tracks of this toolkit focus on GitHub Copilot in VS Code and Claude Code in your terminal, the broader ecosystem of agentic coding tools has matured rapidly. Three major terminal agents stand out alongside Claude Code: **OpenAI's Codex CLI**, **Google's Gemini CLI**, and **GitHub's Copilot CLI**.
 
-These are reference pages, not full guides. They cover what each tool is, how to get started, and what makes it worth reaching for.
+All four tools share the same agentic foundation: an AI model running inside a local loop that can inspect your codebase, execute terminal commands, run tests, observe output, and iterate autonomously. However, each CLI comes from a different engineering philosophy with distinct architectural trade-offs, pricing models, and killer features.
 
 <Callout type="note">
-  The tools here are complementary to what this toolkit teaches. Everything you've learned about context management,
-  AGENTS.md, prompt discipline, and reviewing AI output applies equally when working with any of these agents.
+  The patterns you learn across this toolkit — prompt discipline, scoping tasks, incremental commits, test-driven loops,
+  and verification gates — apply directly to all of these tools. The agent loop is universal; only the harness changes.
 </Callout>
-
-## AGENTS.md works here too
-
-The `AGENTS.md` file you set up in your repository is not a Claude Code exclusive. It is part of a shared convention:
-
-- **Codex CLI** reads `AGENTS.md` natively — it is the primary way to give Codex project context.
-- **Gemini CLI** reads `GEMINI.md` by default, but can be configured to also read `AGENTS.md` (and any other files you specify) via `settings.json`.
-- **GitHub Copilot CLI** reads instruction files from `.github/instructions/` and understands your repository structure through its GitHub integration.
-
-A well-written `AGENTS.md` in your repo gives any of these tools a useful starting point without extra setup.
 
 ---
 
-- [Agentic IDEs Comparison](/other-agents/agentic-ides-comparison/) — Cursor, Windsurf, Copilot Agent Mode, and Claude Code compared
-- [Codex CLI](/other-agents/codex-cli/) — OpenAI's terminal coding agent
-- [Gemini CLI](/other-agents/gemini-cli/) — Google's open-source terminal agent with a generous free tier
-- [GitHub Copilot CLI](/other-agents/copilot-cli/) — Copilot's agentic terminal experience, mature in 2026
+## "What's the Jam?" — Comparing Terminal Agents
+
+Every terminal CLI has a unique personality and technical sweet spot. Understanding "what's the jam" for each tool helps you pick the right agent for the job:
+
+| Agent           | Backing Models                        | "What's the Jam?" (Superpower)                                                                                                                                           | Context Capacity | Ideal Use Case                                                                                                               |
+| :-------------- | :------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| **Claude Code** | Claude 3.7 Sonnet (Hybrid Thinking)   | **Test-and-repair autonomy & tool orchestration.** Exceptional at planning multi-file refactors and thinking through architectural edge cases.                           | 200k tokens      | Complex backend/frontend feature engineering, architectural refactoring, deep reasoning.                                     |
+| **Codex CLI**   | OpenAI o3, o4-mini                    | **Deep reasoning with strict sandboxed execution tiers.** Three explicit permission policies (`suggest`, `auto-edit`, `full-auto`) and plan-mode reasoning.              | 128k–200k tokens | Teams invested in ChatGPT Enterprise, strict compliance environments, automated headless batch scripts.                      |
+| **Gemini CLI**  | Gemini 2.5 Pro / Flash                | **Massive 1M token context & live Google Search grounding.** Read entire monorepo architectures at once with real-time web verification for zero-day APIs.               | 1M+ tokens       | Large monorepo analysis, researching undocumented or rapidly changing libraries, zero-cost development (generous free tier). |
+| **Copilot CLI** | Multi-model (Claude, GPT-4o, o3-mini) | **Native GitHub context graph & ecosystem integration.** Understands issues, pull request discussions, reviews, and repository permissions without leaving the terminal. | Model-dependent  | Developers immersed in GitHub enterprise workflows, PR review automation, issue-to-code resolution.                          |
+
+---
+
+## The Big Milestone: Unified AGENTS.md Support
+
+For over a year, developers navigating multiple tools faced a frustrating fragmentation problem: Claude Code used `CLAUDE.md`, Gemini CLI preferred `GEMINI.md`, and OpenAI / Cursor championed `AGENTS.md`. Teams were forced either to maintain duplicate context files or write brittle symlinks.
+
+**Today, that friction is gone: Claude Code now natively supports `AGENTS.md` out of the box.**
+
+This long-awaited update unifies context across the entire ecosystem:
+
+```
+Your Repository Root
+├── AGENTS.md                ← The universal project contract (read by all agents)
+│                              - Build & test commands
+│                              - Code style & architectural invariants
+│                              - Off-limits directories & safety boundaries
+```
+
+### How Each Tool Reads AGENTS.md
+
+- **Claude Code:** Reads `AGENTS.md` automatically at session launch. If both `CLAUDE.md` and `AGENTS.md` exist in the same directory, Claude merges both, giving precedence to `CLAUDE.md` for tool-specific settings while respecting `AGENTS.md` for shared project rules.
+- **Codex CLI:** Natively parses `AGENTS.md` from the root and across subdirectories, using it to constrain its tool choices and test execution loops.
+- **Gemini CLI:** Reads `AGENTS.md` natively as part of its workspace configuration alongside `GEMINI.md`.
+- **GitHub Copilot CLI:** Automatically ingests `AGENTS.md` alongside repo-level instruction files in `.github/instructions/`.
+
+By committing a clean, structured `AGENTS.md` to your repository, you provide instant context to every developer on your team, regardless of which terminal agent or AI-enabled IDE they prefer.
+
+---
+
+## Explore the Agents
+
+- **[Agentic IDEs Comparison](/other-agents/agentic-ides-comparison/)** — A deep comparison of Cursor, Windsurf, VS Code Copilot Agent Mode, and Claude Code.
+- **[Codex CLI](/other-agents/codex-cli/)** — OpenAI's terminal coding agent: installation, approval policies, Plan Mode, and scripting.
+- **[Gemini CLI](/other-agents/gemini-cli/)** — Google's open-source terminal agent: 1M token context, Search grounding, and free-tier setup.
+- **[GitHub Copilot CLI](/other-agents/copilot-cli/)** — Copilot's terminal agent: GitHub issue/PR integration, Autopilot mode, and slash commands.

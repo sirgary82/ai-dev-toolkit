@@ -1,118 +1,196 @@
 ---
 title: Codex CLI
-description: OpenAI's terminal-based coding agent. Runs locally, powered by OpenAI models, with configurable approval modes and MCP support.
+description: OpenAI's terminal-based coding agent. Powered by o-series reasoning models, featuring configurable execution policies, Plan Mode, and universal AGENTS.md support.
 status: published
 order: 2
 ---
 
 import Callout from '../../../components/Callout.astro';
 
-Codex CLI is OpenAI's answer to terminal-native AI coding. It runs locally on your machine, reads your codebase, and can plan and execute multi-step coding tasks — creating files, running shell commands, and iterating on its own output. It is powered by OpenAI models (o3, o4-mini by default) and is fully open source under Apache 2.0.
+Codex CLI is OpenAI's open-source terminal coding agent (Apache 2.0). It runs locally on your workstation, reads your codebase, and executes multi-step engineering tasks — authoring code, running terminal commands, executing unit tests, and self-correcting based on compiler or test feedback.
 
 <Callout type="note">
-  Codex CLI is the local terminal agent. OpenAI also has **Codex Web** at chatgpt.com/codex — a cloud-based agent that
-  runs tasks asynchronously in isolated environments. They are different products. This page covers the CLI.
+  **Codex CLI vs Codex Web:** Codex CLI is the local terminal harness that interacts directly with your local files and
+  git repository. OpenAI also offers **Codex Web** (at chatgpt.com/codex), a cloud-based agent running inside remote
+  container sandboxes. This guide focuses on the local **Codex CLI**.
 </Callout>
 
 ---
 
-## Installation
+## "What's the Jam?" — Why Developers Choose Codex CLI
+
+Among terminal agents, Codex CLI has a distinct engineering personality:
+
+1. **Deep Reasoning with OpenAI o-Series Models:** By default, Codex CLI leverages OpenAI's reasoning models (such as `o3` and `o4-mini`). It natively allocates test-time compute to plan intricate logic, analyze circular dependencies, and verify edge cases before generating code.
+2. **Explicit Sandboxing & Execution Tiers:** Codex CLI was designed from day one with enterprise security in mind. It has three strict approval policies (`suggest`, `auto-edit`, `full-auto`), making it safe to adopt in risk-sensitive environments.
+3. **Dedicated Plan Mode:** Instead of jumping straight into editing files, Codex allows you to explicitly trigger an upfront architectural planning phase where it drafts an implementation strategy, reviews project constraints, and waits for your confirmation.
+4. **Headless Scriptability (`codex exec`):** Codex CLI can run entirely non-interactively in CI/CD pipelines, pre-commit hooks, or cron jobs for automated refactoring, dependency bumping, and issue remediation.
+
+---
+
+## Installation & Setup
+
+### 1. Install the CLI
 
 ```bash
-# npm
+# Global install via npm
 npm install -g @openai/codex
 
-# Homebrew (macOS)
+# Homebrew (macOS / Linux)
 brew install --cask codex
 ```
 
-Binary downloads are available from the [GitHub Releases page](https://github.com/openai/codex/releases/latest) for Linux and macOS.
+Binary downloads are also available directly from the [OpenAI Codex GitHub Releases](https://github.com/openai/codex/releases).
 
-## Authentication
+### 2. Authentication
 
-The simplest path is signing in with a ChatGPT account (Plus, Pro, Team, or Enterprise plan):
+You can authenticate using your existing ChatGPT subscription or a direct OpenAI API key:
 
 ```bash
+# Launch interactive login
 codex
-# Select "Sign in with ChatGPT" on first launch
+
+# Select "Sign in with ChatGPT" (works with Plus, Pro, Team, and Enterprise)
 ```
 
-You can also authenticate with an OpenAI API key if you prefer direct API billing.
-
----
-
-## How it works
-
-Codex reads your project files and executes tasks using a loop: plan → act → observe → repeat. Before it runs anything, it asks for approval based on your configured **execution policy**.
-
-There are three approval modes:
-
-| Mode        | What happens                                                            |
-| ----------- | ----------------------------------------------------------------------- |
-| `suggest`   | Codex proposes changes, you apply them manually (default, safest)       |
-| `auto-edit` | Codex edits files automatically, asks before running shell commands     |
-| `full-auto` | Codex runs everything autonomously — use in sandboxed environments only |
-
-Set the mode at launch:
+Alternatively, set an API key for metered billing:
 
 ```bash
-codex --approval-mode auto-edit
+export OPENAI_API_KEY="sk-..."
+codex
 ```
-
-Or configure a default in `~/.codex/config.toml`.
-
-### Plan mode
-
-For complex tasks, Codex has a **Plan mode** that reasons through the problem before taking any action. It uses a configurable reasoning effort level (`low`, `medium`, `high`). This is useful when you want the agent to think through a multi-file change before touching anything.
 
 ---
 
-## AGENTS.md
+## Quickstart: How to Use Codex CLI
 
-Codex reads `AGENTS.md` natively. Place one at the root of your repository (or in subdirectories for component-specific context) and Codex will incorporate it into every session. The file supports a hierarchical scope model — subdirectory `AGENTS.md` files take precedence over the root one for tasks in that folder.
+### 1. Interactive REPL
+
+Launching `codex` in any project folder opens the interactive agent session:
+
+```bash
+cd my-project
+codex
+```
+
+```
+╭─────────────────────────────────────────────────────────────╮
+│ OpenAI Codex CLI                                           │
+│ Model: o3 | Policy: auto-edit | Context: AGENTS.md loaded   │
+╰─────────────────────────────────────────────────────────────╯
+
+> Add a rate-limiting middleware to our Express API using redis
+```
+
+Codex will:
+
+1. Scan your project files and parse your `AGENTS.md`.
+2. Propose a plan and search for existing middleware patterns.
+3. Automatically edit the appropriate files (under `auto-edit` mode).
+4. Run your test suite (`npm test`) to verify that existing routes still work.
+5. Present a clean unified diff for your final review.
+
+### 2. Using Plan Mode for Multi-File Changes
+
+When dealing with cross-cutting changes, invoke **Plan Mode** to force Codex to think through the architectural blast radius before making edits:
+
+```bash
+# Start with high reasoning effort
+codex --plan --reasoning-effort high
+```
+
+During Plan Mode, Codex investigates the repository, lists all files that must change, identifies potential breaking changes, and asks:
+
+> _"I plan to update 4 files and add 1 migration. Here is the step-by-step plan. Proceed with implementation? [Y/n]"_
+
+### 3. Non-Interactive Scripting (`codex exec`)
+
+For scripted automations, use headless execution:
+
+```bash
+# Run a single task non-interactively
+codex exec "Update all deprecated React 18 createRoot calls to React 19 standards" \
+  --approval-mode full-auto \
+  --output diff.patch
+```
+
+---
+
+## Execution Policies & Safety Modes
+
+Codex provides three distinct execution tiers to balance autonomy against developer oversight:
+
+| Mode            | Flag                        | File Edits                            | Shell / Test Commands                         | Recommended Context                        |
+| :-------------- | :-------------------------- | :------------------------------------ | :-------------------------------------------- | :----------------------------------------- |
+| **`suggest`**   | `--approval-mode suggest`   | Proposes diffs; user applies manually | Asks for confirmation before every command    | Initial evaluation; security-critical code |
+| **`auto-edit`** | `--approval-mode auto-edit` | Applies edits automatically           | Prompts user before running terminal commands | **Default day-to-day workflow**            |
+| **`full-auto`** | `--approval-mode full-auto` | Applies edits automatically           | Runs commands autonomously without prompting  | Dockerized sandboxes, isolated CI jobs     |
+
+You can set your default policy in `~/.codex/config.toml`:
+
+```toml
+[defaults]
+model = "o3"
+approval_mode = "auto-edit"
+reasoning_effort = "medium"
+
+[sandbox]
+allow_network = false
+allowed_commands = ["npm test", "dotnet test", "git status"]
+```
+
+---
+
+## Project Context: AGENTS.md
+
+Codex CLI treats `AGENTS.md` as its primary project instruction file. Place one at the root of your repository:
 
 ```markdown
-# AGENTS.md example for Codex
+# AGENTS.md for Codex CLI
 
-## Project
+## Stack & Architecture
 
-ASP.NET Core API + React frontend. All commands run from repo root.
+- ASP.NET Core 9 Minimal API + PostgreSQL
+- Use MediatR for CQRS command handlers
+- Return `Result<T>` objects, never throw raw HTTP exceptions
 
-## Conventions
+## Testing Discipline
 
-- New endpoints go in /src/Api/Controllers/
-- Use ResultPattern<T> for all service return values
-- Run `dotnet test` before considering a task done
+- Run `dotnet test` to verify any modifications
+- All new endpoints must have a corresponding integration test in tests/Api.Tests/
 
-## Off limits
+## Safety Rules
 
-Do not modify migrations directly. Generate them with `dotnet ef migrations add`.
+- Never edit database migrations directly
+- Do not touch files under /legacy/
 ```
 
-Codex also supports importing other files into `AGENTS.md` via path references, which lets you modularise large context files.
+Codex automatically merges root `AGENTS.md` files with subdirectory `AGENTS.md` files when working inside nested modules, giving local component rules precedence over global rules.
 
 ---
 
-## MCP support
+## Connecting External Tools via MCP
 
-Codex connects to MCP servers configured in `~/.codex/config.toml`. This lets you extend it with tools for databases, APIs, or internal services — the same pattern as Claude Code's MCP setup.
+Codex supports the Model Context Protocol (MCP) to access external tools and databases:
+
+```toml
+# ~/.codex/config.toml
+[mcp_servers.postgres]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost:5432/app_dev"]
+
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+env = { GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_..." }
+```
+
+Once configured, Codex can query database schemas or GitHub issues directly during an interactive coding session.
 
 ---
 
-## Good practices
+## Good Practices & Pro-Tips
 
-**Start with `suggest` mode while you learn the tool.** Codex can be surprisingly fast and thorough. Watching what it proposes before you let it auto-apply builds trust and catches misunderstandings early.
-
-**Give it a test command in AGENTS.md.** If you tell Codex how to run your tests, it will use them to verify its own changes in `auto-edit` and `full-auto` modes. This dramatically reduces the number of broken changes that reach you.
-
-**Use Plan mode for anything touching multiple modules.** For cross-cutting changes — adding a new feature end-to-end, refactoring a shared interface — Plan mode's upfront reasoning catches structural issues before the editing starts.
-
-**Scope tasks to one concern at a time.** Like any coding agent, Codex works best when the task is clear and bounded. "Add pagination to the orders endpoint" beats "improve the API". The `AGENTS.md` context covers the surrounding constraints so you don't have to repeat them.
-
-**Review diffs before committing.** Even in `auto-edit` mode, treat Codex's output the same way you'd treat a PR from a junior developer: read the diff, check the logic, run the tests.
-
----
-
-## When to reach for it
-
-Codex CLI is a good fit if you're already in the OpenAI ecosystem (ChatGPT team plan, existing API key) or if you want a terminal agent with a well-established approval model and open-source codebase you can inspect. It competes directly with Claude Code in capability — the main differentiator is the backing model and the OpenAI platform integration.
+- **Keep reasoning effort proportional:** Use `--reasoning-effort low` for straightforward boilerplate or documentation tasks, and `--reasoning-effort high` for subtle concurrency bugs, mathematical algorithms, or complex refactors.
+- **Provide verification commands in AGENTS.md:** Always document your test and lint commands in `AGENTS.md`. Codex uses these commands to self-correct failures before prompting you.
+- **Inspect diffs with git:** While Codex shows its proposed changes in the terminal, run `git diff` in another terminal tab or worktree to review the full syntax-highlighted changeset before committing.

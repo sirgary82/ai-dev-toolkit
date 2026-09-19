@@ -1,0 +1,175 @@
+---
+title: Guardrails, Sandboxing & Human-in-the-Loop
+description: How to design permission boundaries, execution sandboxes, and safe recovery checkpoints so autonomous coding agents can move fast without risking repository integrity or leaking secrets.
+track: [backend, frontend]
+status: published
+order: 5
+---
+
+import Callout from '../../../components/Callout.astro';
+
+The primary friction when teams adopt autonomous coding agents is **fear of unintended side effects**:
+
+- What if the agent deletes an uncommitted file?
+- What if it runs a destructive database migration on a shared staging environment?
+- What if it inadvertently commits an API secret to a public pull request?
+
+Striking the right balance between **developer velocity** and **operational safety** requires well-defined **guardrails and sandboxing patterns**. When guardrails are configured properly, you can grant agents substantial autonomy without staying glued to your keyboard to approve every minor command.
+
+---
+
+## The Three Tiers of Tool Permissions
+
+Modern coding agents classify tool capabilities into three permission tiers. Configure your tools to enforce these boundaries:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. AUTO-APPROVED (Read-Only & Verification)                 │
+│    - Read files, search code, list directories              │
+│    - Run tests: npm test, dotnet test, pytest               │
+│    - Run typecheckers & linters: tsc, eslint                │
+├─────────────────────────────────────────────────────────────┤
+│ 2. CONFIRMATION REQUIRED (Mutating Operations)              │
+│    - File edits, creations, and deletions                   │
+│    - Adding new external dependencies (npm install pkg)      │
+│    - Local git commits and branch creation                  │
+├─────────────────────────────────────────────────────────────┤
+│ 3. STRICTLY PROHIBITED (Off-Limits / Hard Boundaries)       │
+│    - Reading secret files (.env, id_rsa, credentials.json)  │
+│    - Destructive git operations: git push -f, git reset     │
+│    - Sudo commands or system-level package installations    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 1. Auto-Approved (Zero-Friction Verification)
+
+Commands that do not mutate files or external systems should run without human intervention. This enables the agent to execute its self-healing compile-test-debug loop autonomously.
+
+### 2. Confirmation Required (Interactive Gates)
+
+Any operation that modifies files on disk or alters local branch state should prompt the developer with a clear diff. You verify the intent and press `[Y]` once, allowing the agent to proceed to the next phase.
+
+### 3. Strictly Prohibited (Hard Boundaries)
+
+Prohibited operations should be blocked at the tooling level (via configuration files, sandboxes, or pre-execution hooks) so that even if an agent hallucinates a dangerous command, the environment refuses to execute it.
+
+---
+
+## Sandboxing Pattern: Disposable Git Worktrees
+
+The simplest and most effective sandbox for autonomous agent execution is a **Git Worktree**.
+
+Instead of letting an agent work directly in your primary checkout where you have unstaged work or delicate local state, create an isolated worktree on a dedicated branch:
+
+```bash
+# Create an isolated worktree in an adjacent folder
+git worktree add ../agent-task-sandbox -b feat/autonomous-refactor
+
+# Launch your agent inside the sandbox
+cd ../agent-task-sandbox
+claude  # or codex, gemini, copilot
+```
+
+### Why Worktree Sandboxing Works:
+
+- **Zero Risk to Your Active Workspace:** The agent cannot accidentally touch, overwrite, or delete the files you are working on in your primary editor.
+- **Instant Disposal:** If the agent takes a wrong architectural path, you do not need to spend time undoing commits or cleaning untracked files. Simply exit the session and delete the worktree:
+  ```bash
+  cd ../my-main-repo
+  git worktree remove ../agent-task-sandbox --force
+  git branch -D feat/autonomous-refactor
+  ```
+- **Clean Merge:** If the agent succeeds and all tests pass, merge the clean branch into your working branch with a single `git merge feat/autonomous-refactor`.
+
+---
+
+## Defense-in-Depth: Repository Off-Limits Rules
+
+Always codify explicit negative constraints in your `AGENTS.md` and `CLAUDE.md`. Agents pay close attention to dedicated "Off Limits" sections:
+
+```markdown
+# AGENTS.md Security & Safety Invariants
+
+## Strictly Off-Limits
+
+- NEVER inspect, read, or print files matching: `.env*`, `*.pem`, `*id_rsa*`, `secrets/`.
+- NEVER execute destructive git commands: `git reset --hard`, `git clean -fd`, `git push --force`.
+- NEVER execute database drop, truncate, or down-migration commands.
+- Do NOT add new third-party npm packages without explicit prior human confirmation.
+
+## Execution Rules
+
+- Always run `npm test` after editing code to confirm zero regressions.
+- If a command fails 3 consecutive times, stop and ask the developer for help rather than guessing.
+```
+
+---
+
+## Tool-Specific Configuration
+
+### 1. Codex CLI Sandbox Configuration
+
+Codex CLI allows you to define allowed commands and network restrictions in `~/.codex/config.toml`:
+
+```toml
+[sandbox]
+allow_network = false
+allowed_commands = [
+  "npm test",
+  "npm run lint",
+  "git status",
+  "git diff"
+]
+prohibited_commands = [
+  "rm -rf",
+  "git push",
+  "sudo"
+]
+```
+
+### 2. VS Code Copilot Agent Mode Settings
+
+In your workspace `.vscode/settings.json`, tune execution autonomy:
+
+```json
+{
+  "chat.agent.enabled": true,
+  // Require explicit confirmation before terminal commands run:
+  "github.copilot.chat.agent.runTasks": false
+}
+```
+
+---
+
+## The Pre-Flight Checkpoint Habit
+
+Before letting an autonomous agent make sweeping multi-file changes, adopt the **30-second pre-flight checkpoint**:
+
+```bash
+# 1. Ensure working directory is clean
+git status
+
+# 2. If you have uncommitted work, stash or commit it
+git commit -am "checkpoint: working state before agent refactor"
+
+# 3. Launch agent
+claude "Refactor the authentication middleware to use JWT tokens"
+```
+
+If the agent produces a flawed result, returning to a pristine state takes one command:
+
+```bash
+# Nuclear reset back to your checkpoint
+git reset --hard HEAD
+```
+
+---
+
+## Summary of the Agentic Flow Methodology
+
+By combining the patterns in this section, you create a robust, repeatable software engineering pipeline:
+
+1. **[The Plan-First Workflow](/agentic-flows/plan-first-flow/):** Force upfront design and interview before touching code.
+2. **[Test-Driven Agentic Loops](/agentic-flows/test-driven-agentic-loop/):** Provide ground-truth exit codes and failure diffs.
+3. **[Sub-Agent Delegation](/agentic-flows/multi-agent-delegation/):** Keep context windows clean by distributing work to specialist roles.
+4. **[Guardrails & Sandboxing](/agentic-flows/guardrails-and-approvals/):** Run in disposable worktrees with strict permission tiers.

@@ -69,22 +69,17 @@ This keeps the CLAUDE.md file focused on instructions while linking out to riche
 
 ## AGENTS.md — the cross-tool open standard
 
-`AGENTS.md` emerged in mid-2025 from a collaboration between Sourcegraph, OpenAI, Google, Cursor, and others. It is now maintained by the **Agentic AI Foundation** under the Linux Foundation. It is not a Claude or Anthropic standard — it is a vendor-neutral specification designed to work across tools.
+`AGENTS.md` emerged in mid-2025 from a collaboration between Sourcegraph, OpenAI, Google, Cursor, and others, maintained by the **Agentic AI Foundation** under the Linux Foundation. It is a vendor-neutral open standard designed to work seamlessly across tools.
 
-Tools that read AGENTS.md (as of 2025–2026): Claude Code, GitHub Copilot, Cursor, Gemini CLI, Windsurf, Aider, and others.
+<Callout type="tip">
+  **The Community Milestone:** For over a year, developers waited for full, first-class parity across tools. Claude Code
+  now natively supports `AGENTS.md` out of the box as a primary context file. If your project has only an `AGENTS.md`,
+  Claude Code reads it automatically without requiring a `CLAUDE.md`.
+</Callout>
 
-Claude Code reads AGENTS.md alongside CLAUDE.md — but **CLAUDE.md takes priority** when both exist in the same directory.
+Tools that read AGENTS.md natively: **Claude Code**, **GitHub Copilot & Copilot CLI**, **OpenAI Codex CLI**, **Google Gemini CLI**, **Cursor**, **Windsurf**, and **Aider**.
 
-### What AGENTS.md does not have
-
-Because AGENTS.md must work across many different tools with different capabilities, it is intentionally minimal. It does not support:
-
-- Hierarchical loading (no subdirectory override mechanism)
-- `@import` directives
-- Auto-memory or agent self-updating
-- Tool-specific feature flags
-
-What it loses in features it gains in portability. An AGENTS.md file written for Claude Code will also be read by Copilot, Cursor, and any other tool that adopts the standard — with no extra work.
+When both `CLAUDE.md` and `AGENTS.md` exist in the same directory, Claude Code intelligently merges both — applying shared engineering rules from `AGENTS.md` while allowing tool-specific overrides in `CLAUDE.md`.
 
 ---
 

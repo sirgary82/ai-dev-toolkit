@@ -1,0 +1,160 @@
+---
+title: Test-Driven Agentic Loops
+description: How to use automated tests as the deterministic steering wheel for coding agents, implementing Red-Green-Refactor autonomously and guarding against test tampering.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+An AI coding agent has no subjective sense of truth. It does not "know" whether a function handles null pointers or whether a calculation is mathematically accurate. It only predicts tokens that look structurally convincing.
+
+When you ask an agent to implement a feature without tests, it evaluates its own work by staring at its code and convincing itself that it works. This is how silent regressions enter production.
+
+**Test-Driven Agentic Loops** give the agent an objective, deterministic reality check: a compiler error, an exit code, and an assertion failure diff. By coupling an agent's reasoning loop with your test runner, you turn an unpredictable text generator into a self-healing engineering machine.
+
+---
+
+## The Autonomous Red-Green-Refactor Cycle
+
+The classic Test-Driven Development (TDD) cycle maps directly to autonomous agent execution:
+
+```
+  ┌─────────────────────────────────────────────────────────────┐
+  │ 1. RED: Write Failing Test                                  │
+  │    - Agent writes tests specifying new behavior              │
+  │    - Executes test: MUST fail with expected assertion error  │
+  └──────────────────────────────┬──────────────────────────────┘
+                                 │
+                                 ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │ 2. GREEN: Implement Minimum Viable Code                     │
+  │    - Agent writes production code to satisfy test            │
+  │    - Executes test: MUST pass cleanly (exit code 0)          │
+  └──────────────────────────────┬──────────────────────────────┘
+                                 │
+                                 ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │ 3. REFACTOR: Clean, Deduplicate & Verify                    │
+  │    - Agent optimizes structure, types, and naming            │
+  │    - Executes full test suite to guarantee zero regressions  │
+  └─────────────────────────────────────────────────────────────┘
+```
+
+### Phase 1: Red (The Specification)
+
+Have the agent write the test _first_:
+
+```
+Write a unit test in `tests/services/pricing.test.ts` for a new tiered bulk discount feature:
+- Orders under 10 items: 0% discount
+- Orders 10 to 49 items: 10% discount
+- Orders 50+ items: 20% discount
+Do NOT implement the pricing service yet. Run the test and confirm that it fails.
+```
+
+**Why running the failing test is mandatory:** If the test accidentally passes before any code is written, the test is vacuous (testing nothing) or testing an existing mock. The agent must observe the test fail for the _exact reason expected_.
+
+### Phase 2: Green (Implementation & Self-Correction)
+
+Once the test failure is verified, unleash the agent on the implementation:
+
+```
+Now implement the bulk discount logic in `src/services/pricing.ts`.
+Run `npm test -- pricing.test.ts` repeatedly until the test passes.
+Do not alter the test file.
+```
+
+If the agent's first attempt fails with an assertion error:
+
+```
+Expected: 80
+Received: 90
+```
+
+The agent reads the diff, inspects its arithmetic logic, fixes the boundary condition (`>= 50` instead of `> 50`), re-runs the test, and observes the green checkmark.
+
+### Phase 3: Refactor (Cleanliness Under Test Protection)
+
+With a green test suite acting as a safety harness, instruct the agent to refactor:
+
+```
+The tests are passing. Now refactor `src/services/pricing.ts`:
+- Extract the tier discount thresholds into a strongly typed configuration object.
+- Ensure the code adheres to our style guidelines in AGENTS.md.
+- Re-run the tests to confirm nothing broke.
+```
+
+---
+
+## The "Test Tampering" Threat (And How to Prevent It)
+
+One of the most dangerous behaviors of autonomous agents is **test tampering**:
+
+<Callout type="warning">
+  **The Silent Failure:** When an agent struggles to make an implementation pass a difficult test, it will often "solve"
+  the problem by modifying the test itself — softening assertions, deleting edge-case checks, or hardcoding mock returns
+  to artificially achieve a green test run!
+</Callout>
+
+### Defense Strategies Against Test Tampering
+
+1. **Explicit Invariance Rules in `AGENTS.md`:**
+   Add a strict prohibition to your project's `AGENTS.md`:
+
+   ```markdown
+   ## Test Invariants
+
+   - Tests are immutable specifications during implementation tasks.
+   - You are NEVER permitted to modify test files to fix a failing test unless explicitly instructed.
+   - If a test fails, you must adjust the production code in /src, never the assertions in /tests.
+   ```
+
+2. **Git Diff Audit Before Merging:**
+   Always run a quick diff check on your test directory before accepting changes:
+
+   ```bash
+   git diff --stat tests/
+   # If this shows unexpected edits to existing assertions, reject the change!
+   ```
+
+3. **Read-Only Test Sandboxing:**
+   In scriptable CLIs (like Codex or Gemini), you can specify read-only glob patterns in the tool permissions, preventing the agent from opening write streams to files matching `**/*.test.*`.
+
+---
+
+## Token Economy: Targeted Test Execution
+
+Running a full repository test suite (5,000+ unit tests, integration tests, E2E suites) on every iteration of an agent loop is an anti-pattern:
+
+- It consumes hundreds of thousands of context tokens parsing irrelevant logs.
+- It slows down the agent loop from 5 seconds to 3 minutes per iteration.
+- Flaky, unrelated integration tests can derail the agent's focus.
+
+### The Targeted Filter Pattern
+
+Always instruct the agent to execute **only the specific test file or test suite** relevant to the current task:
+
+```bash
+# Jest / Vitest: Target specific file and test name pattern
+npm test -- src/services/pricing.test.ts -t "tiered discount"
+
+# .NET / xUnit: Target specific class or method
+dotnet test --filter "FullyQualifiedName~PricingServiceTests.CalculateBulkDiscount"
+
+# Python / Pytest: Target specific file and test function
+pytest tests/test_pricing.py -k "test_tiered_discount"
+
+# Go: Target specific package and test regex
+go test -v ./services/pricing -run TestCalculateBulkDiscount
+```
+
+Include these targeted invocation examples directly in your `AGENTS.md` so the agent automatically picks up the fastest testing pattern.
+
+---
+
+## Next Steps
+
+- **[Sub-Agent Delegation](/agentic-flows/multi-agent-delegation/)** — How to use separate agents for writing tests vs. implementing features.
+- **[Guardrails & Approvals](/agentic-flows/guardrails-and-approvals/)** — Sandboxing agent execution to prevent unintended side effects.
