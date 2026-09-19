@@ -1,0 +1,164 @@
+---
+title: 'Workstation Sandboxing: Docker & MicroVMs'
+description: Hardening local developer machines with unprivileged containers, read-only root filesystems, MicroVMs, and isolated VHDs to contain autonomous agent execution.
+track: [backend, frontend]
+status: published
+order: 2
+---
+
+import Callout from '../../../components/Callout.astro';
+
+For many engineering teams, moving all agent execution to the cloud is neither immediately practical nor cost-effective. Developers want interactive, low-latency loops on their local machines.
+
+The objective of **Workstation Sandboxing** is to let developers run autonomous coding agents (Claude Code, Codex CLI, Gemini CLI) locally while strictly containing their blast radius. If an agent executes a malicious script or makes an unrecoverable error, the damage is restricted to an isolated sandbox that can be incinerated in seconds.
+
+---
+
+## Strategy 1: Hardened Local Container Sandboxing (Docker / Podman)
+
+The most accessible workstation isolation pattern uses unprivileged, locked-down containers.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 HOST DEVELOPER WORKSTATION                  │
+│                                                             │
+│   ~/.ssh/   ~/.aws/   VPN Adapter   Browser Cookies         │
+│     │         │            │               │                │
+│     └── [ALL HOST ACCESS HARD-BLOCKED BY DOCKER] ───────────┼──┐
+│                                                             │  │
+│   ┌───────────────────────────────────────────────────────┐ │  │
+│   │           HARDENED AGENT CONTAINER SANDBOX            │ │  │
+│   │                                                       │ │  │
+│   │  - User: 1000:1000 (Non-root)                         │ │  │
+│   │  - Rootfs: read_only: true                            │ │  │
+│   │  - Linux Capabilities: cap_drop: [ALL]                │ │  │
+│   │  - Volumes: ONLY ./repo mounted at /workspace:rw      │ │  │
+│   │  - Network: Egress-filtered proxy only                │ │  │
+│   └───────────────────────────────────────────────────────┘ │  │
+└─────────────────────────────────────────────────────────────┘  │
+                                                                 ▼
+                                                  [Corporate Intranet & Secrets
+                                                   Completely Inaccessible]
+```
+
+### The Production Docker Compose Blueprint (`docker-compose.agent-sandbox.yml`)
+
+```yaml
+version: '3.8'
+
+services:
+  agent-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent-sandbox
+    # 1. Enforce non-root execution
+    user: '1000:1000'
+    working_dir: /workspace
+
+    # 2. Scope volume strictly to active repo
+    volumes:
+      - .:/workspace:rw
+
+    # 3. Read-only root filesystem prevents persistent malware installation
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+      - /home/agent/.cache:rw,size=1g
+
+    # 4. Strip kernel privileges
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+
+    # 5. Restrict environment variables (pass task tokens only)
+    environment:
+      - TASK_TOKEN=${AGENT_EPHEMERAL_TOKEN}
+      - PIP_INDEX_URL=https://artifacts.corp.internal/repository/pypi-all/simple
+      - NPM_CONFIG_REGISTRY=https://artifacts.corp.internal/repository/npm-all/
+
+    networks:
+      - sandbox-net
+
+networks:
+  sandbox-net:
+    driver: bridge
+```
+
+<Callout type="warning">
+  **The Cardinal Rule of Agent Sandboxing:** **NEVER** mount the host Docker socket (`/var/run/docker.sock`) into an
+  agent container! Any process with access to `/var/run/docker.sock` can spin up privileged sibling containers that
+  mount the host root filesystem (`/`), granting the agent instant, unconstrained root access to the entire physical
+  machine.
+</Callout>
+
+### Key Hardening Invariants:
+
+1.  **Read-Only Root Filesystem (`read_only: true`):** The agent cannot modify system libraries, install persistent rootkits, or alter `/bin`. Only `/workspace` and temporary memory filesystems (`tmpfs`) can be written to.
+2.  **Explicit Volume Scoping:** The host `$HOME` directory is **never** mounted. The agent cannot read `~/.ssh`, `~/.aws`, or credentials from other repositories.
+3.  **Dropped Capabilities (`cap_drop: ALL`):** Stripping Linux capabilities prevents raw network socket creation, kernel debugging (`ptrace`), and hardware manipulation.
+
+---
+
+## Strategy 2: Hardware Virtualization (WSL2 / MicroVMs / Lima)
+
+While container sandboxing protects against standard application attacks, containers share the host Linux kernel. If an agent downloads an untrusted compiled dependency that contains a kernel-level privilege escalation exploit, a container escape is theoretically possible.
+
+For high-security environments (defense, banking, healthcare), **hardware-assisted virtualization** provides a hard boundary.
+
+### How MicroVM Sandboxing Works:
+
+- The agent executes inside a dedicated lightweight virtual machine (using **Firecracker**, **Lima** on macOS, or a dedicated **WSL2 instance** on Windows) with its own guest kernel.
+- The virtual machine has no access to host memory or host network adapters.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 HOST OS (macOS / Windows / Linux)           │
+│                                                             │
+│   Corporate VPN, Active Directory, AWS Master Credentials   │
+│                             │                               │
+│              [HARDWARE HYPERVISOR BOUNDARY]                 │
+│                             │                               │
+│   ┌───────────────────────────────────────────────────────┐ │
+│   │                 GUEST VIRTUAL MACHINE                 │ │
+│   │                                                       │ │
+│   │   - Dedicated Guest Kernel (Isolated memory)          │ │
+│   │   - Ephemeral Snapshot: Reverted after every task     │ │
+│   │   - Virtual Host-Only Adapter (No corporate VPN leak) │ │
+│   │   - Agent executes commands here                      │ │
+│   └───────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Snapshot & Instant Rollback
+
+The primary superpower of VM-level sandboxing is **immutable snapshot restoration**:
+
+1. Before an agent session begins, the hypervisor captures a lightweight snapshot of the clean guest VM.
+2. The agent executes tasks, compiles code, runs tests, and outputs a git patch or branch.
+3. Upon task completion (or if the agent exhibits abnormal behavior), the hypervisor **discards the guest state and resets to the pristine snapshot**.
+4. No malware, backdoor, or lingering configuration can survive across sessions.
+
+---
+
+## Workstation Sandboxing Trade-Off Matrix
+
+| Dimension                    | Path 1: Hardened Container (Docker/Podman)        | Path 2: Hardware MicroVM (WSL2/Lima/Firecracker)   |
+| :--------------------------- | :------------------------------------------------ | :------------------------------------------------- |
+| **Isolation Strength**       | High (User-space boundary; shared kernel)         | **Maximum (Hardware hypervisor; separate kernel)** |
+| **Container Escape Defense** | Moderate (Vulnerable to zero-day kernel exploits) | **Complete (Contained within guest OS)**           |
+| **Workstation Startup Time** | **< 1 second**                                    | 5 to 20 seconds                                    |
+| **RAM / CPU Overhead**       | Low (Shares host memory dynamically)              | High (Allocates 4GB–8GB dedicated RAM per VM)      |
+| **Developer Experience**     | Seamless (Native VS Code Dev Containers)          | Requires managing VM mount points & SSH bridges    |
+| **Implementation Effort**    | Low (Single Docker Compose file)                  | Moderate (Hypervisor automation scripts)           |
+
+---
+
+## Next Steps
+
+- **[Remote Ephemeral Agent Farms](/enterprise/remote-agent-farms/)** — Moving agent execution off developer workstations entirely into scalable cloud worker pools.
+- **[Supply Chain & Egress Control](/enterprise/supply-chain-and-egress-control/)** — Filtering outbound traffic and enforcing private package mirrors.

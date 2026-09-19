@@ -1,6 +1,6 @@
 ---
-title: Sub-Agents & Task Delegation
-description: Decomposing complex engineering tasks across specialized sub-agents to prevent context degradation, enforce separation of concerns, and accelerate parallel development.
+title: Agent Orchestration & Subagents in Coding
+description: Decomposing complex software engineering tasks across specialized subagents, orchestrator-worker topologies, declarative agent definitions, and model routing to prevent context degradation.
 track: [backend, frontend]
 status: published
 order: 4
@@ -8,163 +8,241 @@ order: 4
 
 import Callout from '../../../components/Callout.astro';
 
-When you ask a single agent to handle an entire end-to-end engineering initiative — investigating a legacy module, designing an architecture, modifying 8 files, writing unit tests, updating migrations, and writing documentation — the session usually breaks down around turn 25.
+When developers first experiment with autonomous coding agents, they naturally adopt a **monolithic approach**: a single prompt instructing one agent session to explore a 50-file repository, design an architecture, edit multiple backend services, write unit tests, update database migrations, and write documentation.
 
-The cause is **context window exhaustion**:
+Inevitably, the session breaks down around turn 20:
 
-- As hundreds of thousands of tokens accumulate in a single session history, models suffer from the "Lost in the Middle" phenomenon: they forget early instructions, lose track of constraints set in `AGENTS.md`, and start repeating past mistakes.
-- Huge dumps of compiler logs and raw file contents pollute the prompt, leaving little room for fresh reasoning.
+- **The "Context Monster" Problem:** As raw compiler outputs, entire file dumps, and discarded tool attempts accumulate, the context window degrades. The model suffers from the "Lost in the Middle" phenomenon—it forgets early instructions, overlooks rules set in `AGENTS.md`, and loops on repetitive errors.
+- **Role Conflation:** Asking a single prompt to simultaneously act as the high-level system architect, security auditor, backend developer, and adversarial QA tester leads to cognitive compromise.
 
-The architectural solution is **Sub-Agent Delegation**: breaking work down across ephemeral, specialized agents that perform a discrete task, return a clean summary to a coordinator, and terminate.
-
----
-
-## The Coordinator-Specialist Pattern
-
-Instead of one monolithic agent doing everything, structure your workflow with a **Coordinator** directing **Specialist Sub-Agents**:
-
-```
-                       ┌───────────────────────────────┐
-                       │       Coordinator Agent       │
-                       │   - High-level plan & state   │
-                       │   - Evaluates milestone gates │
-                       │   - Never reads raw 10MB logs │
-                       └──────────────┬────────────────┘
-                                      │
-        ┌─────────────────────────────┼─────────────────────────────┐
-        ▼                             ▼                             ▼
-┌───────────────┐             ┌───────────────┐             ┌───────────────┐
-│  Researcher   │             │  Implementer  │             │   Reviewer    │
-│   Sub-Agent   │             │   Sub-Agent   │             │   Sub-Agent   │
-│ (Exploration) │             │ (Target Code) │             │ (Adversarial) │
-└───────┬───────┘             └───────┬───────┘             └───────┬───────┘
-        │                             │                             │
-        └─────────────────────────────┼─────────────────────────────┘
-                                      ▼
-                        [Concise Synthesized Brief]
-```
-
-### 1. The Researcher / Explorer Agent
-
-- **Responsibility:** Maps dependencies, searches symbols, locates existing patterns, and reads documentation.
-- **Why isolate it:** Reading 15 large source files consumes 80,000 tokens. By delegating this to a sub-agent, the sub-agent absorbs the token cost, distills its findings into a 500-token brief, and returns to the coordinator. The coordinator’s context stays lean.
-
-### 2. The Implementation Agent
-
-- **Responsibility:** Receives the clean brief and focuses exclusively on editing files and making local tests pass.
-- **Why isolate it:** Keeps the agent hyper-focused on the active feature without the distraction of unrelated modules.
-
-### 3. The Adversarial Reviewer Agent
-
-- **Responsibility:** Reviews the git diff created by the implementation agent against security rules, performance budgets, and project conventions.
-- **Why isolate it:** When the same agent writes code and reviews it, it suffers from confirmation bias. A fresh reviewer agent with an adversarial prompt (_"Identify every potential edge case, race condition, or style violation in this diff"_) catches subtle flaws that the author missed.
+**Agent Orchestration and Subagents** solve this by replacing monolithic sessions with modular, hierarchical systems where a **Lead Orchestrator** coordinates ephemeral, specialized **Subagents**.
 
 ---
 
-## Clean State Handoffs: The Artifact Bridge
+## The 2026 Architecture Triad: Orchestrators, Skills, & Subagents
 
-The key to successful delegation is the **clean state handoff**. If sub-agents simply dump their full conversational history back to the parent, context bloat still occurs.
+Modern agentic software engineering is built on three distinct architectural primitives:
 
-Instead, sub-agents communicate via structured markdown artifacts or concise return messages:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    1. LEAD ORCHESTRATOR                     │
+│  - Holds high-level objective, task DAG, & milestones       │
+│  - Never reads raw 10,000-line build logs or huge files     │
+│  - Evaluates quality gates and routes to specialists        │
+└──────────────┬───────────────────────────────┬──────────────┘
+               │                               │
+               ▼                               ▼
+┌──────────────────────────────┐ ┌─────────────────────────────┐
+│          2. SKILLS           │ │        3. SUBAGENTS         │
+│ - Reusable capabilities      │ │ - Isolated worker agents    │
+│ - Loaded on-demand (tools)   │ │ - Ephemeral execution       │
+│ - Code parsers, git hooks    │ │ - Scoped context & prompts  │
+└──────────────────────────────┘ └─────────────────────────────┘
+```
+
+1. **The Lead Orchestrator:** Maintains the global state, implementation plan, and acceptance criteria. It interacts with the developer, makes architectural decisions, and evaluates whether subtasks have met their definition of done.
+2. **Skills:** Reusable, self-contained packages of tools, scripts, and domain instructions (e.g. database schema inspector, git worktree manager, security scanner) loaded only when required.
+3. **Subagents:** Isolated, single-purpose worker agents spawned with a scoped context window, a specific system prompt, and limited tool access. A subagent does its heavy lifting, writes a structured summary, and evaporates.
+
+---
+
+## The Four Core Orchestration Topologies
+
+Depending on whether tasks are sequential, independent, or adversarial, production engineering teams deploy four established orchestration topologies:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    AGENT ORCHESTRATION TOPOLOGIES                       │
+├───────────────────┬───────────────────┬────────────────┬────────────────┤
+│ 1. Orchestrator-  │ 2. Fan-Out /      │ 3. Evaluator-  │ 4. Specialist  │
+│    Worker         │    Fan-In (Swarm) │    Optimizer   │    Routing     │
+├───────────────────┼───────────────────┼────────────────┼────────────────┤
+│ Sequential DAG    │ Parallel Workers  │ Generator +    │ Triage Router  │
+│ Context isolation │ Git Worktrees     │ Adversarial    │ Domain queues  │
+│ Milestone gating  │ Wall-clock speed  │ Critic Loop    │ Skill matching │
+└───────────────────┴───────────────────┴────────────────┴────────────────┘
+```
+
+---
+
+### Topology 1: Orchestrator-Worker (Hierarchical Delegation)
+
+The dominant pattern for non-trivial feature engineering:
+
+1. **Task Decomposition:** The orchestrator breaks a feature request into discrete, bounded tasks.
+2. **Scoped Execution:** The orchestrator spawns a subagent dedicated to a single subtask (e.g., investigating existing billing adapters).
+3. **The Artifact Bridge:** The subagent performs the search, consumes 60,000 tokens reading files, distills its findings into a 200-token markdown brief, and terminates.
+4. **State Transition:** The orchestrator reads the brief, updates its task graph, and launches the next specialist (e.g., the code implementer).
+
+```
+[Orchestrator] ──► Spawns Explorer ──► [Reads 20 files] ──► Returns 200-word Brief
+     │
+     ▼ (Context stays pristine!)
+[Orchestrator] ──► Spawns Implementer ──► [Edits 2 files] ──► Returns Git Patch
+```
+
+---
+
+### Topology 2: Fan-Out / Fan-In (Parallel Multi-Agent Swarms)
+
+When tasks are orthogonal and independent, running subagents sequentially wastes developer time.
+
+#### How It Works:
+
+- **Fan-Out:** The lead orchestrator spawns multiple subagents concurrently across isolated [Git Worktrees](/git-worktrees/parallel-ai-workstreams/):
+  - **Subagent A (Backend):** Implements the REST endpoints in ASP.NET Core / Node.js.
+  - **Subagent B (Frontend):** Builds the React/TypeScript form component and Storybook stories.
+  - **Subagent C (Test Author):** Writes end-to-end Playwright tests against the agreed API schema.
+- **Barrier Synchronization (Fan-In):** The orchestrator waits for all three subagents to complete, merges their clean branch diffs, and runs the integration test suite.
+- **Impact:** Wall-clock task duration drops from 40 minutes to under 8 minutes.
+
+---
+
+### Topology 3: Evaluator-Optimizer (The Adversarial Critic Loop)
+
+When the same agent writes code and reviews its own output, it suffers from severe confirmation bias. The Evaluator-Optimizer topology introduces an independent quality gate:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    GENERATOR SUBAGENT                       │
+│   Writes code implementation & makes local unit tests pass  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ [Passes Git Diff]
+┌─────────────────────────────────────────────────────────────┐
+│                ADVERSARIAL CRITIC SUBAGENT                  │
+│   Spawned in fresh context with adversarial system prompt:  │
+│   "Find any race condition, SQL injection, unhandled error, │
+│    or violation of conventions in AGENTS.md."               │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                │ Does diff pass all rubrics? │
+                └──────────────┬──────────────┘
+                               │
+             ┌─────────────────┴─────────────────┐
+             ▼ NO                                ▼ YES
+   [Returns Defect List]               [Approved for Human PR]
+             │                                   │
+             └──────► [Generator Fixes]          └──────► Complete
+```
+
+---
+
+### Topology 4: Specialist Routing (Triage Gateway)
+
+For large multi-service codebases or incident response workflows:
+
+- A high-speed, lightweight model (e.g., **Gemini 3.8 Flash** or **Claude Haiku 4.5**) acts as a triage router.
+- It parses the developer request or error stack trace, identifies the affected domain (e.g., Database Migration, API Gateway, Frontend State, Auth), and dispatches the task directly to a pre-configured specialist agent preloaded with domain-specific skills.
+
+---
+
+## Declarative Subagents: The `.claude/agents/` Standard
+
+Modern tools allow engineering teams to check declarative subagent specifications directly into version control:
 
 ```markdown
-<!-- Summary returned by Researcher Sub-Agent to Coordinator -->
+## <!-- .claude/agents/database-specialist.md -->
 
-### Research Summary: Order Processing Pipeline
-
-1. **Core Entrypoint:** `src/orders/processor.ts::processOrder()`
-2. **Current Limitations:** Hardcoded USD currency; assumes synchronous payment settlement.
-3. **Target Files to Modify:**
-   - `src/types/currency.ts` (needs ISO currency codes)
-   - `src/orders/processor.ts` (needs multi-currency conversion hook)
-4. **Existing Tests:** `tests/orders/processor.test.ts` (passes, covers single-currency flow)
-5. **Watch Out For:** Circular dependency between `currency.ts` and `pricing.ts`.
-```
-
-With this 150-token brief, the coordinator can now launch an implementer agent with crystal-clear instructions and virtually zero context baggage.
+name: DatabaseSpecialist
+description: Specialized subagent for designing PostgreSQL schemas, writing EF Core / Prisma migrations, and optimizing SQL queries.
+model: claude-sonnet-5
+tools: [bash, read_file, file_edit, grep_search]
 
 ---
 
-## Parallel Execution vs. Sequential Pipelines
+You are a principal Database Reliability Engineer.
 
-Sub-agents can be orchestrated in two fundamental topologies:
+When tasked with schema changes:
 
-### 1. Sequential Pipelines (Staged Handoffs)
-
-Each agent runs in sequence, with each stage gated by validation:
-
+1. Always check existing migrations in /migrations before drafting changes.
+2. Ensure every foreign key has a supporting index.
+3. Validate that migrations are backwards-compatible (expand-and-contract pattern).
+4. Run `npm run db:migrate:test` to verify migration rollback scripts.
+5. Summarize table modifications in clean Markdown before concluding.
 ```
-[Plan Specialist] ──► [Test Author Specialist] ──► [Implementation Specialist] ──► [Reviewer Specialist]
-```
 
-This is the most reliable topology for production features, ensuring that code is never written before specifications exist and never merged without independent review.
-
-### 2. Parallel Workstreams (Independent Sub-Tasks)
-
-When sub-tasks are orthogonal and do not depend on each other, spawn parallel sub-agents:
-
-- **Sub-Agent A:** Implements the backend REST endpoint and integration test in Node.js.
-- **Sub-Agent B:** Implements the mock frontend UI component and Storybook stories in React.
-- **Sub-Agent C:** Updates documentation and OpenAPI schema definitions.
-
-When paired with [Git Worktrees](/git-worktrees/parallel-ai-workstreams/), parallel sub-agents can work in completely isolated directory trees on separate branches, preventing file edit conflicts.
+When the orchestrator encounters a task involving database migrations, it autonomously discovers and invokes `DatabaseSpecialist`.
 
 ---
 
-## Real-World Delegation in Modern Tools
+## Dynamic Model Routing: Right Model for the Right Subagent
 
-### In Claude Code
+In a sophisticated multi-agent pipeline, running the most expensive, high-reasoning model for every simple subagent is an anti-pattern. Mature teams route models dynamically:
 
-Claude Code natively supports sub-agents. You can instruct Claude in any session:
+| Subagent Role          | Required Capability                            | Recommended 2026 Model                  | Why                                                                      |
+| :--------------------- | :--------------------------------------------- | :-------------------------------------- | :----------------------------------------------------------------------- |
+| **Lead Orchestrator**  | High-level planning, DAG management, synthesis | **Claude Opus 5** / **GPT-6 Astra**     | Maximum reasoning depth; strict adherence to complex multi-step plans.   |
+| **Explorer / Triage**  | Fast search across hundreds of files           | **Gemini 3.8 Flash** / **Haiku 4.5**    | High execution speed, 1M+ context capacity, ultra-low cost ($0.75/MTok). |
+| **Code Implementer**   | Syntactic precision, local test repair         | **Claude Sonnet 5** / **GPT-5.6 Sol**   | State-of-the-art SWE-bench coding benchmarks with rapid tool execution.  |
+| **Security / Auditor** | Adversarial vulnerability detection            | **Gemini 3.8 Flash Cyber** / **Opus 5** | Trained specifically on CVE detection, memory leaks, and taint analysis. |
 
-```bash
-claude "Launch a sub-agent to investigate all places where we calculate tax in the repository.
-Have it return a summary of active tax providers. Do not make any edits yourself."
-```
+---
 
-Claude Code spawns an isolated execution context, completes the investigation, and returns only the synthesized summary to your main session.
+## Programmatic Agent Orchestration Example (Python / TypeScript SDK)
 
-### In Custom Agent Frameworks (Codex, Gemini, Python SDKs)
-
-When orchestrating agents programmatically, use discrete system prompts for each role:
+Below is an enterprise-grade coordinator-specialist pipeline using standard agentic primitives:
 
 ```python
-# Coordinator pattern pseudo-code
-def run_feature_workflow(task_description):
-    # 1. Research phase (isolated context)
-    research = spawn_agent(
-        role="researcher",
-        prompt=f"Investigate codebase for: {task_description}"
-    ).run()
+import asyncio
+from agent_sdk import Orchestrator, SubAgent
 
-    # 2. Implementation phase (clean context with research brief)
-    diff = spawn_agent(
-        role="implementer",
-        context=research.summary,
-        prompt=f"Implement feature adhering to: {research.summary}"
-    ).run()
+async def run_feature_workflow(feature_prompt: str):
+    # 1. Initialize Orchestrator with high-reasoning model
+    orchestrator = Orchestrator(model="claude-opus-5")
 
-    # 3. Adversarial review phase
-    review = spawn_agent(
-        role="reviewer",
-        context=diff,
-        prompt="Audit this diff for security vulnerabilities and regressions."
-    ).run()
+    # 2. Spawn Explorer Subagent (runs in isolated context)
+    explorer = SubAgent(
+        role="CodeExplorer",
+        model="gemini-3.8-flash",
+        tools=["grep", "list_dir", "read_file"]
+    )
+    research_brief = await explorer.run(
+        f"Map out all files and interfaces affected by: {feature_prompt}"
+    )
 
-    return review
+    # 3. Spawn Implementation Subagent with research brief
+    coder = SubAgent(
+        role="Implementer",
+        model="claude-sonnet-5",
+        tools=["read_file", "file_edit", "bash_test_runner"],
+        context={"architecture_brief": research_brief.summary}
+    )
+    code_diff = await coder.run(
+        "Implement the feature and ensure all local unit tests pass."
+    )
+
+    # 4. Spawn Adversarial Critic Subagent
+    critic = SubAgent(
+        role="SecurityAuditor",
+        model="gemini-3.8-flash-cyber",
+        tools=["read_file"]
+    )
+    audit_report = await critic.run(
+        f"Audit this diff for security flaws and edge-case bugs:\n{code_diff}"
+    )
+
+    # 5. Orchestrator evaluates review and creates PR
+    if audit_report.passed:
+        return await orchestrator.submit_pull_request(code_diff)
+    else:
+        # Loop back to coder with specific remediation points
+        return await coder.run(f"Fix findings:\n{audit_report.defects}")
 ```
 
 ---
 
-## Delegation Rules of Thumb
+## Production Rules of Thumb for Agent Orchestration
 
-- **Delegate when file reading exceeds 5 files:** If an investigation requires scanning dozens of files, always offload it to an explorer sub-agent.
-- **Delegate review to a fresh session:** Never let the agent that wrote the code be the sole judge of whether the code is production-ready.
-- **Keep coordinator prompts high-level:** The coordinator should track milestones and deliverables, not micro-manage line numbers.
+1. **Enforce the Artifact Bridge:** Subagents should **never** pass raw terminal output or entire conversational logs back to the orchestrator. Subagents must return compact, structured summaries.
+2. **Isolate Parallel Subagents with Git Worktrees:** Never let two concurrent subagents edit the same working directory. Spawn each subagent in a separate worktree on its own branch.
+3. **Limit Recursion Depth:** Restrict subagents from spawning subagents indefinitely. A maximum nesting depth of 2 (Orchestrator → Subagent) prevents runaway token consumption.
+4. **Use Adversarial Review Before Human PRs:** An independent critic subagent catching edge cases before a human sees the pull request dramatically reduces human review fatigue.
 
 ---
 
 ## Next Steps
 
-- **[Guardrails & Approvals](/agentic-flows/guardrails-and-approvals/)** — Setting permission boundaries and sandboxes for autonomous agents.
-- **[Parallel AI Workstreams with Git Worktrees](/git-worktrees/parallel-ai-workstreams/)** — Running multiple agents on physical worktrees concurrently.
+- **[Guardrails, Sandboxing & Human-in-the-Loop](/agentic-flows/guardrails-and-approvals/)** — Designing permission boundaries and isolated worktrees.
+- **[Parallel AI Workstreams with Git Worktrees](/git-worktrees/parallel-ai-workstreams/)** — Practical setup for multi-agent parallel execution on physical branches.

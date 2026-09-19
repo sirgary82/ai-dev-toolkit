@@ -2,7 +2,7 @@
 
 ## What this project is
 
-A static documentation site built with Astro + Starlight. 70+ self-paced guide pages across 20 sections for developers adopting AI coding tools (GitHub Copilot, Claude, Claude Code, Gemini CLI, Codex CLI, and MCP). Deployed to GitHub Pages at `https://sirgary82.github.io/ai-dev-toolkit/`.
+A static documentation site built with Astro + Starlight. 75+ self-paced guide pages across 21 sections for developers adopting AI coding tools (GitHub Copilot, Claude, Claude Code, Gemini CLI, Codex CLI, and MCP). Deployed to GitHub Pages at `https://sirgary82.github.io/ai-dev-toolkit/`.
 
 ## Stack
 
@@ -36,6 +36,7 @@ src/
       testing/            # 3 pages
       cicd/               # 3 pages
       security/           # 2 pages
+      enterprise/         # 4 pages (threat model, workstation sandboxing, cloud farms, supply chain)
       debugging/          # 1 page
       refactoring/        # 1 page
       prompts/            # 2 pages (.NET, React)

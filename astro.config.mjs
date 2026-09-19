@@ -144,7 +144,7 @@ export default defineConfig({
               slug: 'agentic-flows/test-driven-agentic-loop',
             },
             {
-              label: 'Sub-Agents & Task Delegation',
+              label: 'Agent Orchestration & Subagents',
               slug: 'agentic-flows/multi-agent-delegation',
             },
             {
@@ -196,6 +196,27 @@ export default defineConfig({
           items: [
             { label: 'Reviewing AI-Generated Code', slug: 'security/reviewing-ai-generated-code' },
             { label: 'Keeping Secrets Out of Prompts', slug: 'security/keeping-secrets-out' },
+          ],
+        },
+        {
+          label: 'Enterprise Agent Sandboxing',
+          items: [
+            {
+              label: 'Blast Radius & Threat Modeling',
+              slug: 'enterprise/blast-radius-and-threat-model',
+            },
+            {
+              label: 'Workstation Sandboxing',
+              slug: 'enterprise/workstation-sandboxing',
+            },
+            {
+              label: 'Remote Ephemeral Agent Farms',
+              slug: 'enterprise/remote-agent-farms',
+            },
+            {
+              label: 'Supply Chain & Egress Control',
+              slug: 'enterprise/supply-chain-and-egress-control',
+            },
           ],
         },
         {

@@ -1,0 +1,127 @@
+---
+title: Remote Ephemeral Agent Farms
+description: Architecting centralized, air-gapped cloud execution farms (Kubernetes, DevContainers, Firecracker) where autonomous agents run with zero access to developer workstations or corporate VPNs.
+track: [backend, frontend]
+status: published
+order: 3
+---
+
+import Callout from '../../../components/Callout.astro';
+
+As engineering organizations scale their adoption of autonomous coding agents, managing individual workstation sandboxes across thousands of developer laptops creates operational overhead. Developers experience battery drain and thermal throttling when running parallel agent loops, and security teams face challenges auditing commands across heterogeneous machines.
+
+The enterprise solution is the **Remote Ephemeral Agent Farm**: moving all autonomous agent execution into centralized, air-gapped cloud worker pools.
+
+---
+
+## The Remote Farm Architecture
+
+In a remote agent farm, **zero agent code executes on the developer's physical laptop**. The workstation serves purely as a remote control terminal, dispatching tasks to cloud workers and reviewing the resulting pull requests.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DEVELOPER WORKSTATION                    │
+│   Initiates task: agent-cloud submit --issue #104           │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ [HTTPS API / Webhook]
+┌─────────────────────────────────────────────────────────────┐
+│                 CENTRALIZED CONTROL PLANE                   │
+│   - Validates developer identity (SSO / OIDC)               │
+│   - Mints short-lived, repo-scoped GitHub App token         │
+│   - Enforces organizational budget & concurrency limits     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ [Provisions Ephemeral Worker]
+┌─────────────────────────────────────────────────────────────┐
+│             ISOLATED AGENT FARM VPC (Cloud / K8s)           │
+│                                                             │
+│   ┌───────────────────────────────────────────────────────┐ │
+│   │               EPHEMERAL AGENT WORKER                  │ │
+│   │                                                       │ │
+│   │  1. Clones target repo via scoped GitHub App token    │ │
+│   │  2. Launches agent loop inside gVisor/Firecracker pod │ │
+│   │  3. Compiles code & executes tests in isolation       │ │
+│   │  4. Pushes changes to `feat/issue-104` branch         │ │
+│   │  5. Opens Draft PR with complete execution audit log  │ │
+│   │  6. POD TERMINATES & EVAPORATES IMMEDIATELY           │ │
+│   └───────────────────────────────────────────────────────┘ │
+│                               │                             │
+│                  [EGRESS FIREWALL / PROXY]                  │
+│                               ▼                             │
+│       Only connects to: LLM API Gateway & Internal Registry │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core Security Invariants of Remote Agent Farms
+
+### 1. Physical Air-Gap from Developer Laptops
+
+Because the agent runs in a remote cloud VPC, it has **zero physical or logical access** to the developer's machine. It cannot touch local `.ssh` keys, read browser session cookies, inspect open Slack windows, or bridge into the developer’s active VPN connection.
+
+### 2. Short-Lived, Scoped GitHub App Credentials
+
+Never give an agent a personal developer Personal Access Token (PAT).
+In a remote farm:
+
+- The control plane uses a centralized **GitHub App**.
+- When a task is dispatched, the control plane generates an ephemeral token valid for **1 hour**, scoped strictly to read and write permissions on that **single repository**.
+- Even if an agent is completely compromised by malicious code, the attacker cannot access other organizational repositories.
+
+### 3. Centralized Auditability & Compliance
+
+Regulated enterprises (SOC 2 Type II, ISO 27001, HIPAA) require verifiable audit trails of all code modifications.
+A centralized agent farm captures:
+
+- Every prompt and model response.
+- Every shell command executed in the worker, along with its stdout/stderr.
+- Complete network egress logs (DNS queries and IP connections).
+- Unified diffs of all file operations.
+
+This telemetry is streamed directly into the enterprise SIEM (Splunk, Datadog, Snowflake) for automated threat detection.
+
+---
+
+## Infrastructure Implementation Options
+
+Organizations typically choose between three infrastructure patterns for their agent farm:
+
+### Option A: Managed Cloud Developer Environments (CDEs)
+
+- **Technologies:** GitHub Codespaces, Coder, Daytona, Gitpod.
+- **How it works:** Pre-built cloud development environments managed as code. Agents run headless inside the remote container via API or SSH.
+- **Pros:** Minimal infrastructure engineering required; native integration with source control.
+- **Cons:** Higher cost per compute hour; less customizable network egress controls.
+
+### Option B: Kubernetes-Based Ephemeral Pods (GKE Sandbox / EKS)
+
+- **Technologies:** Kubernetes Jobs with **gVisor (`runsc`)** or **Kata Containers**.
+- **How it works:** When a task arrives, a Kubernetes Job spins up a pod running the agent image, executes the task to completion, and automatically garbage-collects the pod.
+- **Pros:** Highly cost-effective; integrates with existing enterprise cloud infrastructure; granular Kubernetes NetworkPolicies for egress filtering.
+- **Cons:** Requires an experienced Platform Engineering team to build and maintain the dispatching control plane.
+
+### Option C: MicroVM Fleets (AWS Firecracker / Fly Machines)
+
+- **Technologies:** Firecracker MicroVMs.
+- **How it works:** Spawns a dedicated MicroVM with its own guest kernel in under 200 milliseconds.
+- **Pros:** Maximum isolation; near-instant startup; zero kernel sharing between tasks.
+- **Cons:** Requires custom virtualization infrastructure management.
+
+---
+
+## Cost Optimization: Managing Agent Farm Compute
+
+Running hundreds of autonomous coding agents compiling enterprise codebases can consume substantial cloud resources. Adopt these architectural controls:
+
+1.  **Strict Concurrency & Token Budgets:** Enforce maximum turn limits (e.g., max 30 agent turns per task) and token quotas per developer/team.
+2.  **Preemptible / Spot Worker Instances:** Agent tasks are inherently tolerant of retries. Running worker pools on cloud Spot instances reduces compute costs by up to 70%.
+3.  **Aggressive Idle Timeouts:** If an agent enters an interactive state waiting for human clarification and receives no input for 10 minutes, automatically snapshot the work and terminate the compute pod.
+
+---
+
+## Next Steps
+
+- **[Supply Chain & Egress Control](/enterprise/supply-chain-and-egress-control/)** — Protecting the agent farm from malicious PyPI/npm packages and data exfiltration.
+- **[Blast Radius & Threat Modeling](/enterprise/blast-radius-and-threat-model/)** — Core security principles of autonomous agent systems.

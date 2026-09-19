@@ -1,0 +1,220 @@
+---
+title: Supply Chain Protection & Egress Filtering
+description: Preventing package hallucination attacks ("slopsquatting") and malicious dependency execution through egress proxies, private artifact mirrors, and immutable lockfile enforcement.
+track: [backend, frontend]
+status: published
+order: 4
+---
+
+import Callout from '../../../components/Callout.astro';
+
+When human engineers add new dependencies to a codebase, they typically verify the package's reputation, inspect its GitHub repository, check download metrics, and review the authors.
+
+When an autonomous coding agent works on a task, it operates with **zero human intuition**. If an agent hallucinates a plausible package name or is tricked by prompt injection, it will run `pip install` or `npm install` without hesitation.
+
+In enterprise software engineering, securing the software supply chain against **AI-driven dependency poisoning** requires layered technical controls: hard network egress filtering, private package mirrors, and strict lockfile immutability.
+
+---
+
+## The Threat: Package Hallucinations & "Slopsquatting"
+
+Large Language Models do not consult live package registries during generation unless explicitly connected via an MCP tool. Instead, they predict token sequences that look syntactically convincing.
+
+### How a Slopsquatting Attack Unfolds:
+
+```
+  1. AGENT REASONING                                2. ATTACKER RECONNAISSANCE
+  Agent needs to solve a validation problem.        Attacker monitors common LLM
+  Hallucinates a non-existent package:              hallucinations on public models.
+  "fastapi-jwt-auth-middleware"                     Identifies popular un-registered names.
+                │                                               │
+                │                                               ▼
+                │                                   Attacker registers the name
+                │                                   on public PyPI or npm.
+                │                                   Uploads payload with malicious
+                │                                   post-install lifecycle script.
+                ▼                                               │
+  3. AUTONOMOUS INSTALLATION                                    │
+  Agent runs unattended:                                        │
+  `pip install fastapi-jwt-auth-middleware` ◄──────────────────┘
+                │
+                ▼
+  4. EXECUTION & EXFILTRATION
+  Malicious post-install script executes on host:
+  - Scans local filesystem for API keys & .env files
+  - Connects to external C2 server
+  - Attempts lateral subnet reconnaissance
+```
+
+Because the agent runs in an automated loop, the malicious payload executes before any human developer reviews the pull request.
+
+---
+
+## Defense Layer 1: Hard Egress Filtering (Network Level)
+
+The first line of defense is ensuring that an agent environment **physically cannot establish connections to arbitrary public endpoints**.
+
+### Egress Filtering Principles:
+
+1.  **Default Deny:** All outbound TCP and UDP traffic from the agent container or VM is dropped by default.
+2.  **Domain & Port Allowlisting:** Outbound egress is restricted via a dedicated proxy (such as Envoy, Squid, or Kubernetes NetworkPolicies) to strictly approved destinations:
+    - **Approved AI Gateway:** `api.anthropic.com`, `api.openai.com`, or internal enterprise AI gateway.
+    - **Approved Source Control:** Enterprise GitHub or internal GitLab.
+    - **Internal Artifact Mirror:** Corporate JFrog Artifactory or Sonatype Nexus.
+3.  **Direct Public Registries Blocked:** Direct outbound access to `pypi.org`, `files.pythonhosted.org`, and `registry.npmjs.org` is completely blocked.
+
+### Example Kubernetes NetworkPolicy for Agent Workers:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-worker-egress-policy
+  namespace: agent-farm
+spec:
+  podSelector:
+    matchLabels:
+      role: agent-worker
+  policyTypes:
+    - Egress
+  egress:
+    # 1. Allow DNS resolution only via internal cluster DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # 2. Allow HTTPS only to the corporate egress proxy
+    - to:
+        - podSelector:
+            matchLabels:
+              app: corporate-egress-proxy
+      ports:
+        - protocol: TCP
+          port: 8443
+```
+
+---
+
+## Defense Layer 2: Private Artifact Mirrors with Quarantine Scanning
+
+To completely eliminate the risk of hallucinated packages, all package manager requests inside the agent sandbox must be routed exclusively through an internal enterprise repository manager (such as **JFrog Artifactory**, **Sonatype Nexus**, or **AWS CodeArtifact**).
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AGENT EXECUTION ENVIRONMENT              │
+│                                                             │
+│   pip install / npm install / dotnet add package            │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ [Global config redirects all requests]
+┌─────────────────────────────────────────────────────────────┐
+│             ENTERPRISE ARTIFACT REPOSITORY                  │
+│             (Artifactory / Nexus / Cloudsmith)              │
+│                                                             │
+│   1. Check Internal Cache: Is package already vetted?       │
+│      ├── YES ──► Serve package to agent immediately         │
+│      └── NO  ──► Is package new from public registry?       │
+│                                                             │
+│   2. Security Quarantine Pipeline:                          │
+│      - Has package been registered for less than 14 days?   │
+│        └── YES ──► HARD BLOCK (Rejects hallucinated package)│
+│      - Run static analysis & behavioral malware scan        │
+│      - Evaluate author reputation & download threshold      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Pre-Configuring the Agent Sandbox
+
+Force package managers inside your agent Docker image to point to internal mirrors by baking configuration files directly into the image:
+
+#### For Python (`/etc/pip.conf`):
+
+```ini
+[global]
+index-url = https://artifacts.corp.internal/repository/pypi-all/simple
+trusted-host = artifacts.corp.internal
+no-cache-dir = false
+```
+
+#### For Node.js (`/etc/npmrc`):
+
+```ini
+registry=https://artifacts.corp.internal/repository/npm-all/
+strict-ssl=true
+```
+
+#### For .NET (`/etc/nuget/NuGet.Config`):
+
+```xml
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="InternalCorporateFeed" value="https://artifacts.corp.internal/repository/nuget-all/index.json" />
+  </packageSources>
+</configuration>
+```
+
+---
+
+## Defense Layer 3: Enforcing Lockfile Immutability
+
+In standard day-to-day feature engineering and bug fixing, an agent should **never** introduce new third-party dependencies unless explicitly instructed to perform a library upgrade.
+
+### 1. Invariant Rules in AGENTS.md
+
+Instruct the agent to use deterministic, lockfile-only installation commands:
+
+```markdown
+## Dependency Management Rules
+
+- You are NEVER permitted to add new third-party packages or modify dependencies.
+- Always use deterministic lockfile installation:
+  - Node.js: Use `npm ci` (NEVER run `npm install`).
+  - Python: Use `poetry install --no-root` or `pip install -r requirements.txt --require-hashes`.
+  - .NET: Use `dotnet restore --locked-mode`.
+- If an implementation task requires a new library, stop immediately and request human approval.
+```
+
+### 2. Automated Pull Request Quality Gates
+
+Enforce this invariant mechanically in your CI pipeline. If an agent submits a PR for a bug fix, verify that lockfiles were untouched:
+
+```bash
+# In CI pipeline step:
+git diff --name-only origin/main HEAD | grep -E "(package-lock\.json|yarn\.lock|poetry\.lock|packages\.lock\.json)"
+
+if [ $? -eq 0 ]; then
+  echo "❌ Error: Pull request modified dependency lockfiles. Human security review required."
+  exit 1
+fi
+```
+
+---
+
+## Defense Layer 4: Disabling Post-Install Script Execution
+
+Many package managers support lifecycle scripts that execute arbitrary shell commands upon installation (e.g., npm `postinstall` scripts). Attackers frequently hide their malicious payloads inside these hooks.
+
+When agents run builds, configure package managers to disable script execution whenever feasible:
+
+```bash
+# npm: Install without executing third-party lifecycle scripts
+npm ci --ignore-scripts
+
+# pip: Prevent execution of setup.py during install by requiring pre-built wheels
+pip install --only-binary :all: -r requirements.txt
+```
+
+---
+
+## Summary Checklist: Hardening the Agent Supply Chain
+
+- **[ ] Network Egress:** Direct outbound access to `pypi.org` and `npmjs.org` is blocked by proxy allowlists.
+- **[ ] Internal Mirror:** Package managers point exclusively to an enterprise artifact repository.
+- **[ ] Quarantine Filter:** Packages registered in the last 14 days are automatically quarantined.
+- **[ ] Lockfile Discipline:** Agents run `npm ci` / `--require-hashes`; CI gates reject unexpected lockfile modifications.
+- **[ ] Ephemeral Environments:** Sandboxes are destroyed upon task completion, eliminating persistent backdoors.

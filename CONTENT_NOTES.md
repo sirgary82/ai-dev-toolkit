@@ -12,7 +12,7 @@ Private working notes. Not published.
 
 ## Published (all current content)
 
-All 60+ pages are published and live at https://sirgary82.github.io/ai-dev-toolkit/
+All 75+ pages are published and live at https://sirgary82.github.io/ai-dev-toolkit/
 
 | Section | Pages | Notes |
 |---------|-------|-------|
@@ -22,7 +22,8 @@ All 60+ pages are published and live at https://sirgary82.github.io/ai-dev-toolk
 | context-management/ | 14 | AGENTS.md, CLAUDE.md, prompt basics, MCP, custom MCPs, version staleness, Figma MCP |
 | claude/ | 9 | Getting started, tips, sub-agents, custom commands, gh-integration |
 | multi-tool/ | 1 | Copilot + Claude combined workflow |
-| agentic-flows/ | 5 | Overview, plan-first flow, TDD loops, sub-agent delegation, guardrails & sandboxing |
+| agentic-flows/ | 5 | Overview, plan-first flow, TDD loops, sub-agent delegation & orchestration, guardrails & sandboxing |
+| enterprise/ | 4 | Threat model & blast radius, workstation sandboxing, remote agent farms, supply-chain & egress |
 | git-worktrees/ | 3 | Setup, workflow, parallel AI workstreams |
 | pr-review/ | 2 | Automated review, impact assessment |
 | auditable-changes/ | 2 | Incremental mindset, commit discipline |

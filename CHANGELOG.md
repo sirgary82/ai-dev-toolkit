@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.5.0] - 2026-09-19
+
+### Added
+
+- **New Section: Enterprise Agent Sandboxing & Infrastructure (4 guides)**:
+  - `enterprise/blast-radius-and-threat-model.mdx` — Formal threat modeling for autonomous coding agents, prompt injection vectors, hallucinated dependency execution, and blast radius tiering (Tiers 1–4).
+  - `enterprise/workstation-sandboxing.mdx` — Local workstation defense-in-depth: Docker-in-Docker containment, rootless containers, microVMs (Firecracker/gVisor), eBPF execution auditing with Tetragon, and bind-mount isolation.
+  - `enterprise/remote-agent-farms.mdx` — Headless multi-agent execution architectures on AWS ECS/Fargate, Kubernetes ephemeral job pods, Dev Containers / Gitpod / Codespaces, and credential isolation via short-lived OIDC tokens.
+  - `enterprise/supply-chain-and-egress-control.mdx` — Protecting against AI package slopsquatting, MITM egress filtering with Cilium/Squid forward proxies, enterprise package mirrors (Artifactory/Nexus), and CI/CD promotion pipelines.
+- **Master Guide: Agent Orchestration & Subagents in Coding**:
+  - Rewrote and deeply expanded `agentic-flows/multi-agent-delegation.mdx` into an exhaustive architectural guide for orchestrating multi-agent software engineering workflows.
+  - Covered 4 orchestration topologies (Hierarchical Orchestrator-Worker, Dynamic Swarms, Pipeline/Assembly Line, and Specialist Pool with Router).
+  - Added declarative subagent specifications using `.claude/agents/*.md` and multi-model routing (assigning high-tier frontier models like Claude Opus 5 / GPT-6 Astra for architecture planning and fast/cost-effective models like Gemini 3.8 Flash / Haiku 4.5 for test execution).
+  - Detailed the Artifact Bridge protocol for zero-loss state handoffs between context windows.
+- **2026 Frontier Models Landscape**:
+  - Updated foundational guides (`foundations/before-you-start.mdx`) and comparison tables (`other-agents/index.mdx`) with latest model generations: Claude Opus 5 & Sonnet 5, OpenAI GPT-6 Astra & GPT-5.6, and Google Gemini 3.8 Flash & Pro 3.1.
+
+---
+
 ## [0.4.0] - 2026-09-19
 
 ### Added
