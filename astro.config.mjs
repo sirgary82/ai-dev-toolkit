@@ -54,7 +54,9 @@ export default defineConfig({
       title: 'AI Dev Toolkit',
       description: 'Self-paced guides for developers adopting AI coding tools.',
       lastUpdated: true,
-      social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
+      social: [
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/sirgary82/ai-dev-toolkit' },
+      ],
       sidebar: [
         {
           label: 'Start Here',
@@ -108,6 +110,10 @@ export default defineConfig({
             { label: 'LLM Version Staleness', slug: 'context-management/llm-version-context' },
             { label: 'Essential MCPs for Development', slug: 'context-management/essential-mcps' },
             { label: 'Figma MCP for Design-to-Code', slug: 'context-management/figma-mcp' },
+            {
+              label: 'Building Custom MCP Servers',
+              slug: 'context-management/building-custom-mcps',
+            },
           ],
         },
         {
@@ -227,6 +233,7 @@ export default defineConfig({
           label: 'Other Coding Agents',
           items: [
             { label: 'Overview', slug: 'other-agents' },
+            { label: 'Agentic IDEs Comparison', slug: 'other-agents/agentic-ides-comparison' },
             { label: 'Codex CLI', slug: 'other-agents/codex-cli' },
             { label: 'Gemini CLI', slug: 'other-agents/gemini-cli' },
             { label: 'GitHub Copilot CLI', slug: 'other-agents/copilot-cli' },

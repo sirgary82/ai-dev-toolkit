@@ -9,15 +9,18 @@ order: 3
 import Callout from '../../../components/Callout.astro';
 import Badge from '../../../components/Badge.astro';
 
-<Badge type="updated" label="As of March 2026" /> Claude Code is available as a public release via npm.
+<Badge type="updated" label="As of September 2026" /> Claude Code is Anthropic's agentic CLI tool, powered by Claude 3.7
+Sonnet with hybrid reasoning.
 
-Claude Code is a terminal-based agentic coding tool. You run it in a terminal (including VSCode's integrated terminal), and it reads your files, proposes edits, runs commands, and manages multi-step tasks — all with you reviewing and approving each significant action.
+Claude Code is a terminal-based agentic coding tool. You run it in your shell (including VSCode's integrated terminal), and it reads your codebase, proposes diffs, runs test suites, executes terminal commands, and manages complex multi-file engineering tasks — with you reviewing and approving each action.
 
-If you've used Copilot Agent Mode in VSCode, Claude Code occupies a similar space: describe a goal, review a plan, approve or reject changes. The key differences are that Claude Code operates from the terminal (not embedded in the editor), has a larger context window, and natively supports [MCP servers](/context-management/mcp-repo-context/) for extending what it can access.
+Backed by **Claude 3.7 Sonnet**, Claude Code incorporates **extended thinking mode**: for difficult architectural refactors, debugging loops, and multi-file dependencies, it generates explicit thinking tokens to reason through constraints before touching your filesystem.
+
+If you've used Copilot Agent Mode in VSCode, Claude Code occupies a similar autonomous space. The key differences are that Claude Code is terminal-native, operates with extended reasoning depth, provides built-in subagent orchestration, and natively supports [MCP servers](/context-management/mcp-repo-context/) via CLI commands.
 
 ## Installation
 
-Claude Code requires Node.js and an Anthropic API key. The API key is separate from a claude.ai web subscription — check the [Anthropic pricing page](https://www.anthropic.com/pricing) for current options.
+Claude Code requires Node.js (v18.20+ or v20+) and an Anthropic API key (or an active Claude Pro/Team/Enterprise account):
 
 ```bash
 npm install -g @anthropic-ai/claude-code
@@ -38,8 +41,8 @@ claude
 ```
 
 <Callout type="warning">
-  Claude Code has access to your filesystem and can run terminal commands. Always review what it plans to do before
-  approving. Start with lower-stakes tasks to build familiarity with how it behaves before using it on critical code.
+  Claude Code has access to your filesystem and can execute shell commands. Always review proposed diffs and command
+  lines before approving.
 </Callout>
 
 ## The interaction model
@@ -103,7 +106,10 @@ Root-level `CLAUDE.md` structure:
 | `/help`     | List all available slash commands                      |
 | `/compact`  | Compress conversation history to free up context space |
 | `/clear`    | Start a fresh conversation                             |
-| `/cost`     | Show token usage for the current session               |
+| `/resume`   | Resume a previous session (or sync with Desktop app)   |
+| `/diff`     | Open interactive diff panel to inspect file edits      |
+| `/model`    | Select backing model or configure thinking budget      |
+| `/cost`     | Show token usage and API cost for current session      |
 | `@filename` | Reference a specific file in your message              |
 | `#symbol`   | Reference a symbol (function, class) by name           |
 
@@ -155,16 +161,39 @@ For a .NET solution with multiple projects, navigating to the specific project d
 
 ## MCP servers — extending what Claude Code can access
 
-Claude Code natively supports MCP (Model Context Protocol) servers. An MCP server exposes tools and data sources that Claude Code can query during a session — your architecture documentation, API specs, or any custom knowledge about your codebase.
+Claude Code natively supports MCP (Model Context Protocol) servers. An MCP server exposes tools and data sources that Claude Code can query during a session — your architecture documentation, API specs, database schemas, or issue trackers.
 
-Configuration lives at `~/.claude/claude_code_config.json`:
+### Adding MCP servers via CLI
+
+The fastest way to connect an MCP server to Claude Code is using the built-in CLI command:
+
+```bash
+# Add a local stdio MCP server (project-level or user-level with --scope user)
+claude mcp add repo-docs -- node /path/to/your/mcp-server/index.js
+
+# Add an official npm-based server
+claude mcp add github -- npx -y @modelcontextprotocol/server-github
+
+# List and verify active connections
+claude mcp list
+
+# Remove an MCP server
+claude mcp remove repo-docs
+```
+
+You can also view connected servers directly inside a running session by typing `/mcp`.
+
+Alternatively, manual configuration lives in `~/.claude.json` or `.claude/config.json`:
 
 ```json
 {
   "mcpServers": {
     "repo-docs": {
       "command": "node",
-      "args": ["/path/to/your/mcp-server/index.js"]
+      "args": ["/path/to/your/mcp-server/index.js"],
+      "env": {
+        "REPO_ROOT": "/path/to/your-repo"
+      }
     }
   }
 }

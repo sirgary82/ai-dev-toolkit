@@ -12,22 +12,52 @@ Private working notes. Not published.
 
 ## Published (all current content)
 
-All 31 pages are published and live at https://sirgary82.github.io/ai-dev-toolkit/
+All 60+ pages are published and live at https://sirgary82.github.io/ai-dev-toolkit/
 
 | Section | Pages | Notes |
 |---------|-------|-------|
-| copilot/ | 5 | Verify shortcuts on each Copilot release |
-| context-management/ | 9 | Core section — keep current as tooling evolves |
-| claude/ | 5 | Update when new Claude models or CC features ship |
-| multi-tool/ | 1 | |
-| git-worktrees/ | 3 | |
-| pr-review/ | 2 | |
-| auditable-changes/ | 2 | |
-| tracks/ | 2 | Update order/links as new guides are added |
+| foundations/ | 2 | Before you start, glossary |
+| tracks/ | 2 | Backend (.NET), Frontend (React) |
+| copilot/ | 5 | Getting started, inline, chat, agent mode, shortcuts |
+| context-management/ | 13 | AGENTS.md, CLAUDE.md, prompt basics, MCP, version staleness, Figma MCP |
+| claude/ | 9 | Getting started, tips, sub-agents, custom commands, gh-integration |
+| multi-tool/ | 1 | Copilot + Claude combined workflow |
+| git-worktrees/ | 3 | Setup, workflow, parallel AI workstreams |
+| pr-review/ | 2 | Automated review, impact assessment |
+| auditable-changes/ | 2 | Incremental mindset, commit discipline |
+| testing/ | 3 | AI testing, TDD with AI, testing AI code |
+| cicd/ | 3 | Pipeline configs, PR quality gates, dependency upgrades |
+| security/ | 2 | Reviewing AI code, keeping secrets out |
+| debugging/ | 1 | AI-assisted debugging |
+| refactoring/ | 1 | AI-assisted refactoring |
+| prompts/ | 2 | .NET prompts, React prompts |
+| exercises/ | 4 | Hands-on modules across phases |
+| case-studies/ | 2 | Backend & frontend walkthroughs |
+| troubleshooting/ | 1 | Common failure modes & fixes |
+| self-assessment/ | 1 | Phase checklists |
+| other-agents/ | 4 | Codex CLI, Gemini CLI, Copilot CLI, index |
 
 ---
 
-## Next content — Phase 5: Testing with AI
+## Next content — Phase 11: Agentic IDEs & CLI Agent Comparisons
+
+### `other-agents/agentic-ides-comparison.mdx`
+A systematic comparison of modern agentic coding environments: Cursor, Windsurf, VS Code (Copilot Agent Mode), and Claude Code.
+- Cognitive model differences (IDE-native autocomplete vs terminal-native agentic loop).
+- Context retrieval mechanisms (indexing, embeddings, grep vs MCP).
+- How `AGENTS.md` and `CLAUDE.md` create tool-agnostic developer workflows.
+- Decision tree: when to use an agentic IDE vs CLI agent vs ambient completions.
+
+---
+
+## Next content — Phase 12: Building Custom MCP Servers
+
+### `context-management/building-custom-mcps.mdx`
+Step-by-step guide for software teams building their own Model Context Protocol servers.
+- Why build a custom server: exposing private architecture documentation, internal APIs, database schemas, and microservice registries.
+- Building a TypeScript MCP server with `@modelcontextprotocol/sdk`.
+- Exposing tools (`get_service_schema`, `query_internal_docs`) and resources.
+- Connecting to both Claude Code (`claude mcp add`) and VS Code Copilot (`.vscode/mcp.json`).
 
 The biggest gap in the current guide. Testing is where AI tooling has the highest leverage and the most gotchas.
 

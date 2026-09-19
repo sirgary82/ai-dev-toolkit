@@ -9,65 +9,108 @@ order: 4
 import Callout from '../../../components/Callout.astro';
 import Badge from '../../../components/Badge.astro';
 
-<Badge type="updated" label="As of March 2026" /> Agent mode is available in the GitHub Copilot extension for VSCode.
+<Badge type="updated" label="As of September 2026" /> Agent mode is generally available in the GitHub Copilot extension
+for VSCode.
 
 ## What agent mode is
 
-In standard Chat mode, Copilot answers one question at a time. You make decisions between each step. Agent mode changes the dynamic: you describe a goal, and Copilot plans a sequence of steps, edits files, runs terminal commands, and checks its own work — until the task is done or it gets stuck.
+In standard Chat mode, Copilot answers one question at a time. You make decisions between each step. Agent mode changes the dynamic: you describe a goal, and Copilot autonomously plans a sequence of steps, edits multiple files across your workspace, executes terminal commands (like tests or lints), inspects error outputs, and self-corrects until the task is complete or it requests your guidance.
 
-Think of it as the difference between asking a colleague to "add a method" versus asking them to "implement the feature, including the tests."
+Think of it as the difference between asking a colleague to "add a method" versus asking them to "implement the feature, including the tests and build verification."
 
 <Callout type="warning">
-  Agent mode can make multiple file edits and run terminal commands. Review the plan it proposes before approving each
-  step, especially in codebases where a mistake is hard to revert.
+  Agent mode can create/modify multiple files and run terminal commands. Review the proposed plan and file diffs before
+  approving execution, especially in codebases where uncommitted changes are active.
+</Callout>
+
+## Model selection in Agent Mode
+
+In modern VS Code releases, Copilot Agent Mode is not locked to a single model. You can toggle between different backing models directly from the model picker dropdown next to the prompt input:
+
+- **Claude 3.7 Sonnet**: Anthropic's hybrid reasoning model. Highly capable at complex multi-file architectural changes, deep refactoring, and logical planning with visible extended thinking tokens.
+- **GPT-4o / o1 / o3-mini**: OpenAI's models, excelling at structured code generation, algorithm optimization, and fast iterative editing.
+- **Gemini 2.5 Flash / Pro**: Google's models, optimized for speed and handling very large workspace contexts.
+
+<Callout type="tip">
+  For complex refactoring or tasks touching multiple services, select **Claude 3.7 Sonnet** or **o3-mini**. Their
+  extended reasoning mode reasons through edge cases before modifying your files.
 </Callout>
 
 ## When to use agent mode
 
 **Good fit:**
 
-- Scaffolding new features with predictable structure (new endpoint + service + tests)
-- Repetitive refactors across multiple files (renaming a field everywhere it's used)
-- Setting up configuration that follows a known pattern
+- Scaffolding new features end-to-end (e.g. controller + service + DTO + unit tests)
+- Repetitive, multi-file refactors (e.g. updating method signatures across an entire module)
+- Diagnosing and fixing failing test suites autonomously
+- Configuring pipelines or infrastructure from codebase specifications
 
 **Less suited for:**
 
-- Tasks with complex business rules Copilot can't infer from context
-- Work requiring decisions about architecture or trade-offs
-- Anything where you can't easily review and revert the output
+- Ambiguous business requirements where domain rules cannot be inferred from code
+- Highly sensitive environments without Git version control or test coverage
+- Pure exploratory questions better suited for standard Chat mode
 
 ## Starting an agent session
 
-1. Open Copilot Chat (`Ctrl+Shift+I`).
-2. Change the mode dropdown from **Ask** to **Agent** (or **Edit**, depending on your version).
-3. Describe your goal in plain language:
+1. Open Copilot Chat (`Ctrl+Shift+I` or click the Copilot icon in the primary sidebar).
+2. Change the mode selector from **Ask** to **Agent** (or toggle **Copilot Edits** in the editor header).
+3. Select your preferred backing model from the dropdown.
+4. Describe your goal in plain language:
 
-> "Add a `GetByEmail` method to `UserService`. It should query the repository, throw `NotFoundException` if not found, and return the user mapped to a `UserDto`. Follow the same pattern as `GetById`."
+> "Add a `GetByEmail` method to `UserService`. It should query the repository, throw `NotFoundException` if not found, and return the user mapped to a `UserDto`. Follow the same pattern as `GetById`, and add unit tests covering success and missing user cases."
 
-4. Copilot proposes a plan. Review it, then confirm to proceed.
+5. Copilot analyzes the workspace, proposes an execution plan, lists the files to edit, and asks for confirmation to proceed.
+
+## Model Context Protocol (MCP) in Agent Mode
+
+VS Code Copilot Agent Mode natively supports the **Model Context Protocol (MCP)**. This allows Copilot to access external tools and live systems—such as your database, issue trackers, or documentation servers—during task execution.
+
+Workspace-level MCP servers are configured in `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/mydb"]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+When MCP servers are configured, Copilot Agent Mode can automatically query database schemas or fetch pull request details while executing your prompt. See [MCP for Repo Context](/context-management/mcp-repo-context/) for full architectural details.
 
 ## Reviewing agent output
 
-Agent mode shows you each file it intends to change. You can:
+Agent mode provides fine-grained control over all changes:
 
-- **Accept** individual file changes
-- **Discard** a change if it doesn't look right
-- **Ask Copilot to revise** by typing a follow-up in the chat
+- **Per-file review**: Examine diffs inline with syntax highlighting before accepting.
+- **Accept or Discard**: Accept specific file modifications while discarding unwanted lateral edits.
+- **Self-correction**: If Copilot's edits break a build, you can click "Fix with Copilot" or instruct it: "The build failed on line 42 with missing reference—adjust the imports."
 
 <Callout type="tip">
-  The phrase "follow the same pattern as X" is one of the most effective ways to guide agent mode. It grounds Copilot in
-  your existing conventions rather than generating something generically.
+  The phrase "follow the same pattern as X" remains one of the most effective steering techniques. It anchors Agent Mode
+  in existing repository conventions rather than generic starter templates.
 </Callout>
 
 ## Staying in control
 
-Agent mode is more autonomous, but you're still in the loop. A few habits that help:
-
-- **Use Git before starting.** Commit your current work first. This makes it trivial to diff and revert what the agent produces.
-- **Prefer worktrees for experimental tasks.** See [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/) for how to keep agent-mode experiments isolated.
-- **Read the diff.** Every agent output is a diff. Treat it like a PR from a capable contractor: review it before approving.
+- **Commit first**: Always commit or stash your work before running an agent session. This makes `git diff` and `git checkout` instant recovery options.
+- **Isolate in worktrees**: For experimental feature implementations, run Agent Mode inside a dedicated Git worktree. See [Git Worktrees: Setup and Workflow](/git-worktrees/setup-and-workflow/).
+- **Verify with tests**: Run `dotnet test` or `npm test` after the agent finishes. Never rely solely on the agent's self-assessment.
 
 ## Next steps
 
-- [Incremental Mindset](/auditable-changes/incremental-mindset/) — a discipline for working safely with AI-generated changes
-- [Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running multiple agent sessions on different branches simultaneously
+- [The copilot-instructions.md File](/context-management/copilot-instructions-file/) — standing repository rules that steer Agent Mode automatically
+- [Incremental Mindset](/auditable-changes/incremental-mindset/) — discipline for making auditable, safe AI-assisted changes
+- [Git Worktrees: Parallel AI Workstreams](/git-worktrees/parallel-ai-workstreams/) — running multiple agent sessions in parallel on separate branches

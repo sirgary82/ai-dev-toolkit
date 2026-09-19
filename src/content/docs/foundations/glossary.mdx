@@ -165,6 +165,15 @@ One continuous conversation with a model. Sessions have no memory of previous se
 **Diff**
 The set of changes a code generation or edit produces, shown as additions and removals relative to the original. Reading the diff before accepting or running AI-generated changes is the most reliable review practice. Both correct and incorrect AI output look confident — the diff is objective.
 
+**Model Context Protocol (MCP)**
+An open standard (originally created by Anthropic, now broadly adopted across VS Code, Copilot, Cursor, Codex CLI, and Gemini CLI) that allows AI models to connect securely to external tools and context providers (such as databases, GitHub APIs, Figma designs, and documentation indexes) over stdio or HTTP without requiring custom integrations. See [MCP for Repo Context](/context-management/mcp-repo-context/).
+
+**Hybrid Reasoning / Extended Thinking**
+A model capability (pioneered by Claude 3.7 Sonnet) that combines standard generative responses with deliberate, step-by-step reasoning tokens ("thinking process") before outputting code or commands. Users or clients can set a "thinking budget" to balance execution time and reasoning depth.
+
+**Prompt Files (`.prompt.md`)**
+Markdown files containing reusable prompt templates with frontmatter and parameters, stored in `.github/prompts/`. They allow teams to standardize and version-control complex multi-step prompting recipes (like security reviews or unit test generation) across VS Code and GitHub Copilot.
+
 ---
 
 ## Advanced techniques

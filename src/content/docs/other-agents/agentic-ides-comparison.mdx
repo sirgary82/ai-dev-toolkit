@@ -1,0 +1,102 @@
+---
+title: Agentic IDEs vs Terminal Agents
+description: A comparative guide analyzing Cursor, Windsurf, VS Code (Copilot Agent Mode), and Claude Code — strengths, trade-offs, and choosing the right tool.
+status: published
+order: 5
+---
+
+import Callout from '../../../components/Callout.astro';
+import Badge from '../../../components/Badge.astro';
+
+<Badge type="new" label="New in September 2026" />
+
+The AI developer ecosystem has split into two complementary paradigms:
+
+1. **Agentic IDEs** (Cursor, Windsurf, VS Code with Copilot Agent Mode) — editors built from the ground up to weave AI into code completion, cursor tracking, and multi-file editing panels.
+2. **Terminal-Native Agents** (Claude Code, Codex CLI, Gemini CLI, Copilot CLI) — command-line tools that treat the repository as an operating system environment, running builds, tests, and git operations autonomously.
+
+Understanding how they compare allows you to choose the right environment for your workflow without falling into tool tribalism.
+
+---
+
+## The Contenders
+
+### 1. Cursor
+
+- **Architecture:** A direct fork of VS Code maintained by Anysphere.
+- **Key Features:** "Composer" agent mode, full-codebase semantic indexing, predictive edit completions ("Cursor Tab"), and `@` symbol referencing (`@web`, `@docs`, `@git`).
+- **Strengths:** Unrivalled speed for in-editor multi-file edits; feels like an amplified VS Code.
+- **Context Handling:** Automatically indexes codebase embeddings locally and synchronizes changes in real time. Reads `AGENTS.md` and `.cursorrules`.
+
+### 2. Windsurf
+
+- **Architecture:** A dedicated AI-native IDE created by Codeium.
+- **Key Features:** "Cascade" flow system that tracks developer actions across files and terminal tabs in real time.
+- **Strengths:** Exceptional contextual awareness of what you just edited or ran in the integrated terminal without needing explicit `@` mentions.
+- **Context Handling:** Deep AST indexing and automatic tool execution tracking. Reads `AGENTS.md`.
+
+### 3. VS Code with GitHub Copilot Agent Mode
+
+- **Architecture:** Official VS Code extension running on the stock, un-forked Microsoft editor.
+- **Key Features:** Native Model Context Protocol (MCP) support via `.vscode/mcp.json`, multi-model picker (Claude 3.7 Sonnet, GPT-4o, o3-mini, Gemini 2.5), Copilot Edits workspace, and prompt files (`.github/prompts/`).
+- **Strengths:** Zero migration friction for enterprise teams; no separate editor binary or proprietary fork compliance questions.
+- **Context Handling:** Workspace indexing, `.github/copilot-instructions.md`, and direct MCP server tool calls.
+
+### 4. Claude Code
+
+- **Architecture:** Terminal-based CLI agent running directly in your shell or integrated terminal.
+- **Key Features:** Powered by Claude 3.7 Sonnet with hybrid reasoning & extended thinking mode; interactive `/diff` panels, subagent spawning, and native CLI MCP configuration (`claude mcp add`).
+- **Strengths:** Editor-agnostic (works identically in VS Code, Neovim, JetBrains, or headless SSH servers); can run non-interactively in CI pipelines.
+- **Context Handling:** Hierarchical `CLAUDE.md` / `AGENTS.md` files, subagent context isolation, and MCP tools.
+
+---
+
+## Head-to-Head Comparison
+
+| Feature              | Cursor                       | Windsurf           | VS Code Copilot             | Claude Code                 |
+| :------------------- | :--------------------------- | :----------------- | :-------------------------- | :-------------------------- |
+| **Interface**        | Forked Editor                | Forked Editor      | Official VS Code            | Terminal CLI                |
+| **Backing Models**   | Claude 3.7, GPT-4o, Custom   | Claude 3.7, GPT-4o | Claude 3.7, o3-mini, Gemini | Claude 3.7 Sonnet           |
+| **MCP Support**      | Native MCP                   | Native MCP         | Native (`.vscode/mcp.json`) | Native (`claude mcp add`)   |
+| **Primary Context**  | `.cursorrules` / `AGENTS.md` | `AGENTS.md`        | `copilot-instructions.md`   | `CLAUDE.md` / `AGENTS.md`   |
+| **Scriptability**    | Low (GUI-bound)              | Low (GUI-bound)    | Moderate (CLI extension)    | High (Shell / CI pipelines) |
+| **Multi-File Edits** | Composer UI                  | Cascade Flow       | Copilot Edits               | Terminal Diffs / Diff Panel |
+
+---
+
+## The Common Thread: AGENTS.md and MCP
+
+The biggest risk of modern AI tooling is vendor lock-in — spending weeks crafting custom prompt rules that only work inside a single tool.
+
+You can remain completely mobile across all four environments by adopting two open standards:
+
+1. **`AGENTS.md` for Instructions:** Place an `AGENTS.md` file in your repository root. Cursor, Windsurf, VS Code Copilot, and Claude Code all read this file. See [CLAUDE.md vs AGENTS.md](/context-management/agent-files-explained/).
+2. **Model Context Protocol (MCP) for Tools:** Build your internal documentation and database tools as standard MCP servers. The same server connects to VS Code (`.vscode/mcp.json`), Claude Code (`claude mcp add`), and Cursor with zero code modifications.
+
+---
+
+## Decision Matrix: What to Use When
+
+```
+Is the task...
+├── An interactive coding session in your editor?
+│   ├── Do company policies require stock VS Code?
+│   │   └── Yes ──> VS Code + Copilot Agent Mode (with Claude 3.7 / o3-mini)
+│   └── Allowed to use dedicated AI IDEs?
+│       ├── Prefer fluid multi-file inline editing? ──> Cursor
+│       └── Prefer deep terminal & action tracking? ──> Windsurf
+└── A large refactor, test generation batch, or headless task?
+    ├── Working over SSH or in Neovim/JetBrains? ──> Claude Code
+    └── Automating in CI/CD or PR bots? ──> Claude Code / Copilot CLI
+```
+
+<Callout type="tip">
+  Many high-leverage developers use **VS Code or Cursor** for day-to-day writing and keep **Claude Code** open in the
+  integrated terminal for delegated exploration, test generation, and multi-service refactoring.
+</Callout>
+
+## Next steps
+
+- [Other Coding Agents Overview](/other-agents/) — explore terminal-native tools (Codex CLI, Gemini CLI, Copilot CLI)
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — connect MCP servers to any editor
+- [AGENTS.md vs CLAUDE.md](/context-management/agent-files-explained/) — write one context file that powers every agent

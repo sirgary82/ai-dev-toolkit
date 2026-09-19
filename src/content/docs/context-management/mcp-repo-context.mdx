@@ -9,8 +9,8 @@ order: 7
 import Callout from '../../../components/Callout.astro';
 import Badge from '../../../components/Badge.astro';
 
-<Badge type="updated" label="As of March 2026" /> MCP is an open protocol supported by Claude Code natively. Copilot's
-equivalent (Extensions) is in active development.
+<Badge type="updated" label="As of September 2026" /> MCP is the industry-standard protocol supported natively across
+Claude Code, VS Code / GitHub Copilot Agent Mode, Cursor, Codex CLI, and Gemini CLI.
 
 The strategies in [Large Repo Strategies](/context-management/large-repo-strategies/) and [Repo Documentation for AI Tools](/context-management/repo-docs-for-ai/) all rely on you — the developer — deciding what context to provide for each session. You open the right files, paste the relevant `AGENTS.md`, reference the architecture doc.
 
@@ -210,24 +210,34 @@ The server maps `get_service_docs("OrderService")` to `services/OrderService/AGE
   reflects it automatically. The server config in `~/.claude/claude_code_config.json` points to the repo-relative path.
 </Callout>
 
-## GitHub Copilot's equivalent — Extensions
+## MCP in VS Code and GitHub Copilot
 
-GitHub Copilot doesn't support MCP directly. The equivalent mechanism is **Copilot Extensions** — GitHub Apps that expose tools to Copilot Chat agents.
+VS Code and GitHub Copilot natively support the Model Context Protocol in Agent Mode. You do not need a custom cloud extension to give Copilot access to local tools — you can configure MCP servers directly in your repository:
 
-A Copilot Extension can expose the same tools as an MCP server (get service docs, list services, etc.) and make them available in Copilot Chat with the `@extension-name` participant prefix:
+Create `.vscode/mcp.json`:
 
+```json
+{
+  "servers": {
+    "repo-docs": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/mcp-server/index.js"],
+      "env": {
+        "REPO_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}
 ```
-@repo-docs get the architecture for OrderService
-```
 
-The concepts are the same; the implementation differs:
+Once defined, Copilot Agent Mode in VS Code can invoke your docs server's tools (`get_service_docs`, `get_architecture_overview`) during plan formulation and code generation.
 
-- MCP servers run locally, configured per developer
-- Copilot Extensions are published GitHub Apps, configured at the org or repo level
+Both Claude Code and GitHub Copilot now speak the same MCP language:
 
-As of March 2026, Copilot Extensions are in public preview. For teams already invested in Claude Code, an MCP server is faster to build and deploy. For teams primarily on Copilot who want the same capability, a Copilot Extension achieves the same result.
-
-Anthropic and GitHub are working toward convergence on tooling protocols — watch both roadmaps for updates.
+- **Claude Code**: Configured via CLI (`claude mcp add`) or `~/.claude.json`.
+- **VS Code / Copilot**: Configured via `.vscode/mcp.json` or user settings.
+- **Same server code**: The exact same Node.js or Python MCP server script serves both tools seamlessly.
 
 ## When to build an MCP server
 

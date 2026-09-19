@@ -12,29 +12,24 @@ corrections, and new tool coverage. These are the steps before that makes sense.
 
 ### Must-have before going public
 
-- [ ] Add `LICENSE` file — MIT is the right choice for a docs/tooling project.
-      Without it the repo is legally "all rights reserved" and contributors can't submit PRs.
-- [ ] Write `CONTRIBUTING.md` — explain what's in scope, how to submit a fix or new page,
-      and what the review process looks like (solo maintainer, PR-based).
-- [ ] Add GitHub issue and PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`)
-      so contributors give useful context instead of vague reports.
-- [ ] Enable branch protection on `main` — require status checks to pass before merge,
-      prevent direct pushes that bypass CI.
-- [ ] Update the GitHub social link in `astro.config.mjs` from the Starlight default
-      to the actual repo URL.
+- [x] Add `LICENSE` file — MIT license added.
+- [x] Write `CONTRIBUTING.md` — scope, style rules, and PR review workflow documented.
+- [x] Add GitHub issue and PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`).
+- [ ] Enable branch protection on `main` — require status checks to pass before merge (GitHub repository settings).
+- [x] Update the GitHub social link in `astro.config.mjs` to actual repo URL.
 
 ### Nice-to-have before going public
 
-- [ ] Replace `public/favicon.svg` and `src/assets/houston.webp` with project-specific assets
-      (the Astro mascot signals "starter template" to anyone who looks closely).
-- [ ] Add a `CHANGELOG.md` or use GitHub Releases to track what changed and when.
+- [ ] Replace `public/favicon.svg` and `src/assets/houston.webp` with project-specific assets.
+- [x] Add a `CHANGELOG.md` to track what changed across versions.
 
 ### Already done
 
-- [x] README rewritten (was Starlight boilerplate)
+- [x] README rewritten
 - [x] Prettier config added
 - [x] `linkedin_post.md` and `content_notes.md` added to `.gitignore`
 - [x] `AGENTS.md` in place for AI coding tool context
+- [x] 6-month landscape update (September 2026 sweep)
 
 ---
 

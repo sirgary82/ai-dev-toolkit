@@ -185,20 +185,25 @@ Beyond custom commands, Claude Code has built-in skills — invoked the same way
     {
       title: 'Workflow Skills',
       items: [
-        { key: '/clear', description: 'Clear context and start fresh — use heavily between unrelated tasks' },
-        { key: '/compact', description: 'Summarise and compress the current context without losing key info' },
-        { key: '/init', description: 'Scan the codebase and generate a CLAUDE.md from scratch' },
+        { action: 'Clear context and start fresh', shortcut: '/clear', note: 'Use heavily between unrelated tasks' },
+        { action: 'Summarise and compress context', shortcut: '/compact', note: 'Preserves working summary' },
+        { action: 'Scan codebase & generate CLAUDE.md', shortcut: '/init', note: 'Run once per service root' },
       ],
     },
     {
       title: 'User-Defined Skills',
       items: [
         {
-          key: '/loop [interval] [command]',
-          description: 'Run a command on a recurring interval — e.g. /loop 5m /standup',
+          action: 'Run command on recurring interval',
+          shortcut: '/loop [interval] [cmd]',
+          note: 'e.g. /loop 5m /standup',
         },
-        { key: '/review', description: 'If defined in .claude/commands/ — your custom review prompt' },
-        { key: '/test', description: 'If defined in .claude/commands/ — your custom test generation prompt' },
+        { action: 'Custom code review prompt', shortcut: '/review', note: 'Defined in .claude/commands/review.md' },
+        {
+          action: 'Custom unit test generation prompt',
+          shortcut: '/test',
+          note: 'Defined in .claude/commands/test.md',
+        },
       ],
     },
   ]}

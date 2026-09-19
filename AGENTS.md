@@ -2,36 +2,47 @@
 
 ## What this project is
 
-A static documentation site built with Astro + Starlight. 31 pages of self-paced guides for developers adopting AI coding tools (GitHub Copilot, Claude, Claude Code). Deployed to GitHub Pages at `https://sirgary82.github.io/ai-dev-toolkit/`.
+A static documentation site built with Astro + Starlight. 60+ self-paced guide pages across 19 sections for developers adopting AI coding tools (GitHub Copilot, Claude, Claude Code, Gemini CLI, Codex CLI, and MCP). Deployed to GitHub Pages at `https://sirgary82.github.io/ai-dev-toolkit/`.
 
 ## Stack
 
 - **Astro 5.6.1** + **Starlight 0.37.7**
 - **MDX** for all content pages
-- **Node 20**, `npm` for package management
+- **Node 20 / 22** (`>=18.20.8`), `npm` for package management
 - Static output → `dist/` → GitHub Pages via GitHub Actions
 
 ## Project structure
 
 ```
 astro.config.mjs         # Sidebar nav, site URL, base path, prefixLinksIntegration
-remark-prefix-links.mjs  # (deleted) replaced by inline integration in astro.config.mjs
 src/
   components/
     Callout.astro         # tip | warning | note | coming-soon
     Badge.astro           # coming-soon | new | draft | updated
     CheatSheet.astro      # accepts items[] or sections[] props
+  content.config.ts       # docsLoader() + docsSchema() — do not add custom fields
   content/
-    config.ts             # docsLoader() + docsSchema() — do not add custom fields
-    docs/                 # all 31 pages live here
+    docs/                 # all content pages live here
+      foundations/        # before-you-start, glossary
+      tracks/             # backend, frontend
       copilot/            # 5 pages
-      context-management/ # 9 pages
-      claude/             # 5 pages (index.mdx = /claude/ slug)
+      context-management/ # 13 pages (including MCP, version staleness)
+      claude/             # 9 pages (including sub-agents, custom-commands, gh-integration)
       multi-tool/         # 1 page
       git-worktrees/      # 3 pages
       pr-review/          # 2 pages
       auditable-changes/  # 2 pages
-      tracks/             # 2 pages (backend, frontend)
+      testing/            # 3 pages
+      cicd/               # 3 pages
+      security/           # 2 pages
+      debugging/          # 1 page
+      refactoring/        # 1 page
+      prompts/            # 2 pages (.NET, React)
+      exercises/          # 4 pages
+      case-studies/       # 2 pages
+      troubleshooting/    # 1 page
+      self-assessment/    # 1 page
+      other-agents/       # 4 pages (Codex CLI, Gemini CLI, Copilot CLI, index)
       index.mdx           # homepage
 .github/workflows/
   deploy.yml              # Astro build → upload artifact → deploy to Pages

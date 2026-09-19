@@ -82,7 +82,7 @@ A community MCP server that covers five package registries in one. Useful for te
 
 ```bash
 # Add to Claude Code (user-level, works across all projects)
-claude mcp add -s user package-registry npx package-registry-mcp
+claude mcp add --scope user package-registry -- npx -y package-registry-mcp
 ```
 
 Or add to `claude_desktop_config.json`:
@@ -170,7 +170,7 @@ For npm projects, `package.json` is already the canonical version source. The sa
 
 Current package versions are in `package.json`. Key runtime dependencies:
 
-- Framework: React 18, TypeScript 5
+- Framework: React 19 (or 18), TypeScript 5.x
 - Build: Vite 6
 - Testing: Vitest 2, Playwright 1.48
 

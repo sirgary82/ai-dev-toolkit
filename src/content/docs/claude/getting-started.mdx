@@ -34,15 +34,19 @@ What to put in a Project's instructions:
   it, so keep it at the level of "what's always true about this codebase" rather than the current task.
 </Callout>
 
-### 2. Claude Code — the agentic terminal tool
+### 2. Claude Desktop — desktop client with local MCP support
 
-Claude Code is a terminal-based tool you run in your development environment. It can read files, write code, run commands, and manage multi-step tasks — all from the command line or VSCode's integrated terminal. It's the closest Claude equivalent to Copilot Agent Mode.
+The Claude Desktop application (macOS and Windows) gives you the claude.ai interface with local system integration. It allows you to configure local Model Context Protocol (MCP) servers (like PostgreSQL, GitHub, or filesystem tools) directly on your workstation, letting Claude inspect databases and local files securely without exposing credentials to third parties.
+
+### 3. Claude Code — the agentic terminal tool
+
+Claude Code is a terminal-based agentic CLI tool you run in your development environment. It can read files, write code, run commands, execute tests, and manage multi-step engineering tasks autonomously — all from your shell or VSCode's integrated terminal. It is powered by Claude 3.7 Sonnet with hybrid reasoning.
 
 Claude Code is covered in its own guide: [Claude Code](/claude/claude-code/).
 
-### 3. Anthropic API
+### 4. Anthropic API
 
-For teams building tooling — custom scripts, CI integrations, internal automation — the Anthropic API gives direct programmatic access to Claude. This is not the typical starting point for developers new to Claude. When you need it, the [official Anthropic API documentation](https://docs.anthropic.com/en/api) is the right reference.
+For teams building tooling — custom scripts, CI integrations, internal automation — the Anthropic API gives direct programmatic access to Claude. When you need it, the [official Anthropic API documentation](https://docs.anthropic.com/en/api) is the right reference.
 
 ## Your first coding task via the web interface
 

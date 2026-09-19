@@ -16,12 +16,32 @@ These are the servers that consistently provide the most value for day-to-day de
 
 ## How MCP servers are configured
 
-All MCP servers are added to `~/.claude/claude_desktop_config.json`:
+Depending on the client you use, configure MCP servers using either the CLI or JSON configuration:
+
+### 1. In Claude Code (Terminal CLI)
+
+Use the built-in CLI command to add servers:
+
+```bash
+# Add a local or npm stdio server
+claude mcp add github -- npx -y @modelcontextprotocol/server-github
+
+# Add with environment variable
+claude mcp add github -- npx -y @modelcontextprotocol/server-github
+# Set GITHUB_PERSONAL_ACCESS_TOKEN in your shell environment
+```
+
+Or add directly to `~/.claude.json` under `"mcpServers"`.
+
+### 2. In VS Code & Copilot Agent Mode
+
+Create or edit `.vscode/mcp.json` in your workspace:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "server-name": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "package-name"],
       "env": {
@@ -32,7 +52,9 @@ All MCP servers are added to `~/.claude/claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Code after adding a new server.
+### 3. In Claude Desktop
+
+Add to `~/.claude/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows).
 
 ---
 
@@ -288,6 +310,7 @@ When evaluating a community MCP server, check: who maintains it, what permission
 
 ## Next steps
 
-- [MCP for Repo Context](/context-management/mcp-repo-context/) — building your own MCP server for internal documentation
+- [MCP for Repo Context](/context-management/mcp-repo-context/) — overview of using MCP for repository context
+- [Building Custom MCP Servers](/context-management/building-custom-mcps/) — full tutorial on building TypeScript and Python MCP servers
 - [Figma MCP for Design-to-Code](/context-management/figma-mcp/) — the full design-to-code workflow
 - [Claude + GitHub Integration](/claude/github-integration/) — the GitHub MCP alongside the claude.ai connector and gh CLI

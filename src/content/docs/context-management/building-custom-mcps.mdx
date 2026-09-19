@@ -1,0 +1,364 @@
+---
+title: Building Custom MCP Servers
+description: How to build a custom Model Context Protocol (MCP) server in TypeScript or Python to connect proprietary databases, internal APIs, and architectural schemas to your AI coding tools.
+track: [backend, frontend]
+status: published
+order: 13
+---
+
+import Callout from '../../../components/Callout.astro';
+
+While public MCP servers exist for platforms like GitHub, PostgreSQL, and Figma, the most significant productivity gains often come from connecting AI agents to your organisation's internal infrastructure:
+
+- Proprietary service catalogs and microservice registries
+- Internal architecture documentation, RFCs, and API contracts
+- Staging database inspection and schema lookup tools
+- Feature flag management platforms
+- Custom CI/CD pipeline diagnostic endpoints
+
+Because the **Model Context Protocol (MCP)** is an open standard, any server you build works seamlessly across Claude Code, VS Code Copilot Agent Mode, Cursor, and Claude Desktop without rewriting integration logic.
+
+---
+
+## MCP Core Concepts
+
+An MCP server exposes capabilities to AI clients through three primary primitives:
+
+| Primitive     | Purpose                                                               | Example                                                |
+| :------------ | :-------------------------------------------------------------------- | :----------------------------------------------------- |
+| **Tools**     | Executable functions the AI can call with structured arguments.       | `get_service_contract({ serviceName: "billing-api" })` |
+| **Resources** | Structured or text data the AI can read (like file paths or schemas). | `internal://schemas/v2/orders.proto`                   |
+| **Prompts**   | Reusable prompt templates with parameters exposed to users.           | `audit-service-security({ serviceName: "auth-hub" })`  |
+
+For development agents, **Tools** are by far the most commonly used primitive because agents can dynamically decide when to call them based on user requests.
+
+### Transports
+
+MCP supports two primary transport layers:
+
+- **`stdio` (Standard Input/Output):** The client launches your server as a local child process and communicates via JSON-RPC over stdin/stdout. This is the standard mechanism for local developer tooling (Claude Code, VS Code Copilot Agent Mode, Claude Desktop).
+- **`SSE` (Server-Sent Events over HTTP):** The client communicates with a remote server over HTTP. Useful for centralized corporate servers shared across teams.
+
+---
+
+## Building an MCP Server in TypeScript
+
+Let's build a practical internal service registry server using the official `@modelcontextprotocol/sdk`.
+
+### 1. Project Setup
+
+```bash
+mkdir internal-service-mcp && cd internal-service-mcp
+npm init -y
+npm install @modelcontextprotocol/sdk zod
+npm install -D typescript @types/node tsx
+```
+
+Create a minimal `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
+}
+```
+
+### 2. Implement the Server (`src/index.ts`)
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
+
+// Mock internal service database
+const SERVICE_CATALOG = [
+  {
+    name: 'order-processing',
+    owner: 'checkout-team',
+    language: 'TypeScript / Node.js',
+    repository: 'https://github.com/org/order-processing',
+    dependencies: ['payment-gateway', 'inventory-service'],
+    criticality: 'tier-1',
+  },
+  {
+    name: 'payment-gateway',
+    owner: 'fintech-team',
+    language: 'C# / .NET 9',
+    repository: 'https://github.com/org/payment-gateway',
+    dependencies: ['stripe-adapter'],
+    criticality: 'tier-1',
+  },
+  {
+    name: 'inventory-service',
+    owner: 'warehouse-team',
+    language: 'Go',
+    repository: 'https://github.com/org/inventory-service',
+    dependencies: ['warehouse-db'],
+    criticality: 'tier-2',
+  },
+];
+
+// Initialize server instance
+const server = new Server(
+  {
+    name: 'internal-service-registry',
+    version: '1.0.0',
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// 1. Register available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: 'search_services',
+        description: 'Search internal microservices by name, team owner, or tech stack. Returns service metadata.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Keyword to match against service name, owner, or language.',
+            },
+          },
+          required: ['query'],
+        },
+      },
+      {
+        name: 'get_service_dependencies',
+        description: 'Retrieve upstream and downstream service dependencies for a given service name.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            serviceName: {
+              type: 'string',
+              description: 'Exact name of the microservice.',
+            },
+          },
+          required: ['serviceName'],
+        },
+      },
+    ],
+  };
+});
+
+// 2. Handle tool execution
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    if (name === 'search_services') {
+      const { query } = z.object({ query: z.string() }).parse(args);
+      const normalizedQuery = query.toLowerCase();
+
+      const matches = SERVICE_CATALOG.filter(
+        (s) =>
+          s.name.toLowerCase().includes(normalizedQuery) ||
+          s.owner.toLowerCase().includes(normalizedQuery) ||
+          s.language.toLowerCase().includes(normalizedQuery)
+      );
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(matches, null, 2),
+          },
+        ],
+      };
+    }
+
+    if (name === 'get_service_dependencies') {
+      const { serviceName } = z.object({ serviceName: z.string() }).parse(args);
+      const service = SERVICE_CATALOG.find((s) => s.name.toLowerCase() === serviceName.toLowerCase());
+
+      if (!service) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Service "${serviceName}" not found in internal catalog.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                service: service.name,
+                dependencies: service.dependencies,
+                criticality: service.criticality,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    throw new Error(`Unknown tool requested: ${name}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      isError: true,
+      content: [
+        {
+          type: 'text',
+          text: `Error executing tool "${name}": ${message}`,
+        },
+      ],
+    };
+  }
+});
+
+// 3. Connect via Standard Input/Output
+async function run() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  // Log to stderr, never stdout — stdout is strictly reserved for JSON-RPC messages!
+  console.error('Internal Service Registry MCP running on stdio');
+}
+
+run().catch((err) => {
+  console.error('Fatal server startup error:', err);
+  process.exit(1);
+});
+```
+
+<Callout type="warning">
+  **Never print to stdout in a `stdio` MCP server!** Any `console.log()` statements will corrupt the JSON-RPC stream and
+  break the connection immediately. Always use `console.error()` for internal logs and diagnostic messages.
+</Callout>
+
+---
+
+## Alternative: Building with Python (FastMCP)
+
+If your team works predominantly with Python, the official `mcp` library provides a high-level `FastMCP` interface (similar to FastAPI):
+
+```bash
+pip install "mcp[cli]"
+```
+
+```python
+# server.py
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("internal-service-registry")
+
+SERVICES = {
+    "order-processing": {"owner": "checkout-team", "language": "TypeScript"},
+    "payment-gateway": {"owner": "fintech-team", "language": "C#"},
+}
+
+@mcp.tool()
+def search_services(query: str) -> str:
+    """Search internal microservices by name or tech stack."""
+    results = [
+        {"name": k, **v}
+        for k, v in SERVICES.items()
+        if query.lower() in k.lower() or query.lower() in v["language"].lower()
+    ]
+    return str(results)
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+```
+
+---
+
+## Testing Your MCP Server
+
+### 1. Interactive Testing with the MCP Inspector
+
+Before wiring the server into your agent, use the official MCP Inspector to test tools in a visual debugger:
+
+```bash
+# For TypeScript (using tsx directly)
+npx @modelcontextprotocol/inspector npx tsx ./src/index.ts
+
+# For Python
+npx @modelcontextprotocol/inspector python server.py
+```
+
+The inspector launches a local web UI where you can inspect registered schemas, invoke tools manually with custom parameters, and verify response formats.
+
+---
+
+## Connecting to AI Clients
+
+Once tested, register your custom server in your development tools:
+
+### Claude Code CLI
+
+```bash
+# Add to your project scope:
+claude mcp add internal-catalog -- npx tsx /absolute/path/to/src/index.ts
+
+# Verify it is active:
+claude mcp list
+```
+
+### VS Code & Copilot Agent Mode
+
+Add the server definition to your workspace's `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "internal-catalog": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/src/index.ts"]
+    }
+  }
+}
+```
+
+When you prompt Copilot Agent Mode (e.g., _"Which service handles billing, and what does it depend on?"_), Copilot will automatically discover `search_services`, invoke it, and formulate an accurate answer based on your live catalog.
+
+### Claude Desktop
+
+Add to `~/.claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "internal-catalog": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/src/index.ts"]
+    }
+  }
+}
+```
+
+---
+
+## Best Practices for Custom MCP Servers
+
+1. **Tool descriptions are prompt instructions:** The model decides whether to call a tool solely based on its description and parameter names. Write clear, unambiguous descriptions specifying what the tool does, what format inputs should follow, and what it returns.
+2. **Strict schema validation:** Always validate arguments with Zod (TypeScript) or Pydantic (Python). Do not assume the model will always provide well-formed types.
+3. **Compact, token-efficient responses:** AI models have finite context windows. Rather than returning an entire 10MB database payload, return clean, filtered summaries or paginate large lists.
+4. **Graceful error returns:** When a tool fails (e.g., entity not found), return `{ isError: true, content: [{ type: "text", text: "..." }] }` instead of throwing an unhandled exception that terminates the process. Returning descriptive error messages lets the model self-correct and refine its parameters.
+5. **Read-only by default:** Start with informational tools (queries, schemas, diagnostics). If you expose mutating operations (e.g., creating issues, toggling feature flags), require explicit confirmation parameters or use read-only database connections.

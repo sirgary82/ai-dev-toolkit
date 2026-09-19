@@ -32,6 +32,15 @@ For most conversations, the sidebar panel works best. Use inline chat when you w
 
 **Generating from scratch.** Describe what you need and ask Copilot to write it. This is most reliable for well-defined, self-contained pieces of code.
 
+## Model selection in Chat
+
+Copilot Chat includes a model selector dropdown directly inside the chat interface. Depending on your organization's subscription and policies, you can switch models mid-workflow:
+
+- **Claude 3.7 Sonnet**: Best for deep reasoning, architectural explanations, and reviewing complex PR diffs.
+- **GPT-4o**: Fast, balanced conversational responses and code generation.
+- **o1 / o3-mini**: Deep logical deduction, math-heavy algorithms, and complex debugging.
+- **Gemini 2.5 Flash**: Low-latency responses across massive code contexts.
+
 ## Slash commands
 
 Type these at the start of a message to invoke specific modes:
@@ -45,17 +54,22 @@ Type these at the start of a message to invoke specific modes:
 | `/simplify` | Suggest a simpler version of selected code |
 | `/clear`    | Start a new conversation                   |
 
-## Referencing your code
+## Context variables and prompt files
 
 **Selection in sidebar:** Select code in the editor before typing your chat message. Copilot automatically includes the selection as context.
 
-**`@workspace`:** Prefix your message with `@workspace` to ask questions about your project. Copilot indexes your files and tries to answer from your actual codebase.
+**`@workspace`:** Prefix your message with `@workspace` to ask questions about your project. Copilot indexes your files and queries semantic symbols across the codebase.
 
-**`#file`:** Type `#file` in the chat input to attach a specific file. Useful when the relevant file isn't currently open.
+**`#file`:** Attach specific files to the conversation context without having them open.
+
+**`#editor`:** Attach the visible viewport of your active editor.
+
+**Prompt files (`.github/prompts/*.prompt.md`):** You can store reusable team prompt templates inside `.github/prompts/`. Reference them in chat using `#prompt:your-prompt-name` to load structured review or generation templates instantly.
 
 <Callout type="tip">
   Chat conversations have memory within a session. You can say "now add error handling to that" after a previous
-  exchange, and Copilot will know what "that" refers to. Start a new chat (`/clear`) when switching to a different task.
+  exchange, and Copilot will know what "that" refers to. Use `/clear` when switching to a completely different task to
+  avoid context pollution.
 </Callout>
 
 ## Inline chat (`Ctrl+I`)
